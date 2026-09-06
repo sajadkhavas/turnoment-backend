@@ -16,14 +16,16 @@ Before a phase may be reported as `DONE`, the responsible chat/agent MUST:
 6. Run the repository quality gate and resolve failures instead of weakening the gate.
 7. Open a PR, review the diff, resolve blockers/review threads, and merge only after CI is green.
 8. After implementation merge, update **both** the phase section in `docs/PHASE_REGISTRY.md` and the phase-specific GitHub Issue.
-9. The final phase record MUST contain: `START_SHA`, implementation `END_SHA`, final reviewed phase SHA, implementation PR, CI run(s), implementation merge SHA, closeout/freeze PR and merge SHA when used, open review-thread count, and final status `DONE / MERGED / FROZEN`.
-10. Close the phase Issue only as `completed` after the evidence above is recorded.
-11. If any required gate is pending, report the real status (`IN PROGRESS`, `BLOCKED`, or `READY TO MERGE`) and do **not** claim the phase is done.
+9. The registry closeout record MUST contain: `START_SHA`, implementation `END_SHA`, final reviewed implementation SHA, implementation PR, implementation/pre-merge CI run(s), implementation merge SHA, closeout branch/PR reference, open review-thread count, and the closeout status that is true at the time that registry content is created.
+10. After the closeout/freeze PR is merged, the phase-specific GitHub Issue MUST be updated with the exact closeout merge SHA (the frozen `main` SHA) and the final post-closeout `main` CI run. Once that CI is green, the Issue is the authoritative terminal evidence for `DONE / MERGED / FROZEN`.
+11. Do not create recursive documentation-only PRs merely so a file can contain the SHA of the commit that contains that same file. A Git commit cannot self-record its own SHA because changing the recorded SHA changes the commit hash. The terminal closeout SHA and its post-merge CI therefore belong in the phase Issue after the merge.
+12. Close the phase Issue only as `completed` after the terminal evidence above is recorded and final `main` CI is green.
+13. If any required gate is pending, report the real status (`IN PROGRESS`, `BLOCKED`, `READY TO MERGE`, or `MERGED / CLOSEOUT IN PROGRESS`) and do **not** claim the phase is done.
 
 ## Source of truth
 
-- Phase history: `docs/PHASE_REGISTRY.md`
-- Per-phase execution/evidence: the phase-specific GitHub Issue
+- Phase history and non-recursive closeout snapshot: `docs/PHASE_REGISTRY.md`
+- Per-phase execution evidence and terminal freeze SHA/CI: the phase-specific GitHub Issue
 - Frontend↔Backend ownership: `docs/FRONTEND_BACKEND_CONTRACT.md`
 - Engineering rules: `docs/ENGINEERING_RULES.md`
 - Official references: `docs/OFFICIAL_SOURCES.md`
