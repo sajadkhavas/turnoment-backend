@@ -45,3 +45,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# HSTS preload is intentionally deferred until the real production domains are final,
+# HTTPS-only coverage for every subdomain is verified, and preload enrollment is an
+# explicit deployment decision. Keep every other deployment warning fatal in CI.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]
