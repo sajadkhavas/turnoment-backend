@@ -2,17 +2,18 @@
 
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
-Status: `IN PROGRESS`
+Status: `READY TO MERGE`
 
 - Bootstrap SHA: `16540a37809c0c4e06a1cd5f6ee03bd88002fdc4`
 - START_SHA: `16540a37809c0c4e06a1cd5f6ee03bd88002fdc4`
 - Branch: `phase/p00-backend-foundation`
 - Frontend baseline: `8d5736d788235e3e99765a5332f79f0cba861482`
 - Target stack: Django 6.1 + DRF 3.18 + PostgreSQL + Redis + Celery
-- END_SHA: pending
-- PR: pending
-- CI: pending
-- Merge SHA: pending
+- Implementation END_SHA: `f96a8beaf0fe6810880343413868d64fa3e8c089`
+- PR: `#2`
+- CI: `Backend Quality Gate #4` / run `34040956380` — PASS on Python 3.12 and 3.14
+- Merge SHA: pending merge
+- Registry freeze SHA: pending post-merge closeout
 
 ### P00 acceptance gates
 
@@ -29,10 +30,11 @@ Status: `IN PROGRESS`
 - [x] Engineering rules recorded
 - [x] Local PostgreSQL/Redis compose baseline
 - [x] Tests for system endpoints
-- [ ] GitHub Actions quality gate green
-- [ ] PR reviewed and mergeable
-- [ ] P00 merged to main and registry frozen
+- [x] GitHub Actions quality gate green on Python 3.12 and 3.14
+- [x] PR diff reviewed and mergeable
+- [ ] P00 merged to main
+- [ ] Registry frozen with exact merge evidence
 
 ## Next domain phases
 
-Exact numbering may be refined after P00 closes, but implementation order begins with domain identity/catalog foundations required by the active frontend: accounts/player identity, games, gaming centers, tournaments, rankings, then match/result/challenge/rivalry slices in lockstep with frontend completion.
+Implementation order begins with the identity/catalog foundations required by the active frontend: accounts/player identity, games, gaming centers, tournaments, rankings, then match/result/challenge/rivalry slices in lockstep with frontend completion.
