@@ -15,7 +15,12 @@ from .exceptions import (
     OtpRateLimited,
 )
 from .models import OtpChallenge, OtpRequestState, PlayerProfile, User
-from .otp import OtpDelivery, generate_otp_code, get_otp_sender
+from .otp import (
+    OtpDelivery,
+    OtpDeliveryUnavailable,
+    generate_otp_code,
+    get_otp_sender,
+)
 from .phone import normalize_iran_mobile
 
 
@@ -28,6 +33,30 @@ class IssuedOtp:
 
 def _seconds_until(moment, now) -> int:
     return max(1, int((moment - now).total_seconds()))
+
+
+def _rewind_failed_delivery(*, challenge: OtpChallenge, issued_at) -> None:
+    failure_time = timezone.now()
+    with transaction.atomic():
+        locked_challenge = OtpChallenge.objects.select_for_update().get(pk=challenge.pk)
+        if locked_challenge.consumed_at is None:
+            locked_challenge.consumed_at = failure_time
+            locked_challenge.save(update_fields=["consumed_at"])
+
+        state = OtpRequestState.objects.select_for_update().get(phone=challenge.phone)
+        if state.last_sent_at == issued_at:
+            state.last_sent_at = None
+            state.request_count = max(0, state.request_count - 1)
+            if state.request_count == 0:
+                state.window_started_at = None
+            state.save(
+                update_fields=[
+                    "last_sent_at",
+                    "request_count",
+                    "window_started_at",
+                    "updated_at",
+                ]
+            )
 
 
 def issue_login_otp(*, phone: str, request_ip: str | None = None) -> IssuedOtp:
@@ -70,6 +99,12 @@ def issue_login_otp(*, phone: str, request_ip: str | None = None) -> IssuedOtp:
             update_fields=["window_started_at", "request_count", "last_sent_at", "updated_at"]
         )
 
+        OtpChallenge.objects.filter(
+            phone=phone,
+            purpose=OtpChallenge.Purpose.LOGIN,
+            consumed_at__isnull=True,
+        ).update(consumed_at=now)
+
         code = generate_otp_code()
         challenge = OtpChallenge.objects.create(
             phone=phone,
@@ -80,7 +115,12 @@ def issue_login_otp(*, phone: str, request_ip: str | None = None) -> IssuedOtp:
             expires_at=now + timedelta(seconds=ttl),
         )
 
-    get_otp_sender().send(OtpDelivery(phone=phone, code=code))
+    try:
+        get_otp_sender().send(OtpDelivery(phone=phone, code=code))
+    except OtpDeliveryUnavailable:
+        _rewind_failed_delivery(challenge=challenge, issued_at=now)
+        raise
+
     return IssuedOtp(challenge=challenge, expires_in=ttl, resend_after=cooldown)
 
 

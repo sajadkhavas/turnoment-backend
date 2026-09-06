@@ -5,7 +5,7 @@ from django.test import override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.accounts.models import OtpChallenge, PlayerProfile, User
+from apps.accounts.models import OtpChallenge, OtpRequestState, PlayerProfile, User
 from apps.accounts.otp import MemoryOtpSender
 
 OTP_REQUEST_URL = "/api/v1/auth/otp/request/"
@@ -114,6 +114,29 @@ def test_successful_otp_is_single_use():
 
 
 @pytest.mark.django_db
+@override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
+def test_new_otp_invalidates_previous_challenge():
+    client = APIClient()
+    first, first_delivery = request_otp(client)
+    second, second_delivery = request_otp(client)
+
+    old_response = client.post(
+        OTP_VERIFY_URL,
+        {"challenge_id": first.data["challenge_id"], "code": first_delivery.code},
+        format="json",
+    )
+    assert old_response.status_code == 400
+    assert old_response.data["error"]["code"] == "otp_consumed"
+
+    current_response = client.post(
+        OTP_VERIFY_URL,
+        {"challenge_id": second.data["challenge_id"], "code": second_delivery.code},
+        format="json",
+    )
+    assert current_response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_resend_cooldown_returns_retry_after():
     client = APIClient()
     request_otp(client)
@@ -210,10 +233,17 @@ def test_inactive_account_cannot_login_with_valid_otp():
 
 @pytest.mark.django_db
 @override_settings(OTP_SENDER_BACKEND="apps.accounts.otp.DisabledOtpSender")
-def test_disabled_sender_fails_closed():
+def test_disabled_sender_fails_closed_without_burning_request_quota():
     response = APIClient().post(OTP_REQUEST_URL, {"phone": "09121234567"}, format="json")
+
     assert response.status_code == 503
     assert response.data["error"]["code"] == "otp_delivery_unavailable"
+    challenge = OtpChallenge.objects.get()
+    assert challenge.consumed_at is not None
+    state = OtpRequestState.objects.get(phone="+989121234567")
+    assert state.request_count == 0
+    assert state.last_sent_at is None
+    assert state.window_started_at is None
     assert User.objects.count() == 0
 
 
