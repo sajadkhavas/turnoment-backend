@@ -1,5 +1,7 @@
 # Backend Phase Registry
 
+> Every phase owner/chat MUST follow the root `PHASE_COMPLETION_PROTOCOL.md`. A phase is not DONE until both this registry and its phase-specific GitHub Issue contain final evidence.
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
@@ -12,9 +14,11 @@ Status: `DONE / MERGED / FROZEN`
 - Implementation END_SHA: `f96a8beaf0fe6810880343413868d64fa3e8c089`
 - Final reviewed branch SHA: `be7fe0c9426dc67d729848d9cf7c4325d2dc7619`
 - Implementation PR: `#2`
-- Final pre-merge CI: `Backend Quality Gate #6` / run `34041103523` — PASS on Python 3.12 and 3.14
+- Final pre-merge CI: run `34041103523` — PASS on Python 3.12 and 3.14
 - Implementation merge SHA: `1347052022dcc55b6ce3097f707022e742b2fb82`
-- Registry freeze: this closeout change is based on the exact implementation merge SHA above and is merged separately to preserve branch-only main mutations.
+- Registry closeout PR: `#3`
+- Frozen main SHA after closeout: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
+- Final post-merge CI: run `34041256027` — PASS on Python 3.12 and 3.14
 
 ### P00 acceptance gates
 
@@ -34,8 +38,50 @@ Status: `DONE / MERGED / FROZEN`
 - [x] GitHub Actions quality gate green on Python 3.12 and 3.14
 - [x] PR diff reviewed; open review threads: 0
 - [x] P00 implementation merged to main
-- [x] Registry prepared for exact post-merge freeze
+- [x] Registry frozen with exact merge evidence
+
+---
+
+## P01 — Accounts, Player Identity & Authentication Foundation
+
+Status: `READY TO MERGE`
+
+- START_SHA: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
+- Implementation branch: `phase/p01-accounts-player-auth`
+- Tracking Issue: `#4`
+- Frontend baseline: `8d5736d788235e3e99765a5332f79f0cba861482`
+- Scope: custom account identity, Iran mobile normalization, player profile/gamer tag, OTP lifecycle, sender abstraction, Django session + CSRF, private/public identity APIs
+- Implementation END_SHA: `fd53c04b2452a84da10f5cdb9ad92c237e166f21`
+- Implementation PR: `#5`
+- Green implementation PR CI: run `34044591737` — PASS on Python 3.12 and 3.14
+- Prior corrected PR CI: run `34044425092` — PASS on Python 3.12 and 3.14
+- Open review threads before final documentation gate: `0`
+- Final reviewed branch SHA: pending this documentation gate
+- Implementation merge SHA: pending
+- Registry freeze: pending post-merge closeout
+
+### P01 acceptance gates
+
+- [x] Root mandatory phase-completion protocol committed in phase branch
+- [x] Official-source audit recorded
+- [x] Custom user model designed as initial accounts migration
+- [x] Canonical Iran mobile identity
+- [x] PlayerProfile / gamer-tag identity boundary
+- [x] Persistent OTP challenge + request-state lifecycle
+- [x] Latest OTP invalidates earlier active login challenge
+- [x] Failed OTP delivery does not burn request quota/cooldown
+- [x] OTP sender abstraction with production-disabled default
+- [x] Session + CSRF API contract
+- [x] Private `me` and profile mutation contract
+- [x] Public player privacy projection
+- [x] Abuse/privacy/CSRF/replay tests
+- [x] Migration drift check green
+- [x] Full CI green on Python 3.12 and 3.14
+- [x] PR reviewed / no current blocker / review threads: 0
+- [ ] Final documentation head CI green
+- [ ] Implementation merged to main
+- [ ] Phase Issue and registry frozen with exact final evidence
 
 ## Next domain phases
 
-Implementation order begins with the identity/catalog foundations required by the active frontend: accounts/player identity, games, gaming centers, tournaments, rankings, then match/result/challenge/rivalry slices in lockstep with frontend completion.
+After P01 closes, implementation proceeds through games/catalog, gaming centers/resources, tournaments/registrations, rankings, then match/result/challenge/rivalry slices in lockstep with frontend completion.

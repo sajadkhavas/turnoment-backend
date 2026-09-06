@@ -8,4 +8,5 @@ urlpatterns = [
     path("health/live/", LiveView.as_view(), name="live"),
     path("health/ready/", ReadyView.as_view(), name="ready"),
     path("api/v1/system/", include("apps.system.api.urls", namespace="system")),
+    path("api/v1/", include("apps.accounts.api.urls", namespace="accounts")),
 ]
