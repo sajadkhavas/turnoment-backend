@@ -44,35 +44,41 @@ Status: `DONE / MERGED / FROZEN`
 
 ## P01 — Accounts, Player Identity & Authentication Foundation
 
-Status: `IN PROGRESS`
+Status: `READY TO MERGE`
 
 - START_SHA: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
-- Branch: `phase/p01-accounts-player-auth`
+- Implementation branch: `phase/p01-accounts-player-auth`
 - Tracking Issue: `#4`
 - Frontend baseline: `8d5736d788235e3e99765a5332f79f0cba861482`
 - Scope: custom account identity, Iran mobile normalization, player profile/gamer tag, OTP lifecycle, sender abstraction, Django session + CSRF, private/public identity APIs
-- Implementation END_SHA: pending
-- PR: pending
-- CI: pending
-- Merge SHA: pending
-- Registry freeze: pending
+- Implementation END_SHA: `fd53c04b2452a84da10f5cdb9ad92c237e166f21`
+- Implementation PR: `#5`
+- Green implementation PR CI: run `34044591737` — PASS on Python 3.12 and 3.14
+- Prior corrected PR CI: run `34044425092` — PASS on Python 3.12 and 3.14
+- Open review threads before final documentation gate: `0`
+- Final reviewed branch SHA: pending this documentation gate
+- Implementation merge SHA: pending
+- Registry freeze: pending post-merge closeout
 
 ### P01 acceptance gates
 
-- [x] Root mandatory phase-completion protocol prepared
+- [x] Root mandatory phase-completion protocol committed in phase branch
 - [x] Official-source audit recorded
 - [x] Custom user model designed as initial accounts migration
 - [x] Canonical Iran mobile identity
 - [x] PlayerProfile / gamer-tag identity boundary
 - [x] Persistent OTP challenge + request-state lifecycle
+- [x] Latest OTP invalidates earlier active login challenge
+- [x] Failed OTP delivery does not burn request quota/cooldown
 - [x] OTP sender abstraction with production-disabled default
 - [x] Session + CSRF API contract
 - [x] Private `me` and profile mutation contract
 - [x] Public player privacy projection
-- [x] Abuse/privacy/CSRF test coverage prepared
-- [ ] Migration drift check green
-- [ ] Full CI green on Python 3.12 and 3.14
-- [ ] PR reviewed / no open blocker
+- [x] Abuse/privacy/CSRF/replay tests
+- [x] Migration drift check green
+- [x] Full CI green on Python 3.12 and 3.14
+- [x] PR reviewed / no current blocker / review threads: 0
+- [ ] Final documentation head CI green
 - [ ] Implementation merged to main
 - [ ] Phase Issue and registry frozen with exact final evidence
 
