@@ -2,18 +2,19 @@
 
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
-Status: `READY TO MERGE`
+Status: `DONE / MERGED / FROZEN`
 
 - Bootstrap SHA: `16540a37809c0c4e06a1cd5f6ee03bd88002fdc4`
 - START_SHA: `16540a37809c0c4e06a1cd5f6ee03bd88002fdc4`
-- Branch: `phase/p00-backend-foundation`
+- Implementation branch: `phase/p00-backend-foundation`
 - Frontend baseline: `8d5736d788235e3e99765a5332f79f0cba861482`
 - Target stack: Django 6.1 + DRF 3.18 + PostgreSQL + Redis + Celery
 - Implementation END_SHA: `f96a8beaf0fe6810880343413868d64fa3e8c089`
-- PR: `#2`
-- CI: `Backend Quality Gate #4` / run `34040956380` — PASS on Python 3.12 and 3.14
-- Merge SHA: pending merge
-- Registry freeze SHA: pending post-merge closeout
+- Final reviewed branch SHA: `be7fe0c9426dc67d729848d9cf7c4325d2dc7619`
+- Implementation PR: `#2`
+- Final pre-merge CI: `Backend Quality Gate #6` / run `34041103523` — PASS on Python 3.12 and 3.14
+- Implementation merge SHA: `1347052022dcc55b6ce3097f707022e742b2fb82`
+- Registry freeze: this closeout change is based on the exact implementation merge SHA above and is merged separately to preserve branch-only main mutations.
 
 ### P00 acceptance gates
 
@@ -31,9 +32,9 @@ Status: `READY TO MERGE`
 - [x] Local PostgreSQL/Redis compose baseline
 - [x] Tests for system endpoints
 - [x] GitHub Actions quality gate green on Python 3.12 and 3.14
-- [x] PR diff reviewed and mergeable
-- [ ] P00 merged to main
-- [ ] Registry frozen with exact merge evidence
+- [x] PR diff reviewed; open review threads: 0
+- [x] P00 implementation merged to main
+- [x] Registry prepared for exact post-merge freeze
 
 ## Next domain phases
 
