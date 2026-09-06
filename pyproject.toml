@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=78"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turnoment-backend"
+version = "0.1.0"
+description = "Backend for the Turnoment competitive gaming platform"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "Django>=6.1,<6.2",
+  "djangorestframework>=3.18,<3.19",
+  "psycopg[binary]>=3.2,<4",
+  "celery>=5.6,<5.7",
+  "redis>=5.2,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "pytest-django>=4.11,<5",
+  "ruff>=0.12,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "config*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-ra"

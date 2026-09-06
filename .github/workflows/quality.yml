@@ -1,0 +1,90 @@
+name: Backend Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - "phase/**"
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: turnoment_test
+          POSTGRES_USER: turnoment
+          POSTGRES_PASSWORD: turnoment
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U turnoment -d turnoment_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-only-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz-ABCDE
+      DJANGO_ALLOWED_HOSTS: api.example.test
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://app.example.test
+      DB_NAME: turnoment_test
+      DB_USER: turnoment
+      DB_PASSWORD: turnoment
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/1
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/2
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/3
+      FRONTEND_BASELINE_SHA: 8d5736d788235e3e99765a5332f79f0cba861482
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Compile
+        run: python -m compileall -q apps config manage.py
+
+      - name: Django checks
+        run: |
+          python manage.py check --settings=config.settings.test
+          python manage.py makemigrations --check --dry-run --settings=config.settings.test
+
+      - name: Tests
+        run: pytest -q
+
+      - name: Production deployment checks
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+        run: python manage.py check --deploy --fail-level WARNING --settings=config.settings.production
