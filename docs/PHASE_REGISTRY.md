@@ -44,7 +44,7 @@ Status: `DONE / MERGED / FROZEN`
 
 ## P01 — Accounts, Player Identity & Authentication Foundation
 
-Status: `READY TO FREEZE`
+Status: `DONE / MERGED / FROZEN`
 
 - START_SHA: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
 - Implementation branch: `phase/p01-accounts-player-auth`
@@ -62,14 +62,17 @@ Status: `READY TO FREEZE`
 - Official-source closeout re-review: `2026-09-06` — no architecture deviation found
 - Closeout PR: `#6`
 - Closeout pre-freeze CI: run `34045720546` — PASS on Python 3.12 and 3.14
-- Open review threads on closeout PR before final registry update: `0`
-- Terminal closeout merge SHA / frozen main SHA: recorded in Issue `#4` after merge per `PHASE_COMPLETION_PROTOCOL.md`
-- Final post-closeout main CI: recorded in Issue `#4` after merge
+- Final closeout registry-head CI: run `34045794057` — PASS on Python 3.12 and 3.14
+- Closeout review threads: `0`
+- Closeout merge SHA / frozen main SHA: `8488e70dbc5f9926eecaa5c9756fc4a1d7156e08`
+- Post-closeout main CI: run `34045855470` — PASS on Python 3.12 and 3.14
+- Terminal registry-status branch: `closeout/p01-status-final`
+- Terminal status-finalization merge SHA and its final `main` CI are recorded in Issue `#4` after merge, per `PHASE_COMPLETION_PROTOCOL.md`.
 
 ### P01 acceptance gates
 
 - [x] Root mandatory phase-completion protocol committed
-- [x] Official-source audit recorded
+- [x] Official-source audit recorded and re-reviewed before closeout
 - [x] Custom user model established in the first accounts migration
 - [x] Canonical Iran mobile identity
 - [x] PlayerProfile / gamer-tag identity boundary
@@ -83,16 +86,14 @@ Status: `READY TO FREEZE`
 - [x] Abuse/privacy/CSRF/replay tests
 - [x] Migration drift check green
 - [x] Full implementation CI green on Python 3.12 and 3.14
-- [x] PR reviewed / no blocker / review threads: 0
-- [x] Final documentation-head CI green
+- [x] Implementation PR reviewed / no blocker / review threads: 0
+- [x] Final implementation documentation-head CI green
 - [x] Implementation merged to main
 - [x] Closeout branch created from exact implementation merge SHA
-- [x] Official-source closeout re-review completed
-- [x] Closeout PR opened; first full closeout CI green on Python 3.12 and 3.14
-- [x] Closeout review threads: 0 before final registry update
-- [ ] Final registry-head CI green
-- [ ] Closeout PR merged and terminal SHA recorded in Issue `#4`
-- [ ] Final post-closeout main CI green and Issue closed as completed
+- [x] Closeout PR #6 full CI green and review threads: 0
+- [x] Closeout PR #6 merged
+- [x] Post-closeout `main` CI green on Python 3.12 and 3.14
+- [x] Registry status finalized as `DONE / MERGED / FROZEN`
 
 ## Next domain phases
 
