@@ -1,12 +1,13 @@
 import uuid
 
-import apps.accounts.managers
-import apps.accounts.phone
 import django.db.models.deletion
 import django.db.models.functions.text
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
+
+import apps.accounts.managers
+import apps.accounts.phone
 
 
 class Migration(migrations.Migration):
@@ -47,7 +48,10 @@ class Migration(migrations.Migration):
                     "is_superuser",
                     models.BooleanField(
                         default=False,
-                        help_text="Designates that this user has all permissions without explicitly assigning them.",
+                        help_text=(
+                            "Designates that this user has all permissions without explicitly "
+                            "assigning them."
+                        ),
                         verbose_name="superuser status",
                     ),
                 ),
@@ -76,7 +80,10 @@ class Migration(migrations.Migration):
                     "groups",
                     models.ManyToManyField(
                         blank=True,
-                        help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+                        help_text=(
+                            "The groups this user belongs to. A user will get all permissions "
+                            "granted to each of their groups."
+                        ),
                         related_name="user_set",
                         related_query_name="user",
                         to="auth.group",
@@ -140,7 +147,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="PlayerProfile",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("gamer_tag", models.CharField(blank=True, max_length=24, null=True)),
                 ("display_name", models.CharField(blank=True, max_length=80)),
                 ("city", models.CharField(blank=True, max_length=80)),

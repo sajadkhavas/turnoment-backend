@@ -13,7 +13,18 @@ class UserAdmin(DjangoUserAdmin):
     fieldsets = (
         (None, {"fields": ("phone", "password")}),
         ("Contact", {"fields": ("email",)}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
         ("Dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
@@ -37,7 +48,15 @@ class PlayerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(OtpChallenge)
 class OtpChallengeAdmin(admin.ModelAdmin):
-    list_display = ["id", "phone", "purpose", "attempts_remaining", "created_at", "expires_at", "consumed_at"]
+    list_display = [
+        "id",
+        "phone",
+        "purpose",
+        "attempts_remaining",
+        "created_at",
+        "expires_at",
+        "consumed_at",
+    ]
     search_fields = ["phone"]
     list_filter = ["purpose"]
     readonly_fields = [field.name for field in OtpChallenge._meta.fields]

@@ -45,7 +45,8 @@ class PrivatePlayerProfileSerializer(serializers.ModelSerializer):
             return None
         if not _GAMER_TAG_RE.fullmatch(value):
             raise serializers.ValidationError(
-                "شناسه بازیکن باید ۳ تا ۲۴ کاراکتر و فقط شامل حروف لاتین، عدد، نقطه، خط تیره یا زیرخط باشد."
+                "شناسه بازیکن باید ۳ تا ۲۴ کاراکتر و فقط شامل حروف لاتین، عدد، "
+                "نقطه، خط تیره یا زیرخط باشد."
             )
 
         queryset = PlayerProfile.objects.filter(gamer_tag__iexact=value)
