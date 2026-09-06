@@ -44,7 +44,7 @@ Status: `DONE / MERGED / FROZEN`
 
 ## P01 — Accounts, Player Identity & Authentication Foundation
 
-Status: `MERGED / CLOSEOUT IN PROGRESS`
+Status: `READY TO FREEZE`
 
 - START_SHA: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
 - Implementation branch: `phase/p01-accounts-player-auth`
@@ -60,10 +60,11 @@ Status: `MERGED / CLOSEOUT IN PROGRESS`
 - Open review threads before implementation merge: `0`
 - Closeout branch: `closeout/p01-freeze` created from the exact implementation merge SHA
 - Official-source closeout re-review: `2026-09-06` — no architecture deviation found
-- Closeout PR: pending
-- Closeout merge SHA: pending
-- Final frozen main SHA: pending
-- Final post-closeout main CI: pending
+- Closeout PR: `#6`
+- Closeout pre-freeze CI: run `34045720546` — PASS on Python 3.12 and 3.14
+- Open review threads on closeout PR before final registry update: `0`
+- Terminal closeout merge SHA / frozen main SHA: recorded in Issue `#4` after merge per `PHASE_COMPLETION_PROTOCOL.md`
+- Final post-closeout main CI: recorded in Issue `#4` after merge
 
 ### P01 acceptance gates
 
@@ -87,9 +88,11 @@ Status: `MERGED / CLOSEOUT IN PROGRESS`
 - [x] Implementation merged to main
 - [x] Closeout branch created from exact implementation merge SHA
 - [x] Official-source closeout re-review completed
-- [ ] Closeout PR green and merged
-- [ ] Registry and Issue frozen with exact closeout merge evidence
-- [ ] Final post-closeout main CI green
+- [x] Closeout PR opened; first full closeout CI green on Python 3.12 and 3.14
+- [x] Closeout review threads: 0 before final registry update
+- [ ] Final registry-head CI green
+- [ ] Closeout PR merged and terminal SHA recorded in Issue `#4`
+- [ ] Final post-closeout main CI green and Issue closed as completed
 
 ## Next domain phases
 
