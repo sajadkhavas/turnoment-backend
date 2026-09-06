@@ -44,7 +44,7 @@ Status: `DONE / MERGED / FROZEN`
 
 ## P01 — Accounts, Player Identity & Authentication Foundation
 
-Status: `READY TO MERGE`
+Status: `MERGED / CLOSEOUT IN PROGRESS`
 
 - START_SHA: `2d3ba917dc7c1f041faa3ff6d3e5bf2babddbd19`
 - Implementation branch: `phase/p01-accounts-player-auth`
@@ -52,19 +52,24 @@ Status: `READY TO MERGE`
 - Frontend baseline: `8d5736d788235e3e99765a5332f79f0cba861482`
 - Scope: custom account identity, Iran mobile normalization, player profile/gamer tag, OTP lifecycle, sender abstraction, Django session + CSRF, private/public identity APIs
 - Implementation END_SHA: `fd53c04b2452a84da10f5cdb9ad92c237e166f21`
+- Final reviewed implementation branch SHA: `1901c4dbb85dcc1a2e91c61aab754b2f8dbd4fc1`
 - Implementation PR: `#5`
 - Green implementation PR CI: run `34044591737` — PASS on Python 3.12 and 3.14
-- Prior corrected PR CI: run `34044425092` — PASS on Python 3.12 and 3.14
-- Open review threads before final documentation gate: `0`
-- Final reviewed branch SHA: pending this documentation gate
-- Implementation merge SHA: pending
-- Registry freeze: pending post-merge closeout
+- Final pre-merge documentation CI: run `34044761851` — PASS on Python 3.12 and 3.14; 29 tests PASS; migration drift `No changes detected`; production deployment checks PASS
+- Implementation merge SHA: `46734475831064e124357dbc57d603c47b2b9245`
+- Open review threads before implementation merge: `0`
+- Closeout branch: `closeout/p01-freeze` created from the exact implementation merge SHA
+- Official-source closeout re-review: `2026-09-06` — no architecture deviation found
+- Closeout PR: pending
+- Closeout merge SHA: pending
+- Final frozen main SHA: pending
+- Final post-closeout main CI: pending
 
 ### P01 acceptance gates
 
-- [x] Root mandatory phase-completion protocol committed in phase branch
+- [x] Root mandatory phase-completion protocol committed
 - [x] Official-source audit recorded
-- [x] Custom user model designed as initial accounts migration
+- [x] Custom user model established in the first accounts migration
 - [x] Canonical Iran mobile identity
 - [x] PlayerProfile / gamer-tag identity boundary
 - [x] Persistent OTP challenge + request-state lifecycle
@@ -76,11 +81,15 @@ Status: `READY TO MERGE`
 - [x] Public player privacy projection
 - [x] Abuse/privacy/CSRF/replay tests
 - [x] Migration drift check green
-- [x] Full CI green on Python 3.12 and 3.14
-- [x] PR reviewed / no current blocker / review threads: 0
-- [ ] Final documentation head CI green
-- [ ] Implementation merged to main
-- [ ] Phase Issue and registry frozen with exact final evidence
+- [x] Full implementation CI green on Python 3.12 and 3.14
+- [x] PR reviewed / no blocker / review threads: 0
+- [x] Final documentation-head CI green
+- [x] Implementation merged to main
+- [x] Closeout branch created from exact implementation merge SHA
+- [x] Official-source closeout re-review completed
+- [ ] Closeout PR green and merged
+- [ ] Registry and Issue frozen with exact closeout merge evidence
+- [ ] Final post-closeout main CI green
 
 ## Next domain phases
 
