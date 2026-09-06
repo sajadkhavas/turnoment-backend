@@ -2,6 +2,7 @@ from .base import *  # noqa: F403
 
 SECRET_KEY = "test-only-secret-key-not-for-production-0123456789"
 DEBUG = False
+OTP_SENDER_BACKEND = "apps.accounts.otp.MemoryOtpSender"
 
 CACHES = {
     "default": {
