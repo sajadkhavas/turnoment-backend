@@ -2,7 +2,7 @@
 
 > **MANDATORY FIRST READ FOR EVERY CHAT / AGENT / SESSION**
 >
-> This file is the current operational checkpoint for the whole Turnoment project. Read it before making changes and update it before ending a session.
+> Operational source of truth for continuing the Turnoment backend without duplicate work.
 
 Last checkpoint update: `2026-09-09`
 
@@ -20,73 +20,54 @@ Every chat/agent working on this project MUST:
 8. If cross-repo API contracts or global project state change, update continuity in BOTH repositories.
 
 Allowed operational statuses:
+`PLANNED`, `IN PROGRESS`, `PARTIAL / SAFE CHECKPOINT`, `BLOCKED`, `READY TO MERGE`, `DONE / MERGED / FROZEN`.
 
-- `PLANNED`
-- `IN PROGRESS`
-- `PARTIAL / SAFE CHECKPOINT`
-- `BLOCKED`
-- `READY TO MERGE`
-- `DONE / MERGED / FROZEN`
-
-## 2. Source-of-truth repositories
+## 2. Repository truth
 
 ### Frontend
 
 Repository: `sajadkhavas/turnoment`
 
-Role: public/player/venue product UI and SSR frontend.
+Latest terminal accepted frontend `main` before active F05:
 
-Latest terminal accepted frontend `main` before active F04:
+`864fe1491739b06c763be487a73a589c7e0f3609`
 
-`df7c4e8c6c60c35616bba1143814b5d2a7a408c7`
+Terminal frontend Quality Gate:
 
-Latest terminal frontend Quality Gate:
+`34391019079` — PASS
 
-`34386636373` — PASS
-
-Accepted route truth relevant here:
-
+Accepted relevant routes:
 - F02 `/games/$slug` → `DONE / MERGED / FROZEN — FINAL_CURRENT`
 - F03 `/dashboard/tournaments` → `DONE / MERGED / FROZEN — FINAL_PRIVATE`
-- F03 terminal evidence: frontend Issue `#38`
+- F04 `/dashboard/matches` → `DONE / MERGED / FROZEN — FINAL_PRIVATE`
+- F04 terminal evidence: frontend Issue `#41`
 
 Active frontend workstream:
-
-- `F04 — My Matches /dashboard/matches`
+- `F05 — Result Submission /matches/$id/result`
 - status: `IN PROGRESS`
-- START_SHA: `df7c4e8c6c60c35616bba1143814b5d2a7a408c7`
-- branch: `phase/f04-my-matches`
-- frontend Issue: `sajadkhavas/turnoment#41`
-- evidence: `docs/workstreams/F04_MY_MATCHES.md`
+- START_SHA: `864fe1491739b06c763be487a73a589c7e0f3609`
+- branch: `phase/f05-result-submission`
+- frontend Issue: `sajadkhavas/turnoment#44`
+- evidence: `docs/workstreams/F05_RESULT_SUBMISSION.md`
+- runtime integration remains `FRONTEND MOCK / BACKEND PENDING`
 
 ### Backend
 
 Repository: `sajadkhavas/turnoment-backend`
 
-Role: domain/data/business-logic source of truth and API.
+Verified backend `main` before F05 documentation alignment:
 
-Stack:
+`baeffe042f4dc6ab6d2cbd0433eca4f8404daff6`
 
-- Python
-- Django 6.1
-- Django REST Framework
-- PostgreSQL
-- Redis
-- Celery
+That main includes the completed F03/F04 cross-repo documentation alignments and no matches/results/disputes domain implementation.
 
-Verified backend `main` before this documentation alignment:
-
-`cd47fff8b82359b12d86fad10735a2e9fa52472d`
-
-That main includes the completed F03 cross-repo documentation alignment. It did not implement tournaments/registrations code.
-
-Active F04 documentation-only cross-repo alignment:
-
+Active backend workstream:
+- `F05 Result Submission cross-repo contract alignment`
 - status: `IN PROGRESS — DOCUMENTATION / CROSS-REPO ALIGNMENT ONLY`
-- START_SHA: `cd47fff8b82359b12d86fad10735a2e9fa52472d`
-- branch: `docs/f04-my-matches-contract`
-- tracking Issue: `#11`
-- scope: add the planned authenticated My Matches projection and refresh continuity only
+- START_SHA: `baeffe042f4dc6ab6d2cbd0433eca4f8404daff6`
+- branch: `docs/f05-result-submission-contract`
+- tracking Issue: `#13`
+- scope: refine existing `results` owner into exact planned GET/POST Result Submission contract
 - Python/models/migrations/phase-registry mutation: `FORBIDDEN / NONE`
 
 ## 3. Backend phase state
@@ -96,12 +77,11 @@ Active F04 documentation-only cross-repo alignment:
 - Backend NEXT → `P02 — Games / Catalog Foundation`
 
 Historical backend phase evidence remains authoritative in:
-
 - `PHASE_COMPLETION_PROTOCOL.md`
 - `docs/PHASE_REGISTRY.md`
 - phase-specific GitHub Issues / PRs
 
-F03/F04 cross-repo documentation alignment is governance only. It MUST NOT be recorded as P02 or as implementation of tournaments, matches, results or disputes.
+F03/F04/F05 cross-repo documentation alignment is governance only. It MUST NOT be recorded as P02 or as backend implementation of tournaments, matches, results or disputes.
 
 ## 4. Product architecture law
 
@@ -109,48 +89,91 @@ Frontend is NOT the business source of truth.
 
 Anything that is content, commercial data, competitive state, user state, configurable product data, operational status, SEO entity data, or an action that changes system truth must ultimately be backend-authoritative and available through an API contract.
 
-Frontend-owned examples:
+Backend-authoritative examples include tournament lifecycle, registration/check-in, matches, result submission/confirmation, finalized score/outcome/rating delta, disputes, challenges/rivalries and payments.
 
-- spacing
-- layout
-- visual effects
-- animation
-- design tokens
+Pure presentation such as layout, spacing, animation and design tokens remains frontend-owned.
 
-Backend-authoritative examples:
+## 5. Permanent frontend relationship
 
-- tournaments / registrations
-- games / gaming centers
-- players / rankings
-- match lifecycle/results/rating deltas
-- result submission/confirmation
-- disputes
-- challenges / rivalries
-- notifications
-- payments/refunds/settlements
-
-## 5. Current frontend production rule
-
-Pages are built as the FINAL frontend architecture, not temporary screens requiring later router/SSR/contract reconstruction.
-
-Target flow:
+Accepted frontend architecture:
 
 `Route → validated params/search → route access policy → loader/service → typed repository contract → runtime validation → Mock adapter / Django HTTP adapter → UI`
 
-A frontend surface may be accepted ahead of its backend implementation, but cross-repo integration remains explicitly:
+A frontend route may become final ahead of backend implementation, but cross-repo integration remains:
 
 `FRONTEND MOCK / BACKEND PENDING`
 
-until the owning backend domain/API is implemented and tested.
+until the owning backend domain/API is implemented, permission-tested and merged under the backend phase protocol.
 
-Current relevant frontend truth:
+Web authentication truth remains Django Session + CSRF + OTP. Do not introduce localStorage bearer auth.
 
-- `/dashboard` is final private and uses P01 Django Session truth.
-- `/games/$slug` is frontend `FINAL_CURRENT`; backend Games/Catalog is still P02.
-- `/dashboard/tournaments` is frontend `FINAL_PRIVATE`; backend `registrations/tournaments` is pending its accepted phase order.
-- `/dashboard/matches` is active F04 and is being rebuilt on a permanent typed/runtime-validated contract.
+## 6. Cross-repo API alignment
 
-## 6. Backend NEXT
+### F03 — My Tournaments
+- frontend: `/dashboard/tournaments`
+- backend owner: `registrations/tournaments`
+- planned endpoint: `GET /api/v1/me/tournaments/`
+- backend alignment PR #10 merged
+- alignment main: `cd47fff8b82359b12d86fad10735a2e9fa52472d`
+- post-merge Quality Gate `34380281593` — PASS
+- runtime: `FRONTEND MOCK / BACKEND PENDING`
+
+### F04 — My Matches
+- frontend: `/dashboard/matches`
+- owners: `matches / results / disputes`
+- planned endpoint: `GET /api/v1/me/matches/`
+- backend alignment Issue #11 completed
+- backend docs PR #12 merged
+- alignment merge/main: `baeffe042f4dc6ab6d2cbd0433eca4f8404daff6`
+- post-merge Quality Gate `34388924185` — PASS on Python 3.12 and 3.14
+- runtime: `FRONTEND MOCK / BACKEND PENDING`
+
+### F05 — Result Submission
+
+Frontend route:
+
+`/matches/$id/result`
+
+Backend owner:
+
+`results`
+
+Existing baseline had already reserved result submit/confirm ownership. F05 now refines Result Submission only into exact planned web endpoints:
+
+`GET /api/v1/matches/{matchId}/result/`
+
+`POST /api/v1/matches/{matchId}/result/`
+
+Permanent decisions recorded in `docs/FRONTEND_BACKEND_CONTRACT.md`:
+- Django Session authentication and server-side Match/participant authorization;
+- CSRF-protected POST through the P01 CSRF bootstrap contract;
+- opaque backend-generated `revision` for stale-state detection;
+- authoritative `reportable | awaiting-confirmation | finalized | disputed | unavailable` projection;
+- backend-owned score policy and validation;
+- `Idempotency-Key` per logical submit attempt, with persistent/transaction-safe semantics required before implementation can be live;
+- typed accepted/validation/stale/unavailable/already-submitted outcomes;
+- frontend never derives winner/outcome/rating delta from submitted scores;
+- confirmation and dispute remain separate later workstreams.
+
+Current F05 integration status:
+
+`FRONTEND MOCK / BACKEND PENDING`
+
+No results/matches Python implementation is claimed by this alignment.
+
+Cross-repo F05 documentation evidence:
+- backend branch: `docs/f05-result-submission-contract`
+- backend Issue: `#13`
+- backend START_SHA: `baeffe042f4dc6ab6d2cbd0433eca4f8404daff6`
+- frontend frozen START_SHA: `864fe1491739b06c763be487a73a589c7e0f3609`
+- frontend branch: `phase/f05-result-submission`
+- frontend Issue: `#44`
+- Python code changed: `NO`
+- models/migrations changed: `NO`
+- `docs/PHASE_REGISTRY.md` changed: `NO`
+- backend phase order changed: `NO`
+
+## 7. Backend NEXT
 
 ### P02 — Games / Catalog Foundation
 
@@ -158,104 +181,19 @@ Status: `PLANNED`
 
 P02 must start only through its own mandatory phase workflow from the then-current verified backend main.
 
-Expected direction remains:
+Expected direction remains game identity/slug, publication/activation state, platform metadata, tournament-facing game configuration, public game catalog, frontend Game Listing/Detail API alignment, admin management, permissions, migrations/tests/CI/registry evidence.
 
-- game identity / slug
-- publication/activation state
-- platform support metadata
-- tournament-facing game configuration boundary
-- public game catalog
-- frontend Game Listing / Game Detail API alignment
-- admin management
-- permissions
-- migrations/tests/CI/registry evidence
-
-Neither F03 nor F04 changes this order.
-
-## 7. Cross-repo API alignment
-
-Backend changes that alter API shape/business semantics must update frontend expectations. Frontend changes that introduce backend-authoritative data must be mapped to backend owner/domain/API before product integration is considered complete.
-
-### F03 — My Tournaments
-
-- frontend: `/dashboard/tournaments`
-- backend owner: `registrations/tournaments`
-- planned endpoint: `GET /api/v1/me/tournaments/`
-- backend alignment PR #10 → MERGED
-- alignment main: `cd47fff8b82359b12d86fad10735a2e9fa52472d`
-- backend post-merge Quality Gate: `34380281593` — PASS
-- runtime status: `FRONTEND MOCK / BACKEND PENDING`
-
-### F04 — My Matches
-
-Existing baseline already owned:
-
-- `/matches/{id}` → `matches`
-- result submission/confirmation → `results`
-- disputes/evidence → `disputes`
-
-F04 adds the missing authenticated player-list projection:
-
-`GET /api/v1/me/matches/`
-
-Backend owners:
-
-- `matches` for list membership, lifecycle, schedule, opponent/competition/venue and check-in truth;
-- `results` for report/confirmation/finalized score/outcome/rating-delta projection;
-- `disputes` for active/review/resolved dispute truth.
-
-Planned URL query:
-
-- state: `upcoming | action-required | completed | disputed`
-- kind: `tournament | challenge`
-- game: stable game ID
-- page: positive integer
-
-Permanent response projection and enum/integrity rules are recorded in `docs/FRONTEND_BACKEND_CONTRACT.md`.
-
-F04 list UI does not implement Result Submission or Dispute mutations; those remain dedicated future frontend workstreams and dedicated backend owners.
-
-Current integration status:
-
-`FRONTEND MOCK / BACKEND PENDING`
-
-No F04 backend domain/API implementation is claimed by this documentation alignment.
-
-Cross-repo F04 documentation evidence:
-
-- branch: `docs/f04-my-matches-contract`
-- Issue: `#11`
-- backend START_SHA: `cd47fff8b82359b12d86fad10735a2e9fa52472d`
-- frontend START_SHA: `df7c4e8c6c60c35616bba1143814b5d2a7a408c7`
-- frontend Issue: `sajadkhavas/turnoment#41`
-- Python code changed: `NO`
-- models/migrations changed: `NO`
-- backend phase registry changed: `NO`
-- backend phase order changed: `NO`
+F05 does not change this order.
 
 ## 8. Exact NEXT
 
-Backend NEXT remains:
+For active backend F05 documentation alignment:
+1. review diff and confirm only contract/continuity docs changed;
+2. run Backend Quality Gate on Python 3.12 and 3.14;
+3. open PR and require green CI + review threads 0;
+4. merge documentation only;
+5. require post-merge backend main Quality Gate;
+6. record terminal alignment evidence in Issue #13 and close completed;
+7. backend NEXT remains `P02 — Games / Catalog Foundation`.
 
-`P02 — Games / Catalog Foundation`
-
-Frontend NEXT independently:
-
-`Complete active F04 — My Matches /dashboard/matches`, then proceed to the separately governed Result Submission workstream.
-
-## 9. Latest session checkpoint
-
-- Date: `2026-09-09`
-- Repo changed: `turnoment-backend` documentation only
-- Workstream: `F04 cross-repo My Matches contract alignment`
-- Status: `IN PROGRESS — DOCUMENTATION / CROSS-REPO ALIGNMENT ONLY`
-- Backend START_SHA: `cd47fff8b82359b12d86fad10735a2e9fa52472d`
-- Backend branch: `docs/f04-my-matches-contract`
-- Backend Issue: `#11`
-- Frontend frozen baseline: `df7c4e8c6c60c35616bba1143814b5d2a7a408c7`
-- Frontend active F04 branch: `phase/f04-my-matches`
-- Frontend Issue: `#41`
-- Cross-repo state: `FRONTEND MOCK / BACKEND PENDING`
-- Backend implementation/migrations: `NONE`
-- Backend NEXT remains: `P02 — Games / Catalog Foundation`
-- Exact NEXT for this documentation checkpoint: review diff, run backend CI, merge only if green; do not claim a backend phase completion.
+Frontend independently continues F05 Result Submission through its own QA/PR/closeout chain.
