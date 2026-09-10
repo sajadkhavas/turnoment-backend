@@ -20,48 +20,37 @@ Every backend chat/agent MUST:
 
 Backend repo: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F11 docs-alignment base:
+Current accepted backend main / F12 docs-alignment base:
 
-`e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`
+`3fb421cf2c85d94753ddf9352d8bc1134358847a`
 
-That main contains P00/P01 plus completed F03/F04/F05/F06/F10 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings-preferences domain implementation.
+That main contains P00/P01 plus completed F03/F04/F05/F06/F10/F11 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings/rivalries runtime domain implementation.
 
-F10 documentation alignment is terminally complete:
-- Issue `#17` — CLOSED / COMPLETED;
-- docs head `6e452ea74ec91d4c402f282a173384ce27744fde`;
-- PR `#18` — MERGED;
-- accepted backend main `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
-- post-main Backend Quality Gate `34469522243` — PASS on Python 3.12 and 3.14;
-- runtime still `FRONTEND MOCK / BACKEND PENDING` for notification implementation.
+F11 documentation alignment is terminally complete:
+- Issue `#19` — CLOSED / COMPLETED;
+- docs head `44aee41fac159d5095218af06b635e9caa519375`;
+- PR `#20` — MERGED;
+- accepted backend main `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
+- post-main Backend Quality Gate `34477753302` — PASS on Python 3.12 and 3.14;
+- runtime remains `FRONTEND MOCK / BACKEND PENDING` for Settings persistence.
 
 Active backend workstream:
-
-- `Cross-repo F11 — Player Settings notification-preferences contract alignment`;
+- `Cross-repo F12 — Player Rivalries Hub contract alignment`;
 - status: `IN PROGRESS — DOCUMENTATION ONLY`;
-- START_SHA: `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
-- branch: `docs/f11-player-settings-contract`;
-- Issue: `#19`;
-- contract: `docs/F11_PLAYER_SETTINGS_CONTRACT.md`;
-- Python/models/migrations/URLs/phase-registry mutation: `FORBIDDEN / NONE`.
+- START_SHA: `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
+- branch: `docs/f12-player-rivalries-contract`;
+- Issue: `#21`;
+- contract: `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`;
+- Python/models/migrations/serializers/views/URLs/dependencies/phase-registry mutation: `FORBIDDEN / NONE`.
 
-Frontend F11 baseline:
-
-`4e3a347de9140636bc95e37b096f67f146ed2e70` — F10 terminal frozen main
-
-Frontend F10 terminal evidence:
-- Issue `sajadkhavas/turnoment#59` — CLOSED / COMPLETED;
-- terminal Quality Gate `34474656269` — PASS;
-- terminal artifact `10151074107`;
-- route `/dashboard/notifications` frozen `FINAL_PRIVATE`;
-- runtime notification backend remains pending.
-
-Frontend F11:
-- route `/dashboard/settings`;
-- START_SHA `4e3a347de9140636bc95e37b096f67f146ed2e70`;
-- branch `phase/f11-player-settings`;
-- Issue `sajadkhavas/turnoment#62`;
+Frontend F12:
+- repo `sajadkhavas/turnoment`;
+- route `/dashboard/rivalries`;
+- frontend START_SHA `47ea1ed9bda2a788860f382bc75ea50a83efaaf3` — F11 terminal frozen main;
+- branch `phase/f12-player-rivalries`;
+- Issue `sajadkhavas/turnoment#65`;
 - target `FINAL_PRIVATE`;
-- runtime settings persistence remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend implementation exists.
+- runtime rivalries endpoint remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend phase implements it.
 
 ## 3. Backend phase state
 
@@ -69,7 +58,7 @@ Frontend F11:
 - P01 — Accounts, Player Identity & Authentication Foundation → `DONE / MERGED / FROZEN`;
 - Backend NEXT → `P02 — Games / Catalog Foundation`.
 
-F03/F04/F05/F06/F10/F11 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as runtime implementation of tournaments/matches/results/disputes/notifications/settings.
+F03/F04/F05/F06/F10/F11/F12 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as live runtime implementation.
 
 ## 4. Permanent product/auth law
 
@@ -77,17 +66,17 @@ Frontend architecture may finalize ahead of backend implementation:
 
 `Route → validated params/search → access policy → loader/service → typed repository → runtime validation → fixture / Django adapter → UI`
 
-But mutable/private truth remains backend-authoritative.
+But mutable/private/business-significant truth remains backend-authoritative.
 
 Web authentication truth: Django Session + CSRF + OTP. No localStorage/sessionStorage bearer token.
 
-For an unsafe planned endpoint, frontend consumes P01 CSRF bootstrap and sends `credentials: include` plus `X-CSRFToken`.
+For unsafe planned endpoints, frontend consumes P01 CSRF bootstrap and sends `credentials: include` plus `X-CSRFToken`.
 
 Cross-repo runtime status remains:
 
 `FRONTEND MOCK / BACKEND PENDING`
 
-until the owning domain endpoint is implemented, permission-tested and merged under backend phase protocol.
+until an owning domain endpoint is implemented, permission-tested and merged under backend phase protocol.
 
 ## 5. Cross-repo alignment history
 
@@ -109,64 +98,63 @@ until the owning domain endpoint is implemented, permission-tested and merged un
 ### F05 — Result Submission
 - frontend `/matches/$id/result`;
 - planned `GET/POST /api/v1/matches/{matchId}/result/`;
-- backend owner `results`;
-- Issue #13 completed;
+- backend Issue #13 completed;
 - PR #14 merged;
-- accepted backend main `93d4158e55ebe5d4cb0e724c84104ddd9fbf0c17`;
-- PR CI `34394337599` PASS;
+- accepted main `93d4158e55ebe5d4cb0e724c84104ddd9fbf0c17`;
 - post-merge CI `34394628782` PASS;
 - runtime `FRONTEND MOCK / BACKEND PENDING`.
 
 ### F06 — Match Dispute
-- status `DONE — DOCUMENTATION / CROSS-REPO ALIGNMENT CLOSED`;
 - backend Issue #15 completed;
 - PR #16 merged;
 - accepted main `38dccbf213d5f439e56cd608e3e4ac419d5092d1`;
-- PR CI `34409560819` PASS Python 3.12/3.14;
-- post-merge CI `34409893478` PASS Python 3.12/3.14;
+- post-main CI `34409893478` PASS Python 3.12/3.14;
 - runtime `FRONTEND MOCK / BACKEND PENDING`.
 
 ### F10 — Player Notifications Inbox
-- status `DONE — DOCUMENTATION / CROSS-REPO ALIGNMENT CLOSED`;
 - backend Issue #17 completed;
 - PR #18 merged;
 - accepted main `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
 - post-main CI `34469522243` PASS Python 3.12/3.14;
-- planned endpoints under `docs/F10_NOTIFICATIONS_CONTRACT.md`;
-- Python/models/migrations/URL implementation NONE;
 - runtime `FRONTEND MOCK / BACKEND PENDING`.
 
-### F11 — Player Settings & Notification Preferences (active docs alignment)
+### F11 — Player Settings & Notification Preferences
+- backend Issue #19 completed;
+- PR #20 merged;
+- accepted main `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
+- post-main CI `34477753302` PASS Python 3.12/3.14;
+- planned `GET/PATCH /api/v1/me/settings/notification-preferences/`;
+- runtime `FRONTEND MOCK / BACKEND PENDING`.
 
-Contract source: `docs/F11_PLAYER_SETTINGS_CONTRACT.md`.
+### F12 — Player Rivalries Hub (active docs alignment)
 
-Planned endpoints:
-- `GET /api/v1/me/settings/notification-preferences/`;
-- `PATCH /api/v1/me/settings/notification-preferences/`.
+Contract source: `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`.
+
+Planned endpoint:
+- `GET /api/v1/me/rivalries/`.
 
 Permanent decisions:
-- private authenticated current-player ownership;
-- Django Session + CSRF for mutation;
-- optional categories exactly `tournament`, `match`, `challenge`;
-- mandatory `account` and `system` notices remain enabled;
-- backend-owned persisted defaults and opaque revision;
-- stale writes fail closed and return authoritative current settings;
-- preference changes are prospective and do not delete existing inbox items;
-- preferences never mutate competitive/business truth;
-- no PWA/web-push subscription flow is implied or implemented;
+- private authenticated current-player projection;
+- one server-defined rivalry row per current-player/opponent/game relationship;
+- server owns rivalry membership, IDs, finalized-valid head-to-head aggregates, latest finalized encounter, filters, sort, summary and pagination;
+- only finalized valid non-void encounters contribute;
+- no Challenge unlock/rating inference;
+- no wager/stake mechanics;
+- no friend/block/social graph behavior;
+- no Rivalry Detail route or mutation is introduced by F12;
 - runtime remains `FRONTEND MOCK / BACKEND PENDING`.
 
 ## 6. Exact NEXT
 
-Active F11 backend alignment:
-1. keep diff documentation-only (`PROJECT_CONTINUITY.md` + `docs/F11_PLAYER_SETTINGS_CONTRACT.md`);
-2. do not modify Python, migrations, models, URLs, dependencies or `docs/PHASE_REGISTRY.md`;
+Active F12 backend alignment:
+1. keep diff documentation-only: `PROJECT_CONTINUITY.md` + `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`;
+2. do not modify Python, migrations, models, serializers, views, URLs, dependencies or `docs/PHASE_REGISTRY.md`;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
 4. open docs PR and require green CI + review threads 0;
 5. verify pre-merge backend main exact START_SHA;
 6. merge with expected-head lock;
 7. require post-merge backend main Quality Gate;
-8. record terminal docs-alignment evidence in Issue #19 and close completed;
+8. record terminal docs-alignment evidence in Issue #21 and close completed;
 9. Backend NEXT remains `P02 — Games / Catalog Foundation`.
 
-Frontend F11 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #19 is contract alignment only and MUST NOT be described as live Settings backend implementation.
+Frontend F12 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #21 is contract alignment only and MUST NOT be described as live Rivalries backend implementation.
