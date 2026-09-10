@@ -20,37 +20,38 @@ Every backend chat/agent MUST:
 
 Backend repo: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F12 docs-alignment base:
+Current accepted backend main / F13 docs-alignment START_SHA:
 
-`3fb421cf2c85d94753ddf9352d8bc1134358847a`
+`e81b13a0de6936ded0879d4310eab3883a7556a6`
 
-That main contains P00/P01 plus completed F03/F04/F05/F06/F10/F11 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings/rivalries runtime domain implementation.
+That SHA contains P00/P01 plus completed F03/F04/F05/F06/F10/F11/F12 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings/rivalries/achievements runtime domain implementation.
 
-F11 documentation alignment is terminally complete:
-- Issue `#19` — CLOSED / COMPLETED;
-- docs head `44aee41fac159d5095218af06b635e9caa519375`;
-- PR `#20` — MERGED;
-- accepted backend main `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
-- post-main Backend Quality Gate `34477753302` — PASS on Python 3.12 and 3.14;
-- runtime remains `FRONTEND MOCK / BACKEND PENDING` for Settings persistence.
+F12 documentation alignment is terminally complete:
+- Issue `#21` — CLOSED / COMPLETED;
+- docs head `01ebe3832642799e5a040cf3420a47819d518078`;
+- PR `#22` — MERGED;
+- PR Quality Gate `34516235451` — PASS on Python 3.12 and 3.14;
+- accepted backend main `e81b13a0de6936ded0879d4310eab3883a7556a6`;
+- post-main Backend Quality Gate `34516995711` — PASS on Python 3.12 and 3.14;
+- runtime remains `FRONTEND MOCK / BACKEND PENDING` for Rivalries.
 
 Active backend workstream:
-- `Cross-repo F12 — Player Rivalries Hub contract alignment`;
+- `Cross-repo F13 — Player Achievements Hub contract alignment`;
 - status: `IN PROGRESS — DOCUMENTATION ONLY`;
-- START_SHA: `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
-- branch: `docs/f12-player-rivalries-contract`;
-- Issue: `#21`;
-- contract: `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`;
+- START_SHA: `e81b13a0de6936ded0879d4310eab3883a7556a6`;
+- branch: `docs/f13-player-achievements-contract`;
+- Issue: `#23`;
+- contract: `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`;
 - Python/models/migrations/serializers/views/URLs/dependencies/phase-registry mutation: `FORBIDDEN / NONE`.
 
-Frontend F12:
+Frontend F13:
 - repo `sajadkhavas/turnoment`;
-- route `/dashboard/rivalries`;
-- frontend START_SHA `47ea1ed9bda2a788860f382bc75ea50a83efaaf3` — F11 terminal frozen main;
-- branch `phase/f12-player-rivalries`;
-- Issue `sajadkhavas/turnoment#65`;
+- route `/dashboard/achievements`;
+- frontend START_SHA `a058de708c755d98e7180ffee616b50cbdd8598c` — F12 terminal frozen main;
+- branch `phase/f13-player-achievements`;
+- Issue `sajadkhavas/turnoment#68`;
 - target `FINAL_PRIVATE`;
-- runtime rivalries endpoint remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend phase implements it.
+- runtime achievements endpoint remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend phase implements it.
 
 ## 3. Backend phase state
 
@@ -58,7 +59,7 @@ Frontend F12:
 - P01 — Accounts, Player Identity & Authentication Foundation → `DONE / MERGED / FROZEN`;
 - Backend NEXT → `P02 — Games / Catalog Foundation`.
 
-F03/F04/F05/F06/F10/F11/F12 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as live runtime implementation.
+F03/F04/F05/F06/F10/F11/F12/F13 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as live runtime implementation.
 
 ## 4. Permanent product/auth law
 
@@ -81,80 +82,60 @@ until an owning domain endpoint is implemented, permission-tested and merged und
 ## 5. Cross-repo alignment history
 
 ### F03 — My Tournaments
-- frontend `/dashboard/tournaments`;
 - planned `GET /api/v1/me/tournaments/`;
-- backend PR #10 merged;
-- accepted main `cd47fff8b82359b12d86fad10735a2e9fa52472d`;
-- post-merge CI `34380281593` PASS.
+- backend PR #10 merged; runtime pending.
 
 ### F04 — My Matches
-- frontend `/dashboard/matches`;
 - planned `GET /api/v1/me/matches/`;
-- backend Issue #11 completed;
-- PR #12 merged;
-- accepted main `baeffe042f4dc6ab6d2cbd0433eca4f8404daff6`;
-- post-merge CI `34388924185` PASS Python 3.12/3.14.
+- backend Issue #11 completed; PR #12 merged; runtime pending.
 
 ### F05 — Result Submission
-- frontend `/matches/$id/result`;
 - planned `GET/POST /api/v1/matches/{matchId}/result/`;
-- backend Issue #13 completed;
-- PR #14 merged;
-- accepted main `93d4158e55ebe5d4cb0e724c84104ddd9fbf0c17`;
-- post-merge CI `34394628782` PASS;
-- runtime `FRONTEND MOCK / BACKEND PENDING`.
+- backend Issue #13 completed; PR #14 merged; runtime pending.
 
 ### F06 — Match Dispute
-- backend Issue #15 completed;
-- PR #16 merged;
-- accepted main `38dccbf213d5f439e56cd608e3e4ac419d5092d1`;
-- post-main CI `34409893478` PASS Python 3.12/3.14;
-- runtime `FRONTEND MOCK / BACKEND PENDING`.
+- backend Issue #15 completed; PR #16 merged; runtime pending.
 
 ### F10 — Player Notifications Inbox
-- backend Issue #17 completed;
-- PR #18 merged;
-- accepted main `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
-- post-main CI `34469522243` PASS Python 3.12/3.14;
-- runtime `FRONTEND MOCK / BACKEND PENDING`.
+- backend Issue #17 completed; PR #18 merged; runtime pending.
 
 ### F11 — Player Settings & Notification Preferences
-- backend Issue #19 completed;
-- PR #20 merged;
-- accepted main `3fb421cf2c85d94753ddf9352d8bc1134358847a`;
-- post-main CI `34477753302` PASS Python 3.12/3.14;
+- backend Issue #19 completed; PR #20 merged;
 - planned `GET/PATCH /api/v1/me/settings/notification-preferences/`;
-- runtime `FRONTEND MOCK / BACKEND PENDING`.
+- runtime pending.
 
-### F12 — Player Rivalries Hub (active docs alignment)
+### F12 — Player Rivalries Hub
+- backend Issue #21 completed; PR #22 merged;
+- planned `GET /api/v1/me/rivalries/`;
+- backend/repository owns rivalry membership/identity/finalized-valid head-to-head/latest encounter/filter/sort/summary/pagination truth;
+- runtime pending.
 
-Contract source: `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`.
+### F13 — Player Achievements Hub (active docs alignment)
+
+Contract source: `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`.
 
 Planned endpoint:
-- `GET /api/v1/me/rivalries/`.
+- `GET /api/v1/me/achievements/`.
 
 Permanent decisions:
 - private authenticated current-player projection;
-- one server-defined rivalry row per current-player/opponent/game relationship;
-- server owns rivalry membership, IDs, finalized-valid head-to-head aggregates, latest finalized encounter, filters, sort, summary and pagination;
-- only finalized valid non-void encounters contribute;
-- no Challenge unlock/rating inference;
-- no wager/stake mechanics;
-- no friend/block/social graph behavior;
-- no Rivalry Detail route or mutation is introduced by F12;
+- server owns achievement definitions, stable IDs/codes, categories, status, progress when present, unlock timestamp, summary, filters, ordering and pagination;
+- frontend MUST NOT derive unlock eligibility/status from Match/Tournament/Challenge history;
+- no XP economy, financial reward, trophy grade/rarity, social comparison, claim/mutation flow or Achievement Detail route is introduced;
+- no Challenge unlock/rating inference is introduced;
 - runtime remains `FRONTEND MOCK / BACKEND PENDING`.
 
 ## 6. Exact NEXT
 
-Active F12 backend alignment:
-1. keep diff documentation-only: `PROJECT_CONTINUITY.md` + `docs/F12_PLAYER_RIVALRIES_CONTRACT.md`;
+Active F13 backend alignment:
+1. keep diff documentation-only: `PROJECT_CONTINUITY.md` + `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`;
 2. do not modify Python, migrations, models, serializers, views, URLs, dependencies or `docs/PHASE_REGISTRY.md`;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
 4. open docs PR and require green CI + review threads 0;
 5. verify pre-merge backend main exact START_SHA;
 6. merge with expected-head lock;
 7. require post-merge backend main Quality Gate;
-8. record terminal docs-alignment evidence in Issue #21 and close completed;
+8. record terminal docs-alignment evidence in Issue #23 and close completed;
 9. Backend NEXT remains `P02 — Games / Catalog Foundation`.
 
-Frontend F12 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #21 is contract alignment only and MUST NOT be described as live Rivalries backend implementation.
+Frontend F13 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #23 is contract alignment only and MUST NOT be described as live Achievements backend implementation.
