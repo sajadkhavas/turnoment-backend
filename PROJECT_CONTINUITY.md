@@ -2,7 +2,7 @@
 
 > **MANDATORY FIRST READ FOR EVERY CHAT / AGENT / SESSION**
 
-Last checkpoint update: `2026-09-10`
+Last checkpoint update: `2026-09-11`
 
 ## 1. Continuation law
 
@@ -20,38 +20,38 @@ Every backend chat/agent MUST:
 
 Backend repo: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F13 docs-alignment START_SHA:
+Current accepted backend main / F14 docs-alignment START_SHA:
 
-`e81b13a0de6936ded0879d4310eab3883a7556a6`
+`ddfdceaa9746cc6a60ad2b5e18e630c53904f00c`
 
-That SHA contains P00/P01 plus completed F03/F04/F05/F06/F10/F11/F12 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings/rivalries/achievements runtime domain implementation.
+That SHA contains P00/P01 plus completed F03/F04/F05/F06/F10/F11/F12/F13 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings/rivalries/achievements/teams runtime domain implementation.
 
-F12 documentation alignment is terminally complete:
-- Issue `#21` — CLOSED / COMPLETED;
-- docs head `01ebe3832642799e5a040cf3420a47819d518078`;
-- PR `#22` — MERGED;
-- PR Quality Gate `34516235451` — PASS on Python 3.12 and 3.14;
-- accepted backend main `e81b13a0de6936ded0879d4310eab3883a7556a6`;
-- post-main Backend Quality Gate `34516995711` — PASS on Python 3.12 and 3.14;
-- runtime remains `FRONTEND MOCK / BACKEND PENDING` for Rivalries.
+F13 documentation alignment is terminally complete:
+- Issue `#23` — CLOSED / COMPLETED;
+- docs head `f6d54a77370b268f1d240180d5eacda86d100dd8`;
+- PR `#24` — MERGED;
+- PR Quality Gate `34521995236` — PASS on Python 3.12 and 3.14;
+- accepted backend main `ddfdceaa9746cc6a60ad2b5e18e630c53904f00c`;
+- post-main Backend Quality Gate `34522798713` — PASS on Python 3.12 and 3.14;
+- runtime remains `FRONTEND MOCK / BACKEND PENDING` for Achievements.
 
 Active backend workstream:
-- `Cross-repo F13 — Player Achievements Hub contract alignment`;
+- `Cross-repo F14 — Player Teams Hub contract alignment`;
 - status: `IN PROGRESS — DOCUMENTATION ONLY`;
-- START_SHA: `e81b13a0de6936ded0879d4310eab3883a7556a6`;
-- branch: `docs/f13-player-achievements-contract`;
-- Issue: `#23`;
-- contract: `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`;
+- START_SHA: `ddfdceaa9746cc6a60ad2b5e18e630c53904f00c`;
+- branch: `docs/f14-player-teams-contract`;
+- Issue: `#25`;
+- contract: `docs/F14_PLAYER_TEAMS_CONTRACT.md`;
 - Python/models/migrations/serializers/views/URLs/dependencies/phase-registry mutation: `FORBIDDEN / NONE`.
 
-Frontend F13:
+Frontend F14:
 - repo `sajadkhavas/turnoment`;
-- route `/dashboard/achievements`;
-- frontend START_SHA `a058de708c755d98e7180ffee616b50cbdd8598c` — F12 terminal frozen main;
-- branch `phase/f13-player-achievements`;
-- Issue `sajadkhavas/turnoment#68`;
+- route `/dashboard/teams`;
+- frontend START_SHA `80d367fbf9da858a2c1cfb64df4714f136ff2c4c` — F13 terminal frozen main;
+- branch `phase/f14-player-teams`;
+- Issue `sajadkhavas/turnoment#71`;
 - target `FINAL_PRIVATE`;
-- runtime achievements endpoint remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend phase implements it.
+- runtime Teams endpoint remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend phase implements it.
 
 ## 3. Backend phase state
 
@@ -59,7 +59,7 @@ Frontend F13:
 - P01 — Accounts, Player Identity & Authentication Foundation → `DONE / MERGED / FROZEN`;
 - Backend NEXT → `P02 — Games / Catalog Foundation`.
 
-F03/F04/F05/F06/F10/F11/F12/F13 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as live runtime implementation.
+F03/F04/F05/F06/F10/F11/F12/F13/F14 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as live runtime implementation.
 
 ## 4. Permanent product/auth law
 
@@ -71,7 +71,7 @@ But mutable/private/business-significant truth remains backend-authoritative.
 
 Web authentication truth: Django Session + CSRF + OTP. No localStorage/sessionStorage bearer token.
 
-For unsafe planned endpoints, frontend consumes P01 CSRF bootstrap and sends `credentials: include` plus `X-CSRFToken`.
+For private reads, browser requests include session credentials. Unsafe future commands consume the P01 CSRF contract and send `credentials: include` plus `X-CSRFToken`.
 
 Cross-repo runtime status remains:
 
@@ -83,6 +83,7 @@ until an owning domain endpoint is implemented, permission-tested and merged und
 
 ### F03 — My Tournaments
 - planned `GET /api/v1/me/tournaments/`;
+- team participation already uses stable `teamId`, `teamName` and role `captain | member`;
 - backend PR #10 merged; runtime pending.
 
 ### F04 — My Matches
@@ -101,41 +102,43 @@ until an owning domain endpoint is implemented, permission-tested and merged und
 
 ### F11 — Player Settings & Notification Preferences
 - backend Issue #19 completed; PR #20 merged;
-- planned `GET/PATCH /api/v1/me/settings/notification-preferences/`;
 - runtime pending.
 
 ### F12 — Player Rivalries Hub
 - backend Issue #21 completed; PR #22 merged;
-- planned `GET /api/v1/me/rivalries/`;
-- backend/repository owns rivalry membership/identity/finalized-valid head-to-head/latest encounter/filter/sort/summary/pagination truth;
 - runtime pending.
 
-### F13 — Player Achievements Hub (active docs alignment)
+### F13 — Player Achievements Hub
+- backend Issue #23 completed; PR #24 merged;
+- runtime pending.
 
-Contract source: `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`.
+### F14 — Player Teams Hub (active docs alignment)
+
+Contract source: `docs/F14_PLAYER_TEAMS_CONTRACT.md`.
 
 Planned endpoint:
-- `GET /api/v1/me/achievements/`.
+- `GET /api/v1/me/teams/`.
 
 Permanent decisions:
 - private authenticated current-player projection;
-- server owns achievement definitions, stable IDs/codes, categories, status, progress when present, unlock timestamp, summary, filters, ordering and pagination;
-- frontend MUST NOT derive unlock eligibility/status from Match/Tournament/Challenge history;
-- no XP economy, financial reward, trophy grade/rarity, social comparison, claim/mutation flow or Achievement Detail route is introduced;
-- no Challenge unlock/rating inference is introduced;
+- server owns team membership, stable team identity/name, current-player role, roster membership/roles, counts, selected-team resolution, summary and roster pagination;
+- frontend MUST NOT reconstruct current membership/role from tournament participation history;
+- F14 is read-only and declares no create/rename/delete/invite/kick/leave/captain-transfer mutation contract;
+- no team rating/ranking, tournament/challenge eligibility inference, friend/social graph or Team Detail route is introduced;
+- `/dashboard/challenges` remains isolated;
 - runtime remains `FRONTEND MOCK / BACKEND PENDING`.
 
 ## 6. Exact NEXT
 
-Active F13 backend alignment:
-1. keep diff documentation-only: `PROJECT_CONTINUITY.md` + `docs/F13_PLAYER_ACHIEVEMENTS_CONTRACT.md`;
+Active F14 backend alignment:
+1. keep diff documentation-only: `PROJECT_CONTINUITY.md` + `docs/F14_PLAYER_TEAMS_CONTRACT.md`;
 2. do not modify Python, migrations, models, serializers, views, URLs, dependencies or `docs/PHASE_REGISTRY.md`;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
 4. open docs PR and require green CI + review threads 0;
 5. verify pre-merge backend main exact START_SHA;
 6. merge with expected-head lock;
 7. require post-merge backend main Quality Gate;
-8. record terminal docs-alignment evidence in Issue #23 and close completed;
+8. record terminal docs-alignment evidence in Issue #25 and close completed;
 9. Backend NEXT remains `P02 — Games / Catalog Foundation`.
 
-Frontend F13 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #23 is contract alignment only and MUST NOT be described as live Achievements backend implementation.
+Frontend F14 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #25 is contract alignment only and MUST NOT be described as live Teams backend implementation.
