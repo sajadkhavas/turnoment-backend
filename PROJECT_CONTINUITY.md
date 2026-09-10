@@ -20,36 +20,48 @@ Every backend chat/agent MUST:
 
 Backend repo: `sajadkhavas/turnoment-backend`
 
-Accepted backend main before F10 documentation alignment:
+Current accepted backend main / F11 docs-alignment base:
 
-`38dccbf213d5f439e56cd608e3e4ac419d5092d1`
+`e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`
 
-That main contains P00/P01 plus completed F03/F04/F05/F06 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications domain implementation.
+That main contains P00/P01 plus completed F03/F04/F05/F06/F10 cross-repo contract documentation. It does **not** contain tournaments/matches/results/disputes/notifications/settings-preferences domain implementation.
+
+F10 documentation alignment is terminally complete:
+- Issue `#17` — CLOSED / COMPLETED;
+- docs head `6e452ea74ec91d4c402f282a173384ce27744fde`;
+- PR `#18` — MERGED;
+- accepted backend main `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
+- post-main Backend Quality Gate `34469522243` — PASS on Python 3.12 and 3.14;
+- runtime still `FRONTEND MOCK / BACKEND PENDING` for notification implementation.
 
 Active backend workstream:
 
-- `Cross-repo F10 — Player Notifications contract alignment`
-- status: `IN PROGRESS — DOCUMENTATION ONLY`
-- START_SHA: `38dccbf213d5f439e56cd608e3e4ac419d5092d1`
-- branch: `docs/f10-player-notifications-contract`
-- Issue: `#17`
-- contract: `docs/F10_NOTIFICATIONS_CONTRACT.md`
-- Python/models/migrations/phase-registry mutation: `FORBIDDEN / NONE`
+- `Cross-repo F11 — Player Settings notification-preferences contract alignment`;
+- status: `IN PROGRESS — DOCUMENTATION ONLY`;
+- START_SHA: `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
+- branch: `docs/f11-player-settings-contract`;
+- Issue: `#19`;
+- contract: `docs/F11_PLAYER_SETTINGS_CONTRACT.md`;
+- Python/models/migrations/URLs/phase-registry mutation: `FORBIDDEN / NONE`.
 
-Frontend F10 baseline:
+Frontend F11 baseline:
 
-`34d6a576691532e4228b2eecc0fea1c1d296d58e` — F09 terminal frozen main
+`4e3a347de9140636bc95e37b096f67f146ed2e70` — F10 terminal frozen main
 
-Frontend F09 terminal Quality Gate:
+Frontend F10 terminal evidence:
+- Issue `sajadkhavas/turnoment#59` — CLOSED / COMPLETED;
+- terminal Quality Gate `34474656269` — PASS;
+- terminal artifact `10151074107`;
+- route `/dashboard/notifications` frozen `FINAL_PRIVATE`;
+- runtime notification backend remains pending.
 
-`34468048698` — PASS
-
-Frontend F10:
-- route `/dashboard/notifications`;
-- START_SHA `34d6a576691532e4228b2eecc0fea1c1d296d58e`;
-- branch `phase/f10-player-notifications`;
-- Issue `sajadkhavas/turnoment#59`;
-- runtime remains `FRONTEND MOCK / BACKEND PENDING` until notification backend implementation exists.
+Frontend F11:
+- route `/dashboard/settings`;
+- START_SHA `4e3a347de9140636bc95e37b096f67f146ed2e70`;
+- branch `phase/f11-player-settings`;
+- Issue `sajadkhavas/turnoment#62`;
+- target `FINAL_PRIVATE`;
+- runtime settings persistence remains `FRONTEND MOCK / BACKEND PENDING` until an owning backend implementation exists.
 
 ## 3. Backend phase state
 
@@ -57,7 +69,7 @@ Frontend F10:
 - P01 — Accounts, Player Identity & Authentication Foundation → `DONE / MERGED / FROZEN`;
 - Backend NEXT → `P02 — Games / Catalog Foundation`.
 
-F03/F04/F05/F06/F10 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as runtime implementation of tournaments/matches/results/disputes/notifications.
+F03/F04/F05/F06/F10/F11 cross-repo alignment is governance/documentation only and MUST NOT be represented as P02 or as runtime implementation of tournaments/matches/results/disputes/notifications/settings.
 
 ## 4. Permanent product/auth law
 
@@ -65,7 +77,7 @@ Frontend architecture may finalize ahead of backend implementation:
 
 `Route → validated params/search → access policy → loader/service → typed repository → runtime validation → fixture / Django adapter → UI`
 
-But mutable/private competitive truth remains backend-authoritative.
+But mutable/private truth remains backend-authoritative.
 
 Web authentication truth: Django Session + CSRF + OTP. No localStorage/sessionStorage bearer token.
 
@@ -109,45 +121,52 @@ until the owning domain endpoint is implemented, permission-tested and merged un
 - status `DONE — DOCUMENTATION / CROSS-REPO ALIGNMENT CLOSED`;
 - backend Issue #15 completed;
 - PR #16 merged;
-- merge/current accepted baseline `38dccbf213d5f439e56cd608e3e4ac419d5092d1`;
+- accepted main `38dccbf213d5f439e56cd608e3e4ac419d5092d1`;
 - PR CI `34409560819` PASS Python 3.12/3.14;
 - post-merge CI `34409893478` PASS Python 3.12/3.14;
-- Python/models/migrations/phase-registry mutation NONE;
 - runtime `FRONTEND MOCK / BACKEND PENDING`.
 
-### F10 — Player Notifications Inbox (active docs alignment)
+### F10 — Player Notifications Inbox
+- status `DONE — DOCUMENTATION / CROSS-REPO ALIGNMENT CLOSED`;
+- backend Issue #17 completed;
+- PR #18 merged;
+- accepted main `e1d8d86f9b44a2874afc29f4ef9de13aeb34d9f7`;
+- post-main CI `34469522243` PASS Python 3.12/3.14;
+- planned endpoints under `docs/F10_NOTIFICATIONS_CONTRACT.md`;
+- Python/models/migrations/URL implementation NONE;
+- runtime `FRONTEND MOCK / BACKEND PENDING`.
 
-Contract source: `docs/F10_NOTIFICATIONS_CONTRACT.md`.
+### F11 — Player Settings & Notification Preferences (active docs alignment)
+
+Contract source: `docs/F11_PLAYER_SETTINGS_CONTRACT.md`.
 
 Planned endpoints:
-- `GET /api/v1/me/notifications/`;
-- `POST /api/v1/me/notifications/{notificationId}/read/`;
-- `POST /api/v1/me/notifications/read-all/`.
+- `GET /api/v1/me/settings/notification-preferences/`;
+- `PATCH /api/v1/me/settings/notification-preferences/`.
 
 Permanent decisions:
-- private authenticated current-player scope;
-- Django Session + server-side authorization;
-- CSRF on read-state commands;
-- backend-owned recipient membership, notification identity/kind/content/time/read state, summary, ordering, pagination and navigation-target projection;
-- list filters: `state=unread|read`, `kind=tournament|match|challenge|account|system`, `page`;
-- mark-one and mark-all are idempotent domain transitions;
-- notification targets are typed discriminated app targets, never arbitrary hrefs;
-- F10 target kinds are restricted to already-existing/accepted routes; no Challenge Detail URL is invented;
-- no push preference/delivery-settings contract is implied;
-- frontend never infers competitive truth from notification content;
+- private authenticated current-player ownership;
+- Django Session + CSRF for mutation;
+- optional categories exactly `tournament`, `match`, `challenge`;
+- mandatory `account` and `system` notices remain enabled;
+- backend-owned persisted defaults and opaque revision;
+- stale writes fail closed and return authoritative current settings;
+- preference changes are prospective and do not delete existing inbox items;
+- preferences never mutate competitive/business truth;
+- no PWA/web-push subscription flow is implied or implemented;
 - runtime remains `FRONTEND MOCK / BACKEND PENDING`.
 
 ## 6. Exact NEXT
 
-Active F10 backend alignment:
-1. keep diff documentation-only (`PROJECT_CONTINUITY.md` + `docs/F10_NOTIFICATIONS_CONTRACT.md`);
-2. do not modify Python, migrations, models, URLs or `docs/PHASE_REGISTRY.md`;
-3. run Backend Quality Gate on Python 3.12 and 3.14;
+Active F11 backend alignment:
+1. keep diff documentation-only (`PROJECT_CONTINUITY.md` + `docs/F11_PLAYER_SETTINGS_CONTRACT.md`);
+2. do not modify Python, migrations, models, URLs, dependencies or `docs/PHASE_REGISTRY.md`;
+3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
 4. open docs PR and require green CI + review threads 0;
 5. verify pre-merge backend main exact START_SHA;
 6. merge with expected-head lock;
 7. require post-merge backend main Quality Gate;
-8. record terminal docs-alignment evidence in Issue #17 and close completed;
+8. record terminal docs-alignment evidence in Issue #19 and close completed;
 9. Backend NEXT remains `P02 — Games / Catalog Foundation`.
 
-Frontend F10 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #17 is contract alignment only and MUST NOT be described as live notification backend implementation.
+Frontend F11 independently continues its implementation/QA/PR/closeout chain. Completion of Issue #19 is contract alignment only and MUST NOT be described as live Settings backend implementation.
