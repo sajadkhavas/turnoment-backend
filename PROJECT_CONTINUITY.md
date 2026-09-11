@@ -20,9 +20,9 @@ Every backend chat/agent MUST:
 
 Repository: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F16 docs-alignment START_SHA:
+Current accepted backend main / F17 docs-alignment START_SHA:
 
-`c72ec545782a25719009ae329d74ffd13259d020`
+`335211d711c197a440e086bc570b86f2c5cd65f8`
 
 P00 and P01 are terminally frozen. Backend NEXT remains exactly:
 
@@ -32,9 +32,9 @@ Cross-repo frontend contracts may be documented ahead of runtime implementation,
 
 `FRONTEND MOCK / BACKEND PENDING`
 
-until an owning backend domain is actually implemented, permission-tested and merged.
+until an owning backend domain is implemented, permission-tested and merged.
 
-## 3. Previously accepted cross-repo documentation alignments
+## 3. Accepted cross-repo documentation alignments
 
 F14 Teams alignment:
 - backend Issue `#25` — CLOSED / COMPLETED;
@@ -44,94 +44,134 @@ F14 Teams alignment:
 
 F15 Challenge Hub alignment:
 - backend Issue `#27` — CLOSED / COMPLETED;
-- docs head `184c4a5baaa5ddd464d98cd8ae01c2c65397393b`;
 - PR `#28` — MERGED;
 - accepted backend main `c72ec545782a25719009ae329d74ffd13259d020`;
 - post-main Backend Quality Gate `34584360023` — PASS;
 - no Challenge runtime Python implementation added.
 
-Frontend F14/F15 are frozen independently. Those frontend freezes do not change backend runtime phase order.
+F16 Public Home Discovery alignment:
+- backend Issue `#29` — CLOSED / COMPLETED;
+- docs head `0338af8432d16a92ebafe85160e1d45f8ae3c8db`;
+- PR `#30` — MERGED;
+- accepted backend main `335211d711c197a440e086bc570b86f2c5cd65f8`;
+- post-main Backend Quality Gate `34591528685` — PASS on Python 3.12 / 3.14;
+- no Home discovery runtime Python implementation added.
 
-## 4. Active cross-repo alignment — F16 Public Home Discovery
+Frontend freezes do not change backend runtime phase order.
 
-Frontend repository: `sajadkhavas/turnoment`
+## 4. Active cross-repo alignment — F17 Public Tournament Discovery
 
-Frontend route: `/`
+Frontend repository: `sajadkhavas/turnoment`.
 
-Frontend START_SHA / frozen main at F16 start:
+Frontend route: `/tournaments`.
 
-`008f4fbd959138e3abe6bf85078f6cf700319bd2`
+Frontend F17 START_SHA:
 
-Backend tracking Issue: `#29`
+`fb87a7d84470db6ed1eba03ce0251c5f1eb6b7a9`
 
-Backend docs branch: `docs/f16-public-home-discovery-contract`
+Frontend tracking Issue: `sajadkhavas/turnoment#84`.
 
-Contract source: `docs/F16_PUBLIC_HOME_DISCOVERY_CONTRACT.md`
+Backend tracking Issue: `#31`.
+
+Backend docs branch: `docs/f17-public-tournament-discovery-contract`.
+
+Contract source: `docs/F17_PUBLIC_TOURNAMENT_DISCOVERY_CONTRACT.md`.
 
 Status:
 
 `IN PROGRESS — DOCUMENTATION ONLY`
 
-The existing Home frontend currently contains hardcoded discovery data for tournaments, gaming centers, ranking, aggregate stats and a featured showdown. F16 replaces that direct local authority with a permanent anonymous-safe projection contract.
+The current frontend `/tournaments` inventory performs authoritative filtering/sorting/featured selection and discovery statistics over local fixture arrays. F17 replaces that browser authority with a permanent anonymous-safe tournament discovery contract while retaining validated, shareable URL navigation state.
 
-Planned endpoint:
+Planned endpoint already reserved in the baseline frontend↔backend contract:
 
-`GET /api/v1/discovery/home/`
+`GET /api/v1/tournaments/`
 
 This alignment is documentation-only. Python, models, migrations, serializers, views, URLs, dependencies and `docs/PHASE_REGISTRY.md` are forbidden from changing here.
 
-## 5. Permanent F16 public-home ownership truth
+## 5. Permanent F17 tournament-discovery ownership truth
 
-Backend/repository owns every dynamic public discovery fact, including:
-- aggregate discovery stats when exposed;
-- popular/featured game identity, slug and active-tournament counts;
-- allowed Home finder options that originate from product/domain data;
-- featured tournament identity, lifecycle, venue, capacity, fee/prize and registration truth;
-- gaming-center identity, verification, location, equipment/review projection and upcoming-tournament counts;
-- ranking preview identity/rank/rating/result-derived values;
-- optional featured showdown only when authoritative Match/tournament/result truth exists;
-- stable IDs/slugs and typed navigation/search targets.
+Backend/repository owns:
+- accepted domain-backed game/city filter options;
+- query validation at the API boundary;
+- result-set membership and ordering;
+- pagination totals/current page;
+- tournament stable ID/slug/title;
+- stable game and venue relation keys;
+- venue verification/location;
+- lifecycle and registration state;
+- schedule/timezone;
+- format/bracket labels;
+- capacity limit/registered/remaining truth;
+- entry fee and fixed prize money truth;
+- optional curated/featured tournament identity when exposed.
 
 Frontend may own:
-- static explanatory product copy;
-- visual hierarchy and responsive presentation;
-- temporary finder form state before navigation;
-- deterministic dev/test fixture implementation behind the same repository contract.
+- validated URL navigation state before the request;
+- static Persian labels/copy and information hierarchy;
+- formatting projected values;
+- canonical/robots policy for faceted URL variants;
+- responsive/accessibility presentation;
+- deterministic fixture repository only for dev/test/visual QA.
 
-Frontend MUST NOT infer or locally author center verification, tournament lifecycle/capacity, ranking/rating, winner/result, aggregate stats or other backend-owned truth.
+Frontend MUST NOT authoritatively filter/sort a production inventory in the browser or infer verification, lifecycle, capacity, registration availability, fee/prize, result or ranking truth.
 
-## 6. F16 privacy / integrity rules
+## 6. F17 query contract
 
-- `GET /api/v1/discovery/home/` is anonymous-safe and read-only.
-- It must not expose private account, phone, email, permission, payment or moderation data.
-- Stable identifiers are relation/navigation keys; display names are presentation only.
-- Empty arrays and an absent optional showdown are valid states.
-- Production frontend must not fall back to fabricated fixture truth when the endpoint is unavailable.
-- Tournament Rating and Challenge Rating remain separate.
+Optional query parameters:
+- `game=<stable-game-id-or-approved-slug>`;
+- `city=<stable-city-value>`;
+- `date=today|tomorrow|weekend|week`;
+- `status=open|filling|closed|upcoming`;
+- `format=1v1|team|single-elim|double-elim|round-robin`;
+- `price=free|lt300|300-500|gt500`;
+- `verified=true`;
+- `sort=suggested|soonest|limited|cheapest|prize`;
+- `page=<positive-integer>`.
+
+Absence means the backend-defined default for that field. Frontend validation is navigation safety only; future backend implementation repeats validation independently.
+
+## 7. F17 privacy / integrity rules
+
+- endpoint is anonymous-safe and read-only;
+- stable IDs/slugs are relation/navigation keys; display labels are presentation only;
+- `registered <= limit` and `remaining = max(0, limit - registered)` whenever capacity is finite;
+- venue `verified` is backend-owned;
+- lifecycle and registration states must be mutually consistent;
+- result ordering, pagination and optional featured identity are backend-owned;
+- money uses explicit amount + currency (`IRR`);
+- timestamps are offset-aware and carry `Asia/Tehran` (or another explicit IANA timezone if the owning domain later supports it);
+- empty result pages are valid product states and must never trigger fabricated production fallback records;
+- response exposes no phone/email, private account/profile, payment/refund/settlement, permission, moderation/dispute evidence or private Challenge data;
+- Tournament Rating and Challenge Rating remain separate;
 - no wager/betting/stake mechanics.
-- the Home projection does not change the authority of owning domains; it is an aggregation/projection surface only.
 
-## 7. Official-source decisions retained for F16
+## 8. Phase boundary
 
-Frontend independently audits current TanStack Start/Router, Google Search Central and WCAG guidance.
+F17 contract alignment does NOT add:
+- Python code;
+- models/migrations;
+- serializers/views/URLs;
+- tournaments/registrations business logic;
+- gaming-center verification logic;
+- dependencies;
+- phase-registry changes.
 
-Backend alignment decisions:
-- endpoint is safe GET only and side-effect free;
-- anonymous response is explicitly public-safe;
-- future domain implementation must source each field from the owning domain rather than duplicate business truth in a Home-specific model;
-- no runtime implementation is authorized before owning backend phases exist in accepted order.
+The runtime tournaments/registrations owner lands only in accepted backend phase order after P02 Games/Catalog and the gaming-center/resource foundation. Until then F17 remains exactly:
 
-## 8. Exact F16 backend alignment NEXT
+`FRONTEND MOCK / BACKEND PENDING`.
 
-1. keep this alignment diff documentation-only;
-2. require exact compare from `c72ec545782a25719009ae329d74ffd13259d020`;
+## 9. Exact F17 backend alignment NEXT
+
+1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F17_PUBLIC_TOURNAMENT_DISCOVERY_CONTRACT.md` from backend START_SHA `335211d711c197a440e086bc570b86f2c5cd65f8`;
+2. verify ahead 1 / behind 0 / exactly one commit / exactly two Markdown files;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
-4. open docs PR without auto-closing Issue #29;
+4. open docs PR without auto-closing Issue #31;
 5. require mergeable=true, unresolved review threads=0 and exact pre-merge backend `main` lock;
 6. merge with expected-head lock;
 7. require post-main Backend Quality Gate PASS;
 8. reverify exact live backend `main`;
-9. record terminal docs-alignment evidence in Issue #29 and close completed;
+9. record terminal docs-alignment evidence in Issue #31 and close completed;
 10. keep Backend NEXT exactly `P02 — Games / Catalog Foundation`.
 
-Frontend F16 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #29 is contract alignment only and MUST NOT be described as live Home backend implementation.
+Frontend F17 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #31 is contract alignment only and MUST NOT be described as live tournament backend implementation.
