@@ -18,27 +18,177 @@ Every backend chat/agent MUST:
 9. obey `docs/ENGINEERING_RULES.md`, including public `AllowAny` opt-in and server-side validation/authorization;
 10. keep docs-only alignment work out of Python/models/migrations/serializers/views/URLs/dependencies/phase-registry unless an authorized runtime phase explicitly starts.
 
-## 2. Repository truth
+## 2. Current backend repository truth
 
 Repository: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F18 docs-alignment START_SHA:
+Current accepted backend `main` / F19 docs-alignment START_SHA:
 
-`a5644ae4b4e64908088f389e43155c268fe6e29d`
+`b0fc9ed73dc57aed6a28453745386489aaef0ceb`
 
-P00 and P01 are terminally frozen.
+This is the merged F18 Public Game Catalog documentation-alignment main.
+
+P00 and P01 remain terminally frozen.
 
 Backend NEXT remains exactly:
 
 `P02 — Games / Catalog Foundation`
 
-Cross-repo frontend contracts may be documented ahead of runtime implementation, but they do not start/reorder backend phases and MUST remain represented as:
+The backend phase registry still orders domain implementation as games/catalog first, then gaming centers/resources, then tournaments/registrations, rankings and later competitive slices. Cross-repo frontend contract alignment MUST NOT reorder that sequence.
+
+Runtime truth for frontend surfaces whose owning backend phase has not shipped remains:
 
 `FRONTEND MOCK / BACKEND PENDING`
 
-until the owning backend domain is implemented, permission-tested and merged under the phase protocol.
+## 3. Active cross-repo alignment — F19 Public Gaming Center Discovery
 
-## 3. Accepted cross-repo documentation alignments
+Frontend repository: `sajadkhavas/turnoment`.
+
+Frontend route: `/centers`.
+
+Frontend F19 START_SHA:
+
+`41bdbb90f127474ecabd61cb5ceda5db1b91ae49`
+
+Frontend tracking Issue:
+
+`sajadkhavas/turnoment#92`
+
+Backend tracking Issue:
+
+`#35`
+
+Backend docs branch:
+
+`docs/f19-public-gaming-center-discovery-contract`
+
+Contract source:
+
+`docs/F19_PUBLIC_GAMING_CENTER_DISCOVERY_CONTRACT.md`
+
+Status:
+
+`IN PROGRESS — DOCUMENTATION ALIGNMENT ONLY`
+
+Planned endpoint:
+
+`GET /api/v1/centers/`
+
+Optional query surface:
+- `city=<stable-city-slug>`;
+- `page=<positive-integer>`.
+
+This alignment is documentation-only. Python, models, migrations, serializers, views, URLs, settings/dependencies and `docs/PHASE_REGISTRY.md` are forbidden from changing here.
+
+## 4. Permanent F19 center-directory ownership truth
+
+Backend/repository owns:
+- public/published center membership and ordering;
+- stable `centerId`;
+- public navigation key projection (`publicId`) without pre-deciding the later canonical detail slug policy;
+- center name;
+- verification state;
+- stable city identity/slug and district;
+- public center summary;
+- equipment/facility labels;
+- optional cover image URL;
+- nullable authoritative upcoming-tournament count;
+- city facets/counts;
+- city filtering;
+- pagination.
+
+Frontend may own:
+- validated/shareable `city` and `page` URL state;
+- final static Persian page copy/information hierarchy;
+- presentation/formatting;
+- accessibility/responsive behavior;
+- canonical/robots metadata;
+- deterministic fixture repository only for dev/test/visual QA.
+
+Frontend MUST NOT derive production center membership, verification, equipment truth, city facets, filtering, pagination or tournament counts from local arrays.
+
+## 5. F19 public list contract
+
+Planned anonymous-safe read-only endpoint:
+
+`GET /api/v1/centers/`
+
+Response envelope:
+- `schemaVersion = 1`;
+- `filters.cities[]`;
+- `activeQuery`;
+- `items[]`;
+- `pagination`.
+
+Each city facet:
+- stable `cityId`;
+- stable city `slug`;
+- public city `name`;
+- non-negative authoritative `count`.
+
+Each public center item:
+- stable `centerId`;
+- `publicId` navigation projection;
+- `publicationState = published`;
+- `name`;
+- `verified`;
+- stable city identity + district;
+- public `summary`;
+- `equipmentLabels[]`;
+- `coverImage` nullable;
+- `upcomingTournamentCount` nullable/non-negative.
+
+Pagination integrity:
+- positive `currentPage` and `pageSize`;
+- non-negative `totalItems`;
+- `totalPages = max(1, ceil(totalItems / pageSize))`;
+- `currentPage <= totalPages`;
+- returned item count does not exceed `pageSize`.
+
+Stable IDs, public IDs and city identities/slugs must be unique in their projection scopes.
+
+## 6. Ratings/reviews and verification policy
+
+F19 v1 deliberately contains no rating/review fields.
+
+The current accepted backend roadmap has no implemented ratings domain with authoritative aggregation, abuse handling and publication semantics. Therefore local/fabricated review numbers MUST NOT become production center truth.
+
+A future accepted ratings/reviews domain may version/evolve this contract.
+
+`verified` is a public backend-owned state projection. Private verification evidence/documents are never part of this public list contract.
+
+## 7. F19 privacy / permission / API rules
+
+- endpoint is anonymous-safe and read-only;
+- when implemented by its owning runtime phase, public access explicitly opts into `AllowAny` because global backend permission defaults remain authenticated;
+- validation/filtering/pagination remain backend-authoritative even when frontend runtime-validates responses;
+- public response exposes no private phone/email/account/profile/group/permission/moderation-evidence/payment/refund/settlement/secret data;
+- empty directory/filter result is valid and must never trigger fabricated production fallback records;
+- `upcomingTournamentCount = null` means authoritative count unavailable, while `0` means authoritative zero.
+
+## 8. `/centers/$id` compatibility boundary
+
+F19 listing projects a `publicId` only to keep current frontend navigation functional.
+
+The next frontend route recertification `/centers/$id` separately owns the stable public canonical identifier/slug decision. F19 must not silently freeze an opaque-ID SEO policy for that later route.
+
+If the detail route later adopts a canonical slug, backend identity/redirect evolution must be explicit and compatible.
+
+## 9. Official-source decisions for F19 alignment
+
+Reviewed before documentation mutation:
+- Django REST framework Permissions documentation;
+- Django REST framework Versioning documentation;
+- repository `docs/ENGINEERING_RULES.md`;
+- repository `docs/PHASE_REGISTRY.md`.
+
+Applied decisions:
+- public endpoint access intent must be explicit with `AllowAny` under Turnoment's authenticated global default;
+- public API remains under the established `/api/v1/` contract family;
+- backend remains authoritative for filtering and public domain state;
+- docs alignment cannot start the future gaming-centers/resources runtime phase ahead of P02.
+
+## 10. Accepted previous cross-repo documentation alignments
 
 F14 Teams alignment:
 - backend Issue #25 CLOSED / COMPLETED;
@@ -56,144 +206,54 @@ F16 Public Home Discovery alignment:
 - backend Issue #29 CLOSED / COMPLETED;
 - PR #30 MERGED;
 - accepted backend main `335211d711c197a440e086bc570b86f2c5cd65f8`;
-- post-main gate `34591528685` PASS on Python 3.12 / 3.14;
+- post-main Backend Quality Gate `34591528685` PASS on Python 3.12 / 3.14;
 - no Home discovery runtime Python implementation added.
 
 F17 Public Tournament Discovery alignment:
 - backend Issue #31 CLOSED / COMPLETED;
-- docs head `1566574c26a747edee785fcc2ff76f014fc63b3e`;
 - PR #32 MERGED;
 - accepted backend main `a5644ae4b4e64908088f389e43155c268fe6e29d`;
-- post-main gate `34609435404` PASS on Python 3.12 / 3.14;
+- post-main Backend Quality Gate `34609435404` PASS on Python 3.12 / 3.14;
 - no tournament-discovery runtime Python implementation added.
 
-Frontend freezes do not change backend runtime phase order.
+F18 Public Game Catalog alignment:
+- backend Issue #33 CLOSED / COMPLETED;
+- docs head `c3bc950c69881b812a35e5fb39cda37d1c2c3da7`;
+- PR #34 MERGED;
+- backend merge/main `b0fc9ed73dc57aed6a28453745386489aaef0ceb`;
+- post-main Backend Quality Gate `34631189236` PASS on Python 3.12 / 3.14;
+- no Games runtime Python/model/migration/serializer/view/URL/dependency/phase-registry implementation was added.
 
-## 4. Active cross-repo alignment — F18 Public Game Catalog
+Frontend freezes and contract alignments do not change backend runtime phase order.
 
-Frontend repository: `sajadkhavas/turnoment`.
+## 11. F19 phase boundary
 
-Frontend route: `/games`.
-
-Frontend F18 START_SHA:
-
-`73955783add94c562f4eea0bb55300aab077c342`
-
-Frontend tracking Issue: `sajadkhavas/turnoment#89`.
-
-Backend tracking Issue: `#33`.
-
-Backend docs branch:
-
-`docs/f18-public-game-catalog-contract`
-
-Contract source:
-
-`docs/F18_PUBLIC_GAME_CATALOG_CONTRACT.md`
-
-Status:
-
-`IN PROGRESS — DOCUMENTATION ONLY`
-
-Planned endpoint already reserved in the frontend↔backend baseline:
-
-`GET /api/v1/games/`
-
-This alignment refines the response/ownership contract so F18 `/games` does not retain browser-owned catalog membership or tournament counts.
-
-This alignment is documentation-only. Python, models, migrations, serializers, views, URLs, dependencies and `docs/PHASE_REGISTRY.md` are forbidden from changing here.
-
-## 5. Permanent F18 game-catalog ownership truth
-
-Backend/repository owns:
-- public/published catalog membership;
-- catalog ordering;
-- stable `gameId`;
-- canonical public slug;
-- authoritative game `name` and `shortName`;
-- supported platform labels;
-- game-entity catalog description;
-- optional cover image URL;
-- optional tournament-count projection only when authoritative.
-
-Frontend may own:
-- final static Persian page copy/information hierarchy;
-- presentation/formatting;
-- accessibility/responsive behavior;
-- canonical/robots metadata;
-- crawlable navigation to `/games/{slug}` and `/tournaments?game=<stable-game-id>`;
-- deterministic fixture repository only for dev/test/visual QA.
-
-Frontend MUST NOT derive production catalog membership, canonical identity or tournament counts from local tournament arrays.
-
-## 6. F18 public list contract
-
-Planned anonymous-safe read-only endpoint:
-
-`GET /api/v1/games/`
-
-Response page:
-- `schemaVersion = 1`;
-- `totalItems`;
-- `items[]`.
-
-Each published game item:
-- `gameId` — stable relation/navigation key;
-- `slug` — canonical public slug compatible with game detail;
-- `publicationState = published`;
-- `name`;
-- `shortName`;
-- `description`;
-- `platforms[]`;
-- `coverImage` nullable;
-- `tournamentCount` nullable/non-negative and only supplied when backend-authoritative.
-
-Required integrity:
-- stable IDs unique in the page;
-- canonical slugs unique in the page;
-- no duplicate platform labels within one game;
-- `totalItems` reflects the complete public list projection returned by this contract version;
-- nullable count means the authoritative count is intentionally unavailable, not zero.
-
-The list identity MUST remain compatible with the already-reserved detail contract:
-
-`GET /api/v1/games/{slug}/`
-
-## 7. Privacy / permission / API rules
-
-- endpoint is anonymous-safe and read-only;
-- when implemented, public access must explicitly opt into `AllowAny` because global backend permission defaults remain authenticated;
-- validation remains backend-authoritative even when the frontend runtime-validates the response;
-- public response exposes no phone/email/private account/profile/group/permission/moderation/payment/refund/settlement data;
-- no popularity/search-volume/viewership/prize/ranking superlative may be fabricated as catalog truth;
-- empty public catalog is a valid product state and must never trigger fabricated production fallback records.
-
-## 8. Phase boundary
-
-F18 contract alignment does NOT add:
+F19 contract alignment does NOT add:
 - Python code;
 - models/migrations;
 - serializers/views/URLs;
-- games/catalog runtime logic;
-- dependencies;
+- gaming-center runtime logic;
+- dependencies/settings;
 - phase-registry changes.
 
-P02 is still the next backend phase and is the owner of actual Games / Catalog runtime implementation. Until P02 implements and permission-tests the endpoint, F18 remains exactly:
+P02 remains the next backend runtime phase. The future gaming-centers/resources phase owns actual `GET /api/v1/centers/` implementation only after the accepted phase sequence reaches it.
+
+Until then F19 remains exactly:
 
 `FRONTEND MOCK / BACKEND PENDING`.
 
-## 9. Exact F18 backend alignment NEXT
+## 12. Exact F19 backend alignment NEXT
 
-1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F18_PUBLIC_GAME_CATALOG_CONTRACT.md` from backend START `a5644ae4b4e64908088f389e43155c268fe6e29d`;
+1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F19_PUBLIC_GAMING_CENTER_DISCOVERY_CONTRACT.md` from backend START `b0fc9ed73dc57aed6a28453745386489aaef0ceb`;
 2. verify ahead 1 / behind 0 / exactly one commit / exactly two Markdown files;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
-4. open docs PR without auto-closing Issue #33;
+4. open docs PR without auto-closing Issue #35;
 5. require PR-context Backend Quality Gate PASS;
 6. require mergeable=true, unresolved review threads=0 and exact pre-merge backend `main` lock;
 7. merge with expected-head lock;
 8. require post-main Backend Quality Gate PASS;
 9. reverify exact live backend `main`;
-10. record terminal docs-alignment evidence in Issue #33 and close completed;
+10. record terminal docs-alignment evidence in Issue #35 and close completed;
 11. keep Backend NEXT exactly `P02 — Games / Catalog Foundation`.
 
-Frontend F18 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #33 is contract alignment only and MUST NOT be described as a live Games backend implementation.
+Frontend F19 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #35 means contract documentation is aligned only; it MUST NOT be described as live gaming-center backend implementation.
