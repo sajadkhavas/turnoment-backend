@@ -14,17 +14,21 @@ Every backend chat/agent MUST:
 5. never claim DONE from chat memory;
 6. keep cross-repo frontend contracts explicit without pretending planned APIs are live;
 7. update continuity/evidence before ending;
-8. preserve exact SHA/CI/PR/Issue evidence.
+8. preserve exact SHA/CI/PR/Issue evidence;
+9. obey `docs/ENGINEERING_RULES.md`, including public `AllowAny` opt-in and server-side validation/authorization;
+10. keep docs-only alignment work out of Python/models/migrations/serializers/views/URLs/dependencies/phase-registry unless an authorized runtime phase explicitly starts.
 
 ## 2. Repository truth
 
 Repository: `sajadkhavas/turnoment-backend`
 
-Current accepted backend main / F17 docs-alignment START_SHA:
+Current accepted backend main / F18 docs-alignment START_SHA:
 
-`335211d711c197a440e086bc570b86f2c5cd65f8`
+`a5644ae4b4e64908088f389e43155c268fe6e29d`
 
-P00 and P01 are terminally frozen. Backend NEXT remains exactly:
+P00 and P01 are terminally frozen.
+
+Backend NEXT remains exactly:
 
 `P02 — Games / Catalog Foundation`
 
@@ -32,146 +36,164 @@ Cross-repo frontend contracts may be documented ahead of runtime implementation,
 
 `FRONTEND MOCK / BACKEND PENDING`
 
-until an owning backend domain is implemented, permission-tested and merged.
+until the owning backend domain is implemented, permission-tested and merged under the phase protocol.
 
 ## 3. Accepted cross-repo documentation alignments
 
 F14 Teams alignment:
-- backend Issue `#25` — CLOSED / COMPLETED;
-- PR `#26` — MERGED;
-- accepted backend main `1977db3c9995336166907b9fd85ac26093e6c254`;
+- backend Issue #25 CLOSED / COMPLETED;
+- PR #26 MERGED;
 - no Teams runtime Python implementation added.
 
 F15 Challenge Hub alignment:
-- backend Issue `#27` — CLOSED / COMPLETED;
-- PR `#28` — MERGED;
+- backend Issue #27 CLOSED / COMPLETED;
+- PR #28 MERGED;
 - accepted backend main `c72ec545782a25719009ae329d74ffd13259d020`;
-- post-main Backend Quality Gate `34584360023` — PASS;
+- post-main gate `34584360023` PASS;
 - no Challenge runtime Python implementation added.
 
 F16 Public Home Discovery alignment:
-- backend Issue `#29` — CLOSED / COMPLETED;
-- docs head `0338af8432d16a92ebafe85160e1d45f8ae3c8db`;
-- PR `#30` — MERGED;
+- backend Issue #29 CLOSED / COMPLETED;
+- PR #30 MERGED;
 - accepted backend main `335211d711c197a440e086bc570b86f2c5cd65f8`;
-- post-main Backend Quality Gate `34591528685` — PASS on Python 3.12 / 3.14;
+- post-main gate `34591528685` PASS on Python 3.12 / 3.14;
 - no Home discovery runtime Python implementation added.
+
+F17 Public Tournament Discovery alignment:
+- backend Issue #31 CLOSED / COMPLETED;
+- docs head `1566574c26a747edee785fcc2ff76f014fc63b3e`;
+- PR #32 MERGED;
+- accepted backend main `a5644ae4b4e64908088f389e43155c268fe6e29d`;
+- post-main gate `34609435404` PASS on Python 3.12 / 3.14;
+- no tournament-discovery runtime Python implementation added.
 
 Frontend freezes do not change backend runtime phase order.
 
-## 4. Active cross-repo alignment — F17 Public Tournament Discovery
+## 4. Active cross-repo alignment — F18 Public Game Catalog
 
 Frontend repository: `sajadkhavas/turnoment`.
 
-Frontend route: `/tournaments`.
+Frontend route: `/games`.
 
-Frontend F17 START_SHA:
+Frontend F18 START_SHA:
 
-`fb87a7d84470db6ed1eba03ce0251c5f1eb6b7a9`
+`73955783add94c562f4eea0bb55300aab077c342`
 
-Frontend tracking Issue: `sajadkhavas/turnoment#84`.
+Frontend tracking Issue: `sajadkhavas/turnoment#89`.
 
-Backend tracking Issue: `#31`.
+Backend tracking Issue: `#33`.
 
-Backend docs branch: `docs/f17-public-tournament-discovery-contract`.
+Backend docs branch:
 
-Contract source: `docs/F17_PUBLIC_TOURNAMENT_DISCOVERY_CONTRACT.md`.
+`docs/f18-public-game-catalog-contract`
+
+Contract source:
+
+`docs/F18_PUBLIC_GAME_CATALOG_CONTRACT.md`
 
 Status:
 
 `IN PROGRESS — DOCUMENTATION ONLY`
 
-The current frontend `/tournaments` inventory performs authoritative filtering/sorting/featured selection and discovery statistics over local fixture arrays. F17 replaces that browser authority with a permanent anonymous-safe tournament discovery contract while retaining validated, shareable URL navigation state.
+Planned endpoint already reserved in the frontend↔backend baseline:
 
-Planned endpoint already reserved in the baseline frontend↔backend contract:
+`GET /api/v1/games/`
 
-`GET /api/v1/tournaments/`
+This alignment refines the response/ownership contract so F18 `/games` does not retain browser-owned catalog membership or tournament counts.
 
 This alignment is documentation-only. Python, models, migrations, serializers, views, URLs, dependencies and `docs/PHASE_REGISTRY.md` are forbidden from changing here.
 
-## 5. Permanent F17 tournament-discovery ownership truth
+## 5. Permanent F18 game-catalog ownership truth
 
 Backend/repository owns:
-- accepted domain-backed game/city filter options;
-- query validation at the API boundary;
-- result-set membership and ordering;
-- pagination totals/current page;
-- tournament stable ID/slug/title;
-- stable game and venue relation keys;
-- venue verification/location;
-- lifecycle and registration state;
-- schedule/timezone;
-- format/bracket labels;
-- capacity limit/registered/remaining truth;
-- entry fee and fixed prize money truth;
-- optional curated/featured tournament identity when exposed.
+- public/published catalog membership;
+- catalog ordering;
+- stable `gameId`;
+- canonical public slug;
+- authoritative game `name` and `shortName`;
+- supported platform labels;
+- game-entity catalog description;
+- optional cover image URL;
+- optional tournament-count projection only when authoritative.
 
 Frontend may own:
-- validated URL navigation state before the request;
-- static Persian labels/copy and information hierarchy;
-- formatting projected values;
-- canonical/robots policy for faceted URL variants;
-- responsive/accessibility presentation;
+- final static Persian page copy/information hierarchy;
+- presentation/formatting;
+- accessibility/responsive behavior;
+- canonical/robots metadata;
+- crawlable navigation to `/games/{slug}` and `/tournaments?game=<stable-game-id>`;
 - deterministic fixture repository only for dev/test/visual QA.
 
-Frontend MUST NOT authoritatively filter/sort a production inventory in the browser or infer verification, lifecycle, capacity, registration availability, fee/prize, result or ranking truth.
+Frontend MUST NOT derive production catalog membership, canonical identity or tournament counts from local tournament arrays.
 
-## 6. F17 query contract
+## 6. F18 public list contract
 
-Optional query parameters:
-- `game=<stable-game-id-or-approved-slug>`;
-- `city=<stable-city-value>`;
-- `date=today|tomorrow|weekend|week`;
-- `status=open|filling|closed|upcoming`;
-- `format=1v1|team|single-elim|double-elim|round-robin`;
-- `price=free|lt300|300-500|gt500`;
-- `verified=true`;
-- `sort=suggested|soonest|limited|cheapest|prize`;
-- `page=<positive-integer>`.
+Planned anonymous-safe read-only endpoint:
 
-Absence means the backend-defined default for that field. Frontend validation is navigation safety only; future backend implementation repeats validation independently.
+`GET /api/v1/games/`
 
-## 7. F17 privacy / integrity rules
+Response page:
+- `schemaVersion = 1`;
+- `totalItems`;
+- `items[]`.
+
+Each published game item:
+- `gameId` — stable relation/navigation key;
+- `slug` — canonical public slug compatible with game detail;
+- `publicationState = published`;
+- `name`;
+- `shortName`;
+- `description`;
+- `platforms[]`;
+- `coverImage` nullable;
+- `tournamentCount` nullable/non-negative and only supplied when backend-authoritative.
+
+Required integrity:
+- stable IDs unique in the page;
+- canonical slugs unique in the page;
+- no duplicate platform labels within one game;
+- `totalItems` reflects the complete public list projection returned by this contract version;
+- nullable count means the authoritative count is intentionally unavailable, not zero.
+
+The list identity MUST remain compatible with the already-reserved detail contract:
+
+`GET /api/v1/games/{slug}/`
+
+## 7. Privacy / permission / API rules
 
 - endpoint is anonymous-safe and read-only;
-- stable IDs/slugs are relation/navigation keys; display labels are presentation only;
-- `registered <= limit` and `remaining = max(0, limit - registered)` whenever capacity is finite;
-- venue `verified` is backend-owned;
-- lifecycle and registration states must be mutually consistent;
-- result ordering, pagination and optional featured identity are backend-owned;
-- money uses explicit amount + currency (`IRR`);
-- timestamps are offset-aware and carry `Asia/Tehran` (or another explicit IANA timezone if the owning domain later supports it);
-- empty result pages are valid product states and must never trigger fabricated production fallback records;
-- response exposes no phone/email, private account/profile, payment/refund/settlement, permission, moderation/dispute evidence or private Challenge data;
-- Tournament Rating and Challenge Rating remain separate;
-- no wager/betting/stake mechanics.
+- when implemented, public access must explicitly opt into `AllowAny` because global backend permission defaults remain authenticated;
+- validation remains backend-authoritative even when the frontend runtime-validates the response;
+- public response exposes no phone/email/private account/profile/group/permission/moderation/payment/refund/settlement data;
+- no popularity/search-volume/viewership/prize/ranking superlative may be fabricated as catalog truth;
+- empty public catalog is a valid product state and must never trigger fabricated production fallback records.
 
 ## 8. Phase boundary
 
-F17 contract alignment does NOT add:
+F18 contract alignment does NOT add:
 - Python code;
 - models/migrations;
 - serializers/views/URLs;
-- tournaments/registrations business logic;
-- gaming-center verification logic;
+- games/catalog runtime logic;
 - dependencies;
 - phase-registry changes.
 
-The runtime tournaments/registrations owner lands only in accepted backend phase order after P02 Games/Catalog and the gaming-center/resource foundation. Until then F17 remains exactly:
+P02 is still the next backend phase and is the owner of actual Games / Catalog runtime implementation. Until P02 implements and permission-tests the endpoint, F18 remains exactly:
 
 `FRONTEND MOCK / BACKEND PENDING`.
 
-## 9. Exact F17 backend alignment NEXT
+## 9. Exact F18 backend alignment NEXT
 
-1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F17_PUBLIC_TOURNAMENT_DISCOVERY_CONTRACT.md` from backend START_SHA `335211d711c197a440e086bc570b86f2c5cd65f8`;
+1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F18_PUBLIC_GAME_CATALOG_CONTRACT.md` from backend START `a5644ae4b4e64908088f389e43155c268fe6e29d`;
 2. verify ahead 1 / behind 0 / exactly one commit / exactly two Markdown files;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
-4. open docs PR without auto-closing Issue #31;
-5. require mergeable=true, unresolved review threads=0 and exact pre-merge backend `main` lock;
-6. merge with expected-head lock;
-7. require post-main Backend Quality Gate PASS;
-8. reverify exact live backend `main`;
-9. record terminal docs-alignment evidence in Issue #31 and close completed;
-10. keep Backend NEXT exactly `P02 — Games / Catalog Foundation`.
+4. open docs PR without auto-closing Issue #33;
+5. require PR-context Backend Quality Gate PASS;
+6. require mergeable=true, unresolved review threads=0 and exact pre-merge backend `main` lock;
+7. merge with expected-head lock;
+8. require post-main Backend Quality Gate PASS;
+9. reverify exact live backend `main`;
+10. record terminal docs-alignment evidence in Issue #33 and close completed;
+11. keep Backend NEXT exactly `P02 — Games / Catalog Foundation`.
 
-Frontend F17 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #31 is contract alignment only and MUST NOT be described as live tournament backend implementation.
+Frontend F18 independently completes its implementation/SEO/QA/closeout chain. Completion of backend Issue #33 is contract alignment only and MUST NOT be described as a live Games backend implementation.
