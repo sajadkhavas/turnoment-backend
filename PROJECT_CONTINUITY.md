@@ -14,7 +14,7 @@ Every backend chat/agent MUST:
 5. never claim DONE from chat memory;
 6. keep cross-repo frontend contracts explicit without pretending planned APIs are live;
 7. preserve exact SHA/CI/PR/Issue evidence;
-8. obey `docs/ENGINEERING_RULES.md`, including explicit `AllowAny` for future public endpoints under the authenticated global default;
+8. obey `docs/ENGINEERING_RULES.md`, including explicit public-endpoint permission/authentication policy under the authenticated global default;
 9. keep docs-only alignment work out of Python/models/migrations/serializers/views/URLs/settings/dependencies/workflows/phase-registry;
 10. keep runtime phase order authoritative even when frontend architecture is frozen first.
 
@@ -22,9 +22,9 @@ Every backend chat/agent MUST:
 
 Repository: `sajadkhavas/turnoment-backend`
 
-Current live backend `main` / F22 documentation-alignment START_SHA:
+Current live backend `main` / F23 documentation-alignment START_SHA:
 
-`44f18e462f63c625bc02e07ef93c15f1c385dcd0`
+`215fae68d8003b8df6c034b228d1121d96b0be18`
 
 P00 and P01 remain terminally frozen.
 
@@ -32,7 +32,7 @@ Backend NEXT remains exactly:
 
 `P02 — Games / Catalog Foundation`
 
-The backend phase registry orders runtime work through games/catalog, gaming centers/resources, tournaments/registrations, rankings, then later competitive slices. Cross-repo documentation alignment MUST NOT reorder that sequence.
+The backend phase registry remains authoritative. Cross-repo documentation alignment MUST NOT reorder runtime work.
 
 Current runtime truth remains exactly:
 
@@ -46,39 +46,41 @@ F20 Public Gaming Center Detail is terminal: Issue #37 CLOSED / COMPLETED; PR #3
 
 F21 Public Player Ranking is terminal documentation alignment: Issue #39 CLOSED / COMPLETED; PR #40 MERGED; backend main `44f18e462f63c625bc02e07ef93c15f1c385dcd0`; PR-context Backend Quality Gate `34658090539` and post-main `34658179049` PASS on Python 3.12 / 3.14.
 
+F22 Public Player Profile is terminal documentation alignment: Issue #41 CLOSED / COMPLETED; PR #42 MERGED; exact docs head `be805235925af8b70a6e8d183e5f8f363dd7c9cb`; backend merge/main `215fae68d8003b8df6c034b228d1121d96b0be18`; exact-head `34688994229`, PR-context `34689064802`, and post-main `34689119713` all PASS on Python 3.12 / 3.14.
+
 None of these alignments added owning runtime-domain implementation or reordered backend phases.
 
-## 4. Active cross-repo alignment — F22 Public Player Profile
+## 4. Active cross-repo alignment — F23 Host Application
 
 Frontend repository: `sajadkhavas/turnoment`.
 
 Frontend route:
 
-`/players/$username`
+`/host`
 
-Frontend F22 START_SHA:
+Frontend F23 START_SHA:
 
-`36e8685192fede45da8c4e82c32bdc41a2db1be2`
+`e1aa1667f3c70a9e00d9664b1e20d3019587cab0`
 
-Frontend source checkpoint used for this alignment:
+Frontend exact accepted source checkpoint used for this alignment:
 
-`d8e2cb8448837b3d63cb9727ae44b1a892ab7d64`
+`e70de8ee4acc20014da6a0d10a4343ea26f3e1de`
 
 Frontend tracking Issue:
 
-`sajadkhavas/turnoment#101`
+`sajadkhavas/turnoment#104`
 
 Backend tracking Issue:
 
-`#41`
+`#43`
 
 Backend docs branch:
 
-`docs/f22-public-player-profile-contract`
+`phase/f23-host-application-contract-docs`
 
 Contract source:
 
-`docs/F22_PUBLIC_PLAYER_PROFILE_CONTRACT.md`
+`docs/F23_HOST_APPLICATION_CONTRACT.md`
 
 Status:
 
@@ -86,85 +88,74 @@ Status:
 
 Frontend-reserved target endpoint:
 
-`GET /api/v1/players/{username}/public-profile/`
+`POST /api/v1/host-applications/`
 
 This alignment is documentation-only. Python, models, migrations, serializers, views, URLs, settings, dependencies, workflows and `docs/PHASE_REGISTRY.md` are forbidden from changing here.
 
-## 5. Existing P01 public-player runtime truth
+## 5. F23 frontend contract checkpoint
 
-P01 already exposes a public player endpoint, but it is not the F22 contract:
+The accepted F23 frontend source has exact-head evidence before backend documentation mutation:
+- focused F23 run `34702167115` — PASS;
+- focused artifact `10300084668` — digest `sha256:d1de24c54a127f66cc097d05e0ef17e9cc631ec61aa3e687421bc782bb8c87d3`;
+- Full Frontend Quality Gate `34702167120` — PASS;
+- Full browser-QA artifact `10300094875` — digest `sha256:363f125ae1c2e476383ad660ab7fca3ef3094f23a0a6916c55e1837eed02c649`.
 
-`GET /api/v1/players/<gamer_tag>/`
+Frontend request fields are `venueName`, `managerName`, `phone`, `city`, `area`, `stationCount`, `games`, and nullable `description`. Persian/Arabic digits and Iranian mobile input are normalized before the typed request boundary. Production has no fixture fallback.
 
-Current implementation facts:
-- route lookup parameter is `gamer_tag`;
-- lookup is case-insensitive `PlayerProfile.gamer_tag`;
-- `PlayerProfile` currently has no stable public `username` field;
-- gamer tag is mutable display/profile identity under the current P01 model, not the new F22 navigation identity;
-- current `PublicPlayerSerializer` exposes `id`, `gamer_tag`, `display_name`, free-text `city`, `bio`, and `avatar_key` only;
-- current endpoint explicitly uses `AllowAny` and returns public 404 when no active matching profile exists.
+Frontend success requires a runtime-validated v1 receipt containing `schemaVersion=1`, server-issued `applicationId`, `state=received`, and offset-aware `submittedAt`.
 
-F22 documentation MUST NOT silently reinterpret this existing gamer-tag route as stable username lookup. Runtime compatibility/migration belongs to an accepted future runtime phase.
+## 6. Public write authentication / CSRF boundary
 
-## 6. F22 target identity / publication boundary
+Current backend global DRF defaults use `SessionAuthentication` and `IsAuthenticated`.
 
-F22 target semantics:
-- `playerId` = stable backend relation identity;
-- `username` = stable public profile-navigation identity;
-- `gamerTag` = public display text only and never a relation key;
-- public profile must be explicitly published before projection;
-- public search visibility is projected as `indexable | noindex`;
-- private, unpublished, invalid and nonexistent public lookups collapse to the same not-found surface so the public API does not expose account existence through distinct outcomes.
+F23 is intentionally a public acquisition form. A future runtime implementation must explicitly declare both:
+- `permission_classes = [AllowAny]`;
+- an authentication policy that does not accidentally inherit session-authenticated CSRF behavior for this anonymous public create endpoint.
 
-Before F22 can be integrated live, an owning runtime phase must establish stable `username` storage/uniqueness/normalization and an explicit compatibility strategy for the existing gamer-tag endpoint. The old endpoint must not have its lookup meaning changed silently.
+The accepted documentation target is a session-independent public submission endpoint, for example an empty per-view authentication class list together with explicit `AllowAny`. This keeps a logged-in browser from being treated differently from an anonymous browser solely because a session cookie is present.
 
-## 7. F22 target projection / ownership
+This documentation decision does not implement the endpoint and does not weaken authentication defaults elsewhere.
 
-Planned strict v1 response contains only public-safe data:
-- `schemaVersion=1`;
-- `publicationState=published`;
-- `searchVisibility=indexable|noindex`;
-- stable `playerId`, stable `username`, public `gamerTag`;
-- optional public avatar, stable city projection and public bio;
-- bounded competitive snapshots keyed by stable game/season/rating-type identity;
-- authoritative rating/rank/record/movement;
-- bounded recent finalized public result projection.
+## 7. F23 validation / abuse / privacy ownership
 
-Backend owns publication, identity, competitive membership, rating/rank/record/movement/result truth and all cross-domain relations. Frontend owns presentation, SEO/canonical/robots, accessibility/responsive behavior and deterministic dev/test fixtures only.
+Future backend authority includes:
+- request validation and normalization at the API boundary;
+- authoritative application identity, receipt state and submission timestamp;
+- persistence and duplicate/idempotency policy;
+- rate-limit/abuse controls;
+- access controls for stored application PII;
+- retention/deletion policy when the owning runtime phase is implemented.
 
-Frontend MUST NOT calculate authoritative win rate, rating, rank, movement, result validity or eligibility.
+DRF throttling may be used as one policy layer, but must not be described as complete brute-force or denial-of-service protection.
 
-## 8. Privacy / permission rules
+No public list/detail/read endpoint is implied by F23. The public API only reserves creation of an application receipt.
 
-Future F22 endpoint must explicitly opt into `AllowAny` under Turnoment's authenticated global default and return only the accepted public projection.
+Frontend validation remains defense in depth and must not replace backend validation.
 
-Forbidden public data includes phone, email, real/private display identity unless separately accepted as public, `interview_opt_in`, auth/session/OTP data, groups/permissions, moderation evidence, verification documents, payment/refund/settlement data, secrets and private account/profile fields.
+## 8. Official DRF decisions reviewed for F23
 
-Frontend runtime validation never replaces backend publication/privacy/domain validation.
+Current official Django REST framework guidance reviewed before this documentation mutation:
+- Permissions: https://www.django-rest-framework.org/api-guide/permissions/ — `AllowAny` explicitly communicates unrestricted public access; permissions are separate from authentication.
+- Authentication: https://www.django-rest-framework.org/api-guide/authentication/ — authentication policy is independently configurable per view.
+- Settings: https://www.django-rest-framework.org/api-guide/settings/ — authentication and permission defaults are separate API policies.
+- AJAX / CSRF / CORS: https://www.django-rest-framework.org/topics/ajax-csrf-cors/ — JavaScript clients using session authentication must account for CSRF behavior.
+- Serializers: https://www.django-rest-framework.org/api-guide/serializers/ — request deserialization/validation belongs at the serializer boundary.
+- Throttling: https://www.django-rest-framework.org/api-guide/throttling/ — throttles control request rate/policy and are not a complete security or DoS defense.
 
-## 9. Official DRF decisions reviewed for F22
+Applied decision: the future F23 public create route must be explicit about both permission and authentication policy; server-side validation and abuse controls remain authoritative; no runtime code is authorized in this alignment.
 
-Current official Django REST framework guidance reviewed before documentation mutation:
-- Permissions: https://www.django-rest-framework.org/api-guide/permissions/ — `AllowAny` explicitly communicates unrestricted public access and per-view policy overrides the global default.
-- Generic views: https://www.django-rest-framework.org/api-guide/generic-views/ — detail projections use explicit lookup/queryset behavior; the implementation phase may choose APIView or a generic detail view but must preserve publication/privacy semantics.
-- Serializers: https://www.django-rest-framework.org/api-guide/serializers/ — the external representation and lookup fields must match the accepted API contract.
-- Validators: https://www.django-rest-framework.org/api-guide/validators/ — validation belongs explicitly at the serializer/API boundary as well as in database/domain constraints where applicable.
-- Exceptions: https://www.django-rest-framework.org/api-guide/exceptions/ — not-found resources map to HTTP 404; F22 intentionally uses a common public not-found outcome for absent/non-public identities.
-
-These references do not authorize runtime implementation in this docs-only alignment.
-
-## 10. F22 documentation-alignment acceptance chain
+## 9. F23 documentation-alignment acceptance chain
 
 Required chain:
-1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F22_PUBLIC_PLAYER_PROFILE_CONTRACT.md` from backend START `44f18e462f63c625bc02e07ef93c15f1c385dcd0`;
+1. commit exactly `PROJECT_CONTINUITY.md` and `docs/F23_HOST_APPLICATION_CONTRACT.md` from backend START `215fae68d8003b8df6c034b228d1121d96b0be18`;
 2. verify ahead 1 / behind 0 / exactly one commit / exactly two Markdown files;
 3. require Backend Quality Gate PASS on Python 3.12 and 3.14;
-4. open docs PR without auto-closing Issue #41;
+4. open docs PR without auto-closing Issue #43;
 5. require PR-context Backend Quality Gate PASS;
 6. require mergeable=true, unresolved review threads=0 and exact pre-merge backend-main lock;
 7. merge with expected-head lock;
 8. require post-main Backend Quality Gate PASS;
 9. reverify exact live backend main;
-10. record terminal documentation-alignment evidence in Issue #41 and close completed;
+10. record terminal documentation-alignment evidence in Issue #43 and close completed;
 11. keep Backend NEXT exactly `P02 — Games / Catalog Foundation`;
-12. keep runtime truth `FRONTEND MOCK / BACKEND PENDING` until owning runtime phases actually ship.
+12. keep runtime truth `FRONTEND MOCK / BACKEND PENDING` until an owning runtime phase actually ships the endpoint.
