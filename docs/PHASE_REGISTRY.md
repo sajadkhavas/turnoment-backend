@@ -4,7 +4,7 @@
 
 ## B00 — Final Backend Execution Lock
 
-Status: `READY FOR REVIEW`
+Status: `DONE / MERGED / FROZEN`
 
 - Tracking Issue: `#45`
 - START_SHA: `46b3f47b38068675ed8a0941a871438e51abd6a2`
@@ -12,6 +12,14 @@ Status: `READY FOR REVIEW`
 - Frozen frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`
 - Purpose: lock ten bounded implementation workstreams and mother/integration acceptance against the final frontend.
 - Financial execution: `DEFERRED / DO NOT IMPLEMENT`
+- Planning commit: `d53e0afa409392c883804077aeb9f7aa99afab4a`
+- PR: `#46`
+- Push gate `38066380699`: PASS on Python 3.12 / 3.14
+- PR-context gate `38066400575`: PASS on Python 3.12 / 3.14
+- B00 merge SHA: `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`
+- Post-main gate `38066482086`: PASS on Python 3.12 / 3.14
+- Child Issues: `#47-#56`
+- Child branches: `phase/b01-*` through `phase/b10-*`
 - Execution lock: `docs/B00_FINAL_BACKEND_EXECUTION_LOCK.md`
 - Ten chat prompts: `docs/B00_TEN_CHAT_PROMPTS.md`
 

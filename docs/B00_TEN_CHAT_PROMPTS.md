@@ -1,10 +1,27 @@
 # B00 — Copy-Ready Prompts for 10 Parallel Backend Chats
 
+## Prepared workstream routing
+
+| Chat | Issue | Branch |
+|---|---:|---|
+| B01 | #47 | `phase/b01-core-contract-integration` |
+| B02 | #48 | `phase/b02-accounts-player-settings` |
+| B03 | #49 | `phase/b03-games-rules-discovery` |
+| B04 | #50 | `phase/b04-gaming-centers-host-resources` |
+| B05 | #51 | `phase/b05-tournaments-registration-checkin-brackets` |
+| B06 | #52 | `phase/b06-teams-membership-achievements` |
+| B07 | #53 | `phase/b07-challenges-opponent-search` |
+| B08 | #54 | `phase/b08-matches-results-disputes` |
+| B09 | #55 | `phase/b09-rankings-stats-rivalries` |
+| B10 | #56 | `phase/b10-notifications-moderation-admin` |
+
+All ten branches start from B00 merged baseline `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`. If this closeout branch is merged before any child branch moves, the integration owner may fast-forward all untouched child branches to the final B00 closeout main SHA.
+
 All ten chats use the same immutable baselines:
 
 - Backend repository: `sajadkhavas/turnoment-backend`
 - B00 tracking Issue: `#45`
-- Backend baseline before B00: `46b3f47b38068675ed8a0941a871438e51abd6a2`
+- B00 merged baseline for child workstreams: `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`
 - Final frontend contract: `sajadkhavas/turnoment@1668109bae5ec7abb5e022e5857ffa65cc131501`
 - Stack: Django + DRF + PostgreSQL + Redis + Celery
 - Read first: `PROJECT_CONTINUITY.md`, `PHASE_COMPLETION_PROTOCOL.md`, `docs/B00_FINAL_BACKEND_EXECUTION_LOCK.md`, `docs/ENGINEERING_RULES.md`

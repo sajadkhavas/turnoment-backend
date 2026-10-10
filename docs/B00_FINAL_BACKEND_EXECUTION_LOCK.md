@@ -1,6 +1,6 @@
 # B00 — Final Backend Execution Lock
 
-Status: `READY FOR REVIEW — EXECUTION PLAN LOCKED`
+Status: `DONE / MERGED / FROZEN`
 
 Tracking Issue: `#45`
 
@@ -222,3 +222,16 @@ After ten workstreams are reviewed and merged into the integration branch:
 16. final frontend contract tests remain compatible.
 
 Only the mother/integration agent can declare `BACKEND FINAL / FROZEN`.
+
+## 10. B00 terminal evidence
+
+- Planning commit: `d53e0afa409392c883804077aeb9f7aa99afab4a`
+- PR: `#46`
+- Push Backend Quality Gate: run `38066380699` — PASS on Python 3.12 / 3.14
+- PR-context Backend Quality Gate: run `38066400575` — PASS on Python 3.12 / 3.14
+- Merge SHA / accepted implementation baseline: `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`
+- Post-main Backend Quality Gate: run `38066482086` — PASS on Python 3.12 / 3.14
+- Open review threads before merge: `0`
+- Child workstream Issues: `#47` through `#56`
+- Ten child workstream branches were created from `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`.
+- Financial execution remained excluded.
