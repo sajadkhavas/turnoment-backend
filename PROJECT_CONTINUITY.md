@@ -10,6 +10,9 @@ This section supersedes older “current truth / next phase” sequencing statem
 - Backend B00 START_SHA: `46b3f47b38068675ed8a0941a871438e51abd6a2`
 - B00 branch: `phase/b00-final-backend-execution-lock-20261010`
 - Frozen final frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- B00 merged execution baseline: `c3186ab98cf00e7d7575d301134f9cd29d1dd54f`
+- B00 post-main gate `38066482086`: PASS on Python 3.12 / 3.14.
+- Child Issues `#47-#56` and ten child branches are prepared.
 - Execution mode: ten bounded backend workstreams + mother/integration acceptance.
 - P00 and P01 remain preserved foundations.
 - Financial execution is explicitly deferred: no payment gateway, wallet, ledger money movement, refund execution, prize payout, center settlement, betting/wagering or real payment URLs.
@@ -17,7 +20,7 @@ This section supersedes older “current truth / next phase” sequencing statem
 - The authoritative execution plan is `docs/B00_FINAL_BACKEND_EXECUTION_LOCK.md`.
 - Copy-ready worker prompts are `docs/B00_TEN_CHAT_PROMPTS.md`.
 
-B00 itself is an execution lock, not a claim that runtime domains are implemented.
+B00 is terminally locked as an execution plan; it is not a claim that runtime domains are implemented.
 
 Last checkpoint update: `2026-09-12`
 
