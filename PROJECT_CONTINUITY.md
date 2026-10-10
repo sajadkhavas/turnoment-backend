@@ -2,6 +2,23 @@
 
 > **MANDATORY FIRST READ FOR EVERY CHAT / AGENT / SESSION**
 
+## 0. B00 final-backend execution override — 2026-10-10
+
+This section supersedes older “current truth / next phase” sequencing statements for the active final-backend execution wave.
+
+- Tracking Issue: `#45`
+- Backend B00 START_SHA: `46b3f47b38068675ed8a0941a871438e51abd6a2`
+- B00 branch: `phase/b00-final-backend-execution-lock-20261010`
+- Frozen final frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Execution mode: ten bounded backend workstreams + mother/integration acceptance.
+- P00 and P01 remain preserved foundations.
+- Financial execution is explicitly deferred: no payment gateway, wallet, ledger money movement, refund execution, prize payout, center settlement, betting/wagering or real payment URLs.
+- Paid registration remains pending; end-to-end backend acceptance uses free tournaments.
+- The authoritative execution plan is `docs/B00_FINAL_BACKEND_EXECUTION_LOCK.md`.
+- Copy-ready worker prompts are `docs/B00_TEN_CHAT_PROMPTS.md`.
+
+B00 itself is an execution lock, not a claim that runtime domains are implemented.
+
 Last checkpoint update: `2026-09-12`
 
 ## 1. Continuation law

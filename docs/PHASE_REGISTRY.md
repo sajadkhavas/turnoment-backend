@@ -2,6 +2,23 @@
 
 > Every phase owner/chat MUST follow the root `PHASE_COMPLETION_PROTOCOL.md`. A phase is not DONE until both this registry and its phase-specific GitHub Issue contain final evidence.
 
+## B00 — Final Backend Execution Lock
+
+Status: `READY FOR REVIEW`
+
+- Tracking Issue: `#45`
+- START_SHA: `46b3f47b38068675ed8a0941a871438e51abd6a2`
+- Branch: `phase/b00-final-backend-execution-lock-20261010`
+- Frozen frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Purpose: lock ten bounded implementation workstreams and mother/integration acceptance against the final frontend.
+- Financial execution: `DEFERRED / DO NOT IMPLEMENT`
+- Execution lock: `docs/B00_FINAL_BACKEND_EXECUTION_LOCK.md`
+- Ten chat prompts: `docs/B00_TEN_CHAT_PROMPTS.md`
+
+B00 does not alter the frozen completion evidence for P00/P01. Runtime domain implementation remains pending until its owning workstreams merge and pass final integration acceptance.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
