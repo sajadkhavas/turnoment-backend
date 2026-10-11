@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Challenge",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(
+                    primary_key=True, default=uuid.uuid4,
+                    editable=False, serialize=False,
+                )),
                 ("pair_low", models.CharField(max_length=36)),
                 ("pair_high", models.CharField(max_length=36)),
                 ("game_id", models.CharField(max_length=128)),
@@ -62,8 +65,12 @@ class Migration(migrations.Migration):
                     models.Index(fields=["state", "expires_at"], name="ch_state_expiry"),
                 ],
                 "constraints": [
-                    models.CheckConstraint(condition=~Q(challenger=F("opponent")), name="ch_no_self"),
-                    models.CheckConstraint(condition=Q(pair_low__lt=F("pair_high")), name="ch_canonical_pair"),
+                    models.CheckConstraint(
+                        condition=~Q(challenger=F("opponent")), name="ch_no_self"
+                    ),
+                    models.CheckConstraint(
+                        condition=Q(pair_low__lt=F("pair_high")), name="ch_canonical_pair"
+                    ),
                     models.UniqueConstraint(
                         fields=["pair_low", "pair_high", "game_id"],
                         condition=Q(state__in=["pending", "accepted"]),
@@ -95,7 +102,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ChallengeCommandReceipt",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(
+                    primary_key=True, default=uuid.uuid4,
+                    editable=False, serialize=False,
+                )),
                 ("key", models.CharField(max_length=200)),
                 ("fingerprint", models.CharField(max_length=64)),
                 ("response", models.JSONField()),
