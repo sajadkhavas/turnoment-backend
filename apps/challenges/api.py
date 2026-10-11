@@ -189,28 +189,42 @@ class ChallengeHubView(PrivateChallengeView):
         page = int(page_raw)
         if not 1 <= page <= 1000000:
             return Response({"detail": "Invalid page."}, status=400)
-        # Account scoped read only; no time-based writes from safe requests.
+        # Use database aggregation and bounded pagination; safe GET never writes.
         now = timezone.now()
-        challenges = list(
-            Challenge.objects.filter(Q(challenger=request.user) | Q(opponent=request.user))
-            .select_related("challenger__player_profile", "opponent__player_profile")
-            .order_by("-created_at", "-pk")
+        actor_scope = Q(challenger=request.user) | Q(opponent=request.user)
+        pending = Q(state=Challenge.State.PENDING, expires_at__gt=now)
+        incoming = pending & Q(opponent=request.user)
+        outgoing = pending & Q(challenger=request.user)
+        active = Q(state=Challenge.State.ACCEPTED)
+        completed = (
+            ~Q(state__in=[Challenge.State.PENDING, Challenge.State.ACCEPTED])
+            | Q(state=Challenge.State.PENDING, expires_at__lte=now)
         )
-        grouped = [(ch, group(ch, request.user, now)) for ch in challenges]
-        summary = {name: sum(g == name for _, g in grouped) for name in (
-            "incoming", "outgoing", "active", "completed"
-        )}
-        selected = [
-            ch for ch, g in grouped if (
-                state_filter == "all" or state_filter == g
-                or (state_filter == "action-required" and
-                    g == "incoming")
-            )
-        ]
-        total = len(selected)
+        scoped = Challenge.objects.filter(actor_scope)
+        summary = {
+            "incoming": scoped.filter(incoming).count(),
+            "outgoing": scoped.filter(outgoing).count(),
+            "active": scoped.filter(active).count(),
+            "completed": scoped.filter(completed).count(),
+        }
+        query = scoped
+        if state_filter in {"incoming", "action-required"}:
+            query = query.filter(incoming)
+        elif state_filter == "outgoing":
+            query = query.filter(outgoing)
+        elif state_filter == "active":
+            query = query.filter(active)
+        elif state_filter == "completed":
+            query = query.filter(completed)
+        total = query.count()
         pages = ceil(total / PAGE_SIZE)
         current = min(page, pages) if pages else 1
         first = (current - 1) * PAGE_SIZE
+        selected = list(
+            query.select_related(
+                "challenger__player_profile", "opponent__player_profile"
+            ).order_by("-created_at", "-pk")[first:first + PAGE_SIZE]
+        )
         games = integrations.creation_games(request.user)
         return Response({
             "player": {
@@ -235,7 +249,7 @@ class ChallengeHubView(PrivateChallengeView):
             "summary": summary,
             "items": [
                 item_projection(ch, request.user, now)
-                for ch in selected[first:first + PAGE_SIZE]
+                for ch in selected
             ],
             "pagination": {
                 "currentPage": current, "totalPages": pages, "totalItems": total,
