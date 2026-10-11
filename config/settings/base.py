@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "apps.accounts.apps.AccountsConfig",
+    "apps.games.apps.GamesConfig",
+    "apps.rulesets.apps.RulesetsConfig",
     "apps.system.apps.SystemConfig",
 ]
 
