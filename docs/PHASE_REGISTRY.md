@@ -95,7 +95,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA an
 - Integrated head push/PR CI: `38148240275` and `38148243914` PASS Python 3.12 / 3.14.
 - Implementation merge/main SHA: `76d153deb72b36c40ae82530c8f26c1dcec1ffcb`.
 - Post-implementation main CI: `38148342124` PASS Python 3.12 / 3.14.
-- Closeout branch: `closeout/b04-gaming-centers-freeze`; closeout PR reference and terminal merged SHA/CI will be recorded in Issue #50.
+- Closeout branch: `closeout/b04-gaming-centers-freeze`; closeout PR `#68` and terminal merged SHA/CI will be recorded in Issue #50.
 - Delivered: public centers list/detail, anonymous host application receipts, center-scoped staff/profile/resources/hours APIs, models, migrations, PostgreSQL idempotent rate bucket, admin registration, session-CSRF/privacy/permissions/concurrency tests.
 - Mother-agent repairs: safe B01/B03 shared-file reconciliation without force, reject malformed station equipment identifiers, reject duplicated/unknown center directory filters, add corresponding regression tests, preserve B01/B03 source audit while recording B04.
 - B99 dependency: tournament counts and event lists from B05, moderation and host-application review/retention purge from B10, and integration acceptance of center permissions with B02. No production deployment made.
