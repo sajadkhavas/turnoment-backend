@@ -3,11 +3,13 @@ from django.urls import path
 from .views import (
     CenterDetailView,
     CenterDirectoryView,
+    CenterEquipmentDetailView,
     CenterEquipmentView,
     CenterOpeningHoursView,
     CenterProfileView,
     CenterStaffDetailView,
     CenterStaffView,
+    CenterStationDetailView,
     CenterStationView,
     HostApplicationView,
 )
@@ -24,8 +26,12 @@ urlpatterns = [
          CenterStaffDetailView.as_view(), name="staff-detail"),
     path("center-admin/centers/<uuid:center_id>/equipment/",
          CenterEquipmentView.as_view(), name="equipment"),
+    path("center-admin/centers/<uuid:center_id>/equipment/<uuid:equipment_id>/",
+         CenterEquipmentDetailView.as_view(), name="equipment-detail"),
     path("center-admin/centers/<uuid:center_id>/stations/",
          CenterStationView.as_view(), name="stations"),
+    path("center-admin/centers/<uuid:center_id>/stations/<uuid:station_id>/",
+         CenterStationDetailView.as_view(), name="station-detail"),
     path("center-admin/centers/<uuid:center_id>/hours/",
          CenterOpeningHoursView.as_view(), name="hours"),
 ]
