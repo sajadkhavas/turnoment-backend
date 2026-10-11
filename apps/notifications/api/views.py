@@ -17,7 +17,9 @@ class InboxView(APIView):
 
     @transaction.atomic
     def get(self, request):
-        if set(request.query_params) - {"state", "kind", "page"}:
+        if set(request.query_params) - {"state", "kind", "page"} or any(
+            len(request.query_params.getlist(key)) != 1 for key in request.query_params
+        ):
             return Response({"error": {"code": "invalid_filter"}}, status=400)
         params = NotificationQuerySerializer(data=request.query_params)
         params.is_valid(raise_exception=True)

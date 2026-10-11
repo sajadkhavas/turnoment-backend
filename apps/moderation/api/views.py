@@ -21,7 +21,9 @@ class CasesView(APIView):
 
     def get(self, request):
         fields = {"source_type", "status", "center_id", "page"}
-        if set(request.query_params) - fields:
+        if set(request.query_params) - fields or any(
+            len(request.query_params.getlist(key)) != 1 for key in request.query_params
+        ):
             return Response({"error": {"code": "invalid_filter"}}, status=400)
         source = request.query_params.get("source_type")
         status = request.query_params.get("status")
