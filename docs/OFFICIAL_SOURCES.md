@@ -119,3 +119,25 @@ Decision:
 ### Closeout verification
 
 Re-reviewed 2026-09-06 after implementation and before freeze against the official Django 6.1 and DRF documentation above. No architecture deviation or source conflict was found. The P01 implementation remains aligned with the documented custom-user timing requirement, Django session/CSRF behavior, DRF same-session AJAX guidance, and DRF's warning not to use application throttling as a brute-force security boundary.
+
+---
+
+## B02 — Accounts / Player / Settings
+
+Reviewed 2026-10-11 against frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`; implementation branch `phase/b02-accounts-player-settings`.
+
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django 6.1 queryset row locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django CSRF: https://docs.djangoproject.com/en/6.1/howto/csrf/
+- Django custom user authentication: https://docs.djangoproject.com/en/6.1/topics/auth/customizing/
+- DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Preserve the P01 session/OTP authentication boundary. Notification settings writes require a real authenticated session plus CSRF.
+- Per-user preferences are versioned with an opaque revision; use a database row lock for concurrent updates and return a typed stale result instead of last-write-wins.
+- Required account/system categories are never mutable. Public player projections cannot leak phone/email or invent results.
+- Global platform-operator authority is distinct from object-scoped center membership; B04 owns the durable membership model.
+- Dashboard and competitive results must be composed from B05/B07/B08/B09/B10 authoritative sources during B99 integration, not from placeholders.
+- No financial execution.

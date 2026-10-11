@@ -42,3 +42,63 @@ def test_invalid_mutation_rejected_and_no_revision_change():
         response = client.patch(URL, {"revision": revision, "optional": optional}, format="json")
         assert response.status_code == 400
     assert client.get(URL).data["revision"] == revision
+
+@pytest.mark.django_db
+def test_session_csrf_is_required_for_settings_patch():
+    from rest_framework.test import APIClient
+
+    user = User.objects.create_user(phone="09121234999")
+    client = APIClient(enforce_csrf_checks=True)
+    client.force_login(user)
+
+    initial = client.get(URL)
+    assert initial.status_code == 200
+    command = {
+        "revision": initial.data["revision"],
+        "optional": {"tournament": False, "match": True, "challenge": True},
+    }
+
+    no_csrf = client.patch(URL, command, format="json")
+    assert no_csrf.status_code == 403
+    assert client.get(URL).data["revision"] == initial.data["revision"]
+
+    csrf_response = client.get("/api/v1/auth/csrf/")
+    assert csrf_response.status_code == 200
+    csrf_token = csrf_response.data["csrf_token"]
+    accepted = client.patch(URL, command, format="json", HTTP_X_CSRFTOKEN=csrf_token)
+    assert accepted.status_code == 200
+    assert accepted.data["outcome"] == "saved"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_revision_updates_only_one_wins():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from django.db import connections
+
+    user = User.objects.create_user(phone="09121234888")
+    client = APIClient()
+    client.force_authenticate(user)
+    original = client.get(URL)
+    assert original.status_code == 200
+    revision = original.data["revision"]
+
+    def worker(disable_tournament):
+        connections.close_all()
+        try:
+            requester = APIClient()
+            requester.force_authenticate(user)
+            data = {
+                "revision": revision,
+                "optional": {
+                    "tournament": disable_tournament, "match": True, "challenge": True
+                },
+            }
+            return requester.patch(URL, data, format="json").status_code
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        statuses = list(pool.map(worker, (False, True)))
+
+    assert sorted(statuses) == [200, 409]
