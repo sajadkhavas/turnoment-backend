@@ -200,6 +200,30 @@ B09-owned rating projection and real B08 event seam accepted; full B99 browser/p
 
 ---
 
+## B10 — Notifications / Moderation / Admin Operations
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal main SHA and CI will be recorded in Issue #56 after closeout.
+
+- Issue: `#56`; frozen frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`.
+- Branch: `phase/b10-notifications-moderation-admin`.
+- Agent END_SHA: `19494b38edc8f21cab8bf0b04fa02964d412b196`.
+- Final reviewed integration HEAD: `d5caa3a1d234c82af229d921b0499d6f901cd7da`.
+- Implementation PR `#63`, MERGED with expected-head lock; unresolved review threads: `0`.
+- Agent Push/PR CI `38144144991`, `38144149065` PASS.
+- Final integration Push/PR CI `38159395977`, `38159399025` PASS Python 3.12 and 3.14.
+- Implementation merge SHA: `56392f8a9ec0a790993693604b00eb8ff1cc7a61`.
+- Post-implementation main CI `38159523802` PASS Python 3.12 and 3.14.
+- Closeout branch `closeout/b10-notifications-moderation-freeze`; closeout PR and final SHA/CI will be documented in Issue #56.
+- Delivery: authenticated typed-redirect notification inbox with idempotent emits and read/read-all, central platform operator moderation-case transitions, restricted Django Admin, migrations, permissions/privacy/CSRF/idempotent concurrency tests. Duplicate query filters rejected.
+- Mother integration changes: safe B01–B09 shared settings/URL reconciliation, B10 official-source audit, query filter ambiguity guard and regression tests.
+- B99 cross-domain handoff: authoritative event→notification emission, B04 host application moderation with personal information 180-day retention purge, B08 dispute decision integration/private scanned evidence delivery, and final frontend two-session acceptance. Mere moderation case review does not change B04/B08 source state.
+- FINANCIAL EXECUTION ADDED: `NO`.
+
+B10-owned scope can close after terminal CI; overall backend B99 is pending.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
