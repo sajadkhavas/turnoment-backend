@@ -270,6 +270,7 @@ class CenterEquipmentView(APIView):
         if (not isinstance(label, str) or not 1 <= len(label.strip()) <= 240
                 or type(public) is not bool):
             return Response({"detail": "Invalid equipment."}, status=400)
+        GamingCenter.objects.select_for_update().get(pk=center.pk)
         if center.equipment.filter(label__iexact=label.strip()).exists():
             return Response({"detail": "Duplicate equipment."}, status=409)
         equipment = Equipment.objects.create(center=center, label=label.strip(), is_public=public)
@@ -287,8 +288,10 @@ class CenterStationView(APIView):
             for s in center.stations.order_by("code")
         ]})
 
+    @transaction.atomic
     def post(self, request, center_id):
         center, _ = _scope(request, center_id, EDIT_ROLES)
+        GamingCenter.objects.select_for_update().get(pk=center.pk)
         if set(request.data) != {"code", "equipmentId"}:
             return Response({"detail": "code and equipmentId required."}, status=400)
         code = request.data.get("code")
@@ -341,3 +344,71 @@ class CenterOpeningHoursView(APIView):
             for h in parsed.validated_data
         ])
         return self.get(request, center_id)
+
+
+class CenterEquipmentDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def patch(self, request, center_id, equipment_id):
+        center, _ = _scope(request, center_id, EDIT_ROLES)
+        GamingCenter.objects.select_for_update().get(pk=center.pk)
+        equipment = get_object_or_404(
+            Equipment.objects.select_for_update(), pk=equipment_id, center=center
+        )
+        if not request.data or set(request.data) - {"label", "isPublic"}:
+            return Response({"detail": "Invalid equipment update."}, status=400)
+        if "label" in request.data:
+            label = request.data["label"]
+            if not isinstance(label, str) or not 1 <= len(label.strip()) <= 240:
+                return Response({"label": ["Invalid equipment label."]}, status=400)
+            label = label.strip()
+            if center.equipment.exclude(pk=equipment.pk).filter(label__iexact=label).exists():
+                return Response({"detail": "Duplicate equipment."}, status=409)
+            equipment.label = label
+        if "isPublic" in request.data:
+            if type(request.data["isPublic"]) is not bool:
+                return Response({"isPublic": ["Boolean required."]}, status=400)
+            equipment.is_public = request.data["isPublic"]
+        equipment.save()
+        return Response({
+            "equipmentId": str(equipment.id), "label": equipment.label,
+            "isPublic": equipment.is_public
+        })
+
+    @transaction.atomic
+    def delete(self, request, center_id, equipment_id):
+        center, _ = _scope(request, center_id, EDIT_ROLES)
+        GamingCenter.objects.select_for_update().get(pk=center.pk)
+        equipment = get_object_or_404(
+            Equipment.objects.select_for_update(), pk=equipment_id, center=center
+        )
+        if equipment.stations.exists():
+            return Response({"detail": "Equipment is assigned to stations."}, status=409)
+        equipment.delete()
+        return Response(status=204)
+
+
+class CenterStationDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def patch(self, request, center_id, station_id):
+        center, _ = _scope(request, center_id, EDIT_ROLES)
+        station = get_object_or_404(
+            Station.objects.select_for_update(), pk=station_id, center=center
+        )
+        if set(request.data) != {"state"} or request.data["state"] not in Station.State.values:
+            return Response({"state": ["Invalid station state."]}, status=400)
+        station.state = request.data["state"]
+        station.save(update_fields=["state"])
+        return Response({"stationId": str(station.id), "state": station.state})
+
+    @transaction.atomic
+    def delete(self, request, center_id, station_id):
+        center, _ = _scope(request, center_id, EDIT_ROLES)
+        station = get_object_or_404(
+            Station.objects.select_for_update(), pk=station_id, center=center
+        )
+        station.delete()
+        return Response(status=204)
