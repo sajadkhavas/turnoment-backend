@@ -103,11 +103,19 @@ class Ruleset(models.Model):
     def _key(value):
         import re
 
-        return isinstance(value, str) and bool(re.fullmatch(PUBLIC_SLUG, value)) and len(value) <= 96
+        return (
+            isinstance(value, str)
+            and bool(re.fullmatch(PUBLIC_SLUG, value))
+            and len(value) <= 96
+        )
 
     @staticmethod
     def _text(value, limit):
-        return isinstance(value, str) and 1 <= len(value.strip()) <= limit and value == value.strip()
+        return (
+            isinstance(value, str)
+            and 1 <= len(value.strip()) <= limit
+            and value == value.strip()
+        )
 
     def save(self, *args, **kwargs):
         self.full_clean()

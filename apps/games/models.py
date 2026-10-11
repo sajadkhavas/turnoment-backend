@@ -7,7 +7,6 @@ from django.core.validators import MaxLengthValidator, MinLengthValidator, Regex
 from django.db import models
 from django.db.models import Q
 
-
 GAME_KEY = r"^[A-Za-z0-9_-]{1,128}$"
 PUBLIC_SLUG = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 

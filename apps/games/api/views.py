@@ -1,10 +1,10 @@
 import re
 
 from django.http import Http404
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import ValidationError
 
 from apps.games.selectors import (
     catalog_item,
@@ -32,8 +32,12 @@ class GameCatalogView(PublicGameAPIView):
             raise ValidationError({"query": "Duplicate filters are not allowed."})
         filters = {}
         for param in _ALLOWED_PARAMS:
-            value = query.get(param, "").strip()
-            if value and (len(value) > _MAX_FILTER_LENGTH or any(ord(c) < 32 or ord(c) == 127 for c in value)):
+            raw = query.get(param, "")
+            if len(raw) > _MAX_FILTER_LENGTH or any(
+                ord(char) < 32 or ord(char) == 127 for char in raw
+            ):
+                raise ValidationError({param: "Invalid filter value."})
+            value = raw.strip()
                 raise ValidationError({param: "Invalid filter value."})
             filters[param] = value
         for key in ("slug", "gameId"):

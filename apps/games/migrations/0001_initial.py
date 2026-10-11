@@ -55,7 +55,10 @@ class Migration(migrations.Migration):
                 ("short_name", models.CharField(max_length=240)),
                 (
                     "description",
-                    models.TextField(validators=[django.core.validators.MinLengthValidator(20), django.core.validators.MaxLengthValidator(700)]),
+                    models.TextField(validators=[
+                        django.core.validators.MinLengthValidator(20),
+                        django.core.validators.MaxLengthValidator(700),
+                    ]),
                 ),
                 ("platforms", models.JSONField(default=list)),
                 ("cover_image", models.CharField(blank=True, max_length=2048, null=True)),
