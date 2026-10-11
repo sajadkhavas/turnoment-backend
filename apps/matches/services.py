@@ -71,6 +71,10 @@ def create_match_for_source(
         match.participant_a_id != participant_a.pk
         or match.participant_b_id != participant_b.pk
         or match.game_id != game_id
+        or match.game_name != game_name
+        or match.competition_title != competition_title
+        or match.starts_at != starts_at
+        or any(getattr(match, field) != value for field, value in snapshots.items())
     ):
         raise ValidationError("Source already bound to a different match")
     return match
