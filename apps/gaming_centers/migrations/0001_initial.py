@@ -17,7 +17,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="City",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
+                    serialize=False)),
                 ("slug", models.SlugField(unique=True, max_length=80)),
                 ("name", models.CharField(max_length=240)),
             ],
@@ -26,7 +27,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="GamingCenter",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
+                    serialize=False)),
                 ("public_id", models.SlugField(unique=True, max_length=128)),
                 ("publication_state", models.CharField(max_length=12,
                     choices=[("draft", "Draft"), ("published", "Published"), ("hidden", "Hidden")],
@@ -55,7 +57,8 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={"indexes": [
-                models.Index(fields=["publication_state", "city", "name"], name="center_public_city_idx")
+                models.Index(fields=["publication_state", "city", "name"],
+                    name="center_public_city_idx")
             ],
                 "constraints": [models.CheckConstraint(
                     condition=Q(upcoming_tournament_count__gte=0)
@@ -66,12 +69,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CenterMembership",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
+                    serialize=False)),
                 ("center", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
                                              related_name="memberships",
                                              to="gaming_centers.gamingcenter")),
                 ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                                           related_name="center_memberships", to=settings.AUTH_USER_MODEL)),
+                                           related_name="center_memberships",
+                                               to=settings.AUTH_USER_MODEL)),
                 ("role", models.CharField(max_length=12, choices=[
                     ("owner", "Owner"), ("manager", "Manager"), ("staff", "Staff")])),
                 ("is_active", models.BooleanField(default=True)),
@@ -84,14 +89,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="HostApplication",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,
+                    serialize=False)),
                 ("venue_name", models.CharField(max_length=120)),
                 ("manager_name", models.CharField(max_length=120)),
                 ("phone", models.CharField(max_length=13)),
                 ("city", models.CharField(max_length=80)),
                 ("area", models.CharField(max_length=120)),
                 ("station_count", models.PositiveSmallIntegerField(validators=[
-                    django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(1000)
+                    django.core.validators.MinValueValidator(1),
+                        django.core.validators.MaxValueValidator(1000)
                 ])),
                 ("games", models.CharField(max_length=300)),
                 ("description", models.CharField(max_length=1200, blank=True)),
@@ -99,7 +106,8 @@ class Migration(migrations.Migration):
                     ("received", "Received"), ("reviewing", "Reviewing"),
                     ("approved", "Approved"), ("rejected", "Rejected")
                 ], default="received")),
-                ("submitted_at", models.DateTimeField(default=django.utils.timezone.now, editable=False)),
+                ("submitted_at", models.DateTimeField(default=django.utils.timezone.now,
+                    editable=False)),
                 ("client_key", models.CharField(max_length=64, editable=False)),
                 ("fingerprint", models.CharField(max_length=64, editable=False)),
                 ("bucket_start", models.DateTimeField(editable=False)),
