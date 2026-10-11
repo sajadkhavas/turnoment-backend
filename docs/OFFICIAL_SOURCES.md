@@ -305,3 +305,26 @@ Decisions:
 - Moderation case and audit decisions do not directly change B04 host application or B08 disputed match truth. B99 must wire domain-owned transitions with audited authorization, 180-day host application PII purge policy and private evidence scanning/delivery.
 - Duplicate and unknown API query params are rejected, not ambiguously interpreted.
 - Financial execution added: NO.
+
+---
+
+## B02 — Accounts / Player / Settings
+
+Reviewed 2026-10-11 against frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`; implementation branch `phase/b02-accounts-player-settings`.
+
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django 6.1 queryset row locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django CSRF: https://docs.djangoproject.com/en/6.1/howto/csrf/
+- Django custom user authentication: https://docs.djangoproject.com/en/6.1/topics/auth/customizing/
+- DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Preserve the P01 session/OTP authentication boundary. Notification settings writes require a real authenticated session plus CSRF.
+- Per-user preferences are versioned with an opaque revision; use a database row lock for concurrent updates and return a typed stale result instead of last-write-wins.
+- Required account/system categories are never mutable. B09 owns explicit opt-in publication and public-player competitive profiles. B02 must not create an alternative gamer-tag-only public profile or expose private bio.
+- B02 role checks delegate platform operator authority to B10's is_active+is_staff+is_superuser restriction and use B04's real owner/manager/staff center membership roles.
+- Global platform-operator authority is distinct from object-scoped center membership; B04 owns the durable membership model.
+- Dashboard and competitive results must be composed from B05/B07/B08/B09/B10 authoritative sources during B99 integration, not from placeholders.
+- No financial execution.
