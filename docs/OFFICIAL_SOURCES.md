@@ -119,3 +119,43 @@ Decision:
 ### Closeout verification
 
 Re-reviewed 2026-09-06 after implementation and before freeze against the official Django 6.1 and DRF documentation above. No architecture deviation or source conflict was found. The P01 implementation remains aligned with the documented custom-user timing requirement, Django session/CSRF behavior, DRF same-session AJAX guidance, and DRF's warning not to use application throttling as a brute-force security boundary.
+---
+
+## B01 — Core Contract & Integration Foundation
+
+Reviewed 2026-10-11 for Issue #47 / PR #59 against frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+### Django 6.1 / PostgreSQL transaction and constraint primitives
+
+- Transactions and nested `atomic()`: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL explicit locking: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+
+- Producers record a durable domain event in the same outer transaction as the authoritative business transition. Nested `atomic()` does not independently commit an event while the owner rolls back.
+- PostgreSQL uniqueness on `(source, idempotency_key)` prevents duplicate event/audit rows under concurrent insertion. Nonempty event type/action constraints are database enforced.
+- B01 does not claim consumer delivery or immutable/tamper-proof audit storage; B99/B10 own dispatcher operations, and B09 owns per-consumer idempotency.
+
+### Django REST Framework
+
+- Exceptions: https://www.django-rest-framework.org/api-guide/exceptions/
+- Pagination: https://www.django-rest-framework.org/api-guide/pagination/
+- Authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- Permissions: https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+
+- Core exception/pagination helpers are opt-in, not global, to preserve the accepted P01 authentication/response contract.
+- Keep inherited `SessionAuthentication` and `IsAuthenticated` for private APIs. Public routes must make their authentication and permission policies explicit.
+- Domain serializers and output projections must match each precise frontend contract rather than automatically applying one paginator to every endpoint.
+
+### Celery
+
+- Task and retry semantics: https://docs.celeryq.dev/en/stable/userguide/tasks.html
+
+Decision:
+
+- Enqueuing a database outbox row is not notification delivery; publication, retry handling, offsets, and recovery are integration work. Do not publish transaction-sensitive side effects before commit.
+
+Financial execution remains explicitly excluded from B01.

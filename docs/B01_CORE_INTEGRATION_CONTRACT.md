@@ -27,8 +27,8 @@ Only `config/settings/base.py`: register core/audit apps. `apps.core.frontend.FR
 
 ## Official technical references and decisions
 
-- Django transactions: https://docs.djangoproject.com/en/6.0/topics/db/transactions/ — outer service transaction commits event and domain state atomically; rollback tested.
-- Django constraints: https://docs.djangoproject.com/en/6.0/ref/models/constraints/ — database unique and nonblank event/action constraints guard direct ORM writes and concurrent duplicate keys.
+- Django transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — outer service transaction commits event and domain state atomically; rollback tested.
+- Django constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — database unique and nonblank event/action constraints guard direct ORM writes and concurrent duplicate keys.
 - DRF exceptions: https://www.django-rest-framework.org/api-guide/exceptions/ — custom exception handler integrates with DRF's existing classification; do not wrap arbitrary failures as success.
 - DRF pagination: https://www.django-rest-framework.org/api-guide/pagination/ — opt-in paginator on GenericAPIView; project exact frontend page shapes.
 - DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/ — SessionAuthentication and CSRF stay authoritative.
