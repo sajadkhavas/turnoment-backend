@@ -1,9 +1,11 @@
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import Http404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.models import User
 from apps.notifications.models import Notification
 from apps.notifications.services import mark_all_read, mark_one_read
 
@@ -13,12 +15,15 @@ from .serializers import NotificationQuerySerializer, NotificationSerializer
 class InboxView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def get(self, request):
         if set(request.query_params) - {"state", "kind", "page"}:
             return Response({"error": {"code": "invalid_filter"}}, status=400)
         params = NotificationQuerySerializer(data=request.query_params)
         params.is_valid(raise_exception=True)
         query = params.validated_data
+        # Reads serialize with synchronous emission/read commands for consistent summary.
+        User.objects.select_for_update().only("pk").get(pk=request.user.pk)
         mine = Notification.objects.filter(recipient=request.user)
         summary = {
             "total": mine.count(),
