@@ -1,0 +1,32 @@
+name: B08 Temporary Autoformat
+on:
+  push:
+    branches: [phase/b08-matches-results-disputes]
+permissions:
+  contents: write
+jobs:
+  tidy:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'ruff>=0.12,<1'
+      - name: Apply Ruff formatting without suppressions
+        run: |
+          ruff format apps/matches apps/results apps/disputes config/urls.py
+          ruff check --fix apps/matches apps/results apps/disputes config/urls.py
+          ruff format apps/matches apps/results apps/disputes config/urls.py
+      - name: Push formatter-only commit if needed
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add apps/matches apps/results apps/disputes config/urls.py
+            git commit -m "style(b08): format owned Python files with Ruff"
+            git push origin HEAD:phase/b08-matches-results-disputes
+          fi
