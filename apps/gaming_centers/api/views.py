@@ -2,7 +2,7 @@ import math
 import re
 import uuid
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -163,9 +163,12 @@ class HostApplicationView(APIView):
 
 def _scope(request, center_id, allowed):
     center = get_object_or_404(GamingCenter, id=center_id)
-    membership = CenterMembership.objects.filter(
+    scope_query = CenterMembership.objects.filter(
         center=center, user=request.user, is_active=True
-    ).first()
+    )
+    if connection.in_atomic_block:
+        scope_query = scope_query.select_for_update()
+    membership = scope_query.first()
     if not membership or membership.role not in allowed:
         from rest_framework.exceptions import PermissionDenied
         raise PermissionDenied("Center membership required.")
@@ -188,6 +191,7 @@ class CenterProfileView(APIView):
             **CenterProfileSerializer(center).data,
         })
 
+    @transaction.atomic
     def patch(self, request, center_id):
         center, _ = _scope(request, center_id, EDIT_ROLES)
         serializer = CenterProfileSerializer(center, data=request.data, partial=True)
@@ -210,6 +214,7 @@ class CenterStaffView(APIView):
     @transaction.atomic
     def post(self, request, center_id):
         center, _ = _scope(request, center_id, [CenterMembership.Role.OWNER])
+        GamingCenter.objects.select_for_update().get(pk=center.pk)
         user_id = request.data.get("userId")
         role = request.data.get("role")
         if role not in [CenterMembership.Role.MANAGER, CenterMembership.Role.STAFF]:
