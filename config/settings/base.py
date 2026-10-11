@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "apps.games.apps.GamesConfig",
     "apps.rulesets.apps.RulesetsConfig",
     "apps.system.apps.SystemConfig",
+    "apps.rankings.apps.RankingsConfig",
+    "apps.rivalries.apps.RivalriesConfig",
 ]
 
 MIDDLEWARE = [
