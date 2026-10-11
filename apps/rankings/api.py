@@ -80,6 +80,9 @@ class PublicRankingView(APIView):
 
     def get(self, request):
         q = request.query_params
+        allowed = {"game", "season", "region", "type", "page"}
+        if set(q) - allowed or any(len(q.getlist(k)) != 1 for k in q):
+            return Response({"detail": "Unknown or duplicate filter"}, status=400)
         kind = q.get("type", "tournament")
         if kind not in PlayerRating.Kind.values:
             return Response({"detail": "Invalid rating type"}, status=400)
@@ -103,12 +106,13 @@ class PublicRankingView(APIView):
         region = next((r for r in regions if r.slug == region_slug), None)
         if game is None or season is None or (region_slug and region is None):
             return Response({"detail": "Unknown ranking filter"}, status=400)
-        rows = list(public_ratings(game, season, kind, region))
-        count = len(rows)
+        rows = public_ratings(game, season, kind, region)
+        count = rows.count()
         pages = max(1, math.ceil(count / PAGE_SIZE))
         if page > pages:
             return Response({"detail": "Page out of range"}, status=404)
         start = (page - 1) * PAGE_SIZE
+        page_rows = list(rows[start:start + PAGE_SIZE])
         return Response({
             "schemaVersion": 1,
             "filters": {
@@ -130,7 +134,7 @@ class PublicRankingView(APIView):
             },
             "items": [
                 ranking_row(row, start + number + 1)
-                for number, row in enumerate(rows[start:start + PAGE_SIZE])
+                for number, row in enumerate(page_rows)
             ],
             "pagination": {
                 "currentPage": page, "totalPages": pages,
