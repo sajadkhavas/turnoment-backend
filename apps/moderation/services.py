@@ -39,8 +39,14 @@ def review_case(*, case_id, actor, to_status, note):
         if case.status == to_status:
             return case, False
         valid = (
-            (case.status == ModerationCase.Status.OPEN and to_status == ModerationCase.Status.IN_REVIEW)
-            or (case.status == ModerationCase.Status.IN_REVIEW and to_status == ModerationCase.Status.CLOSED)
+            (
+                case.status == ModerationCase.Status.OPEN
+                and to_status == ModerationCase.Status.IN_REVIEW
+            )
+            or (
+                case.status == ModerationCase.Status.IN_REVIEW
+                and to_status == ModerationCase.Status.CLOSED
+            )
         )
         if not valid:
             raise InvalidModerationTransition("Case transition is not allowed")

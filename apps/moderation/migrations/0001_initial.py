@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ModerationCase",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(
+                    primary_key=True, default=uuid.uuid4,
+                    editable=False, serialize=False,
+                )),
                 ("source_type", models.CharField(max_length=24, choices=[
                     ("host_application", "Host application"), ("dispute", "Dispute"),
                     ("managed_content", "Managed content"),
@@ -41,9 +44,19 @@ class Migration(migrations.Migration):
                     models.Index(fields=["center_id", "status"], name="mod_center_status_idx"),
                 ],
                 "constraints": [
-                    models.UniqueConstraint(fields=["source_type", "source_id"], name="mod_source_unique"),
-                    models.CheckConstraint(condition=Q(source_type__in=["host_application", "dispute", "managed_content"]), name="mod_source_allowed"),
-                    models.CheckConstraint(condition=Q(status__in=["open", "in_review", "closed"]), name="mod_status_allowed"),
+                    models.UniqueConstraint(
+                        fields=["source_type", "source_id"], name="mod_source_unique",
+                    ),
+                    models.CheckConstraint(
+                        condition=Q(source_type__in=[
+                            "host_application", "dispute", "managed_content",
+                        ]),
+                        name="mod_source_allowed",
+                    ),
+                    models.CheckConstraint(
+                        condition=Q(status__in=["open", "in_review", "closed"]),
+                        name="mod_status_allowed",
+                    ),
                 ],
             },
         ),
@@ -59,8 +72,14 @@ class Migration(migrations.Migration):
                 ])),
                 ("note", models.CharField(max_length=1000)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("case", models.ForeignKey(to="moderation.moderationcase", related_name="decisions", on_delete=django.db.models.deletion.PROTECT)),
-                ("actor", models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=django.db.models.deletion.PROTECT)),
+                ("case", models.ForeignKey(
+                    to="moderation.moderationcase", related_name="decisions",
+                    on_delete=django.db.models.deletion.PROTECT,
+                )),
+                ("actor", models.ForeignKey(
+                    to=settings.AUTH_USER_MODEL,
+                    on_delete=django.db.models.deletion.PROTECT,
+                )),
             ],
             options={
                 "ordering": ["created_at", "id"],

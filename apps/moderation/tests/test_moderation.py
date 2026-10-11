@@ -28,8 +28,10 @@ def test_platform_access_and_center_staff_admin_denial():
     for blocked in (player, center_staff):
         client.force_authenticate(user=blocked)
         assert client.get(url).status_code == 403
-        assert client.post(url + "00000000-0000-0000-0000-000000000000/review/",
-                           {"status": "in_review", "note": "Reviewed this case"}, format="json").status_code == 403
+        assert client.post(
+            url + "00000000-0000-0000-0000-000000000000/review/",
+            {"status": "in_review", "note": "Reviewed this case"}, format="json",
+        ).status_code == 403
     client.force_authenticate(user=operator)
     assert client.get(url).status_code == 200
     assert client.get(url).data["pagination"]["totalItems"] == 1
@@ -48,7 +50,8 @@ def test_scopes_idempotence_transitions_and_audit():
             source_type="dispute", source_id="d1", title="Dispute review", center_id="center1"
         )[0],
         record_moderation_case(
-            source_type="managed_content", source_id="c1", title="Content review", center_id="center2"
+            source_type="managed_content", source_id="c1",
+            title="Content review", center_id="center2"
         )[0],
     ]
     same, created = record_moderation_case(

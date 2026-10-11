@@ -44,7 +44,9 @@ def mark_one_read(*, recipient_id, notification_id):
         if notification.read_at is None:
             notification.read_at = timezone.now()
             notification.save(update_fields=["read_at"])
-        unread = Notification.objects.filter(recipient_id=recipient_id, read_at__isnull=True).count()
+        unread = Notification.objects.filter(
+            recipient_id=recipient_id, read_at__isnull=True
+        ).count()
         return notification, unread
 
 
@@ -55,5 +57,7 @@ def mark_all_read(*, recipient_id):
         updated = Notification.objects.filter(
             recipient_id=recipient_id, read_at__isnull=True
         ).update(read_at=now)
-        unread = Notification.objects.filter(recipient_id=recipient_id, read_at__isnull=True).count()
+        unread = Notification.objects.filter(
+            recipient_id=recipient_id, read_at__isnull=True
+        ).count()
         return updated, now, unread

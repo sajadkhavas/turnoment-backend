@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import close_old_connections
 from rest_framework.test import APIClient
 
@@ -42,7 +43,9 @@ def test_inbox_filters_pagination_and_foreign_read_privacy():
     assert client.get("/api/v1/me/notifications/?page=0").status_code == 400
     assert client.get("/api/v1/me/notifications/?kind=invalid").status_code == 400
     assert client.get("/api/v1/me/notifications/?evil=1").status_code == 400
-    assert client.post(f"/api/v1/me/notifications/{alien.pk}/read/", {}, format="json").status_code == 404
+    assert client.post(
+        f"/api/v1/me/notifications/{alien.pk}/read/", {}, format="json"
+    ).status_code == 404
     assert client.get("/api/v1/me/notifications/").data["summary"]["unread"] == 7
 
 
@@ -84,7 +87,9 @@ def test_read_one_all_replay_and_target_contract():
     all_response = client.post("/api/v1/me/notifications/read-all/", {}, format="json")
     assert all_response.data["markedCount"] == 2
     assert all_response.data["unreadCount"] == 0
-    assert client.post("/api/v1/me/notifications/read-all/", {}, format="json").data["markedCount"] == 0
+    assert client.post(
+        "/api/v1/me/notifications/read-all/", {}, format="json"
+    ).data["markedCount"] == 0
     assert Notification.objects.filter(recipient=alice, read_at__isnull=True).count() == 0
     assert client.get("/api/v1/me/notifications/?state=read").data["pagination"]["totalItems"] == 3
 
@@ -92,10 +97,11 @@ def test_read_one_all_replay_and_target_contract():
 @pytest.mark.django_db
 def test_reject_invalid_target_and_empty_content():
     alice = user("+989124444444")
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         emit_notification(
             recipient_id=alice.pk, event_key="bad", kind="system",
-            title="", body="contents", target_kind="tournament-detail", target_id="https://evil.com",
+            title="", body="contents", target_kind="tournament-detail",
+            target_id="https://evil.com",
         )
     assert Notification.objects.count() == 0
 
