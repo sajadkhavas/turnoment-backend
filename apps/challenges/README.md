@@ -36,7 +36,7 @@ Expired invites are only physically expired inside writes; GET never mutates.
 `apps/challenges/integrations.py` defines and currently fails closed for:
 - `player_challenge_stats(user) -> PlayerChallengeStats`: B08 finalized *valid*
   match count and B09 separate Challenge Rating. Hard unlock threshold 30.
-- `creation_games(user) -> tuple[GameChoice,...]`: B03 permitted game+format.
+- `creation_games(user) -> tuple[GameChoice,...]`: reads actual published B03 games and solo-compatible formats.
 - `opponent_eligible(challenger,opponent,game_id)->bool`: B02/B03/B08 server policy.
 - `create_match_for_challenge(challenge)->matchId`: B08 must provide a
   **synchronous**, transactional, exactly-one match keyed by Challenge.id.
@@ -47,7 +47,7 @@ Expired invites are only physically expired inside writes; GET never mutates.
   only for finalized match in its transaction; stable replay, conflict failure.
   B08 must supply real outcome, score and (optional) rating deltas.
 
-Before integration, creation stays locked (no fake finalized matches or games),
+Before B08/B09 integration, creation stays locked (no fake finalized matches or ratings),
 and any already-stored pending invite cannot be accepted without B08.
 B99 must wire the real providers and complete full-stack smoke tests.
 
@@ -74,7 +74,6 @@ Requires PostgreSQL for row-lock and partial-unique-index behavior.
 - DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
 - PostgreSQL partial unique indexes: https://www.postgresql.org/docs/current/indexes-partial.html
 
-`docs/OFFICIAL_SOURCES.md` is integration-owned and not touched by B07,
-to avoid cross-workstream collisions. B99 may fold this audit in centrally.
+B07's official-source decisions are now reconciled into `docs/OFFICIAL_SOURCES.md` in the mother-review branch.
 
 FINANCIAL EXECUTION ADDED: NO
