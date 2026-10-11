@@ -6,18 +6,17 @@ from django.db import transaction
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers, status
+from rest_framework import serializers
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.gaming_resources.models import Equipment, GalleryImage, OpeningHour, Station
+from apps.gaming_resources.models import Equipment, OpeningHour, Station
 
 from ..models import CenterMembership, City, GamingCenter
 from ..services import RateLimitExceeded, receive_host_application
 from .serializers import CenterProfileSerializer, HostApplicationInputSerializer
-
 
 DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -268,7 +267,8 @@ class CenterEquipmentView(APIView):
             return Response({"detail": "label and isPublic required."}, status=400)
         label = request.data.get("label")
         public = request.data.get("isPublic")
-        if not isinstance(label, str) or not 1 <= len(label.strip()) <= 240 or type(public) is not bool:
+        if (not isinstance(label, str) or not 1 <= len(label.strip()) <= 240
+                or type(public) is not bool):
             return Response({"detail": "Invalid equipment."}, status=400)
         if center.equipment.filter(label__iexact=label.strip()).exists():
             return Response({"detail": "Duplicate equipment."}, status=409)
