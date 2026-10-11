@@ -30,7 +30,10 @@ def publish_round(*, tournament, number, title, pairings):
         raise ValueError("Bracket pair cannot be empty")
     if any(a is not None and a == b for a, b in pairings):
         raise ValueError("Same player cannot occupy both sides")
-    participants = [participant for pair in pairings for participant in pair if participant is not None]
+    participants = [
+        participant for pair in pairings for participant in pair
+        if participant is not None
+    ]
     if len(participants) != len(set(participants)):
         raise ValueError("Registration may appear only once per bracket round")
     round_obj = BracketRound.objects.create(

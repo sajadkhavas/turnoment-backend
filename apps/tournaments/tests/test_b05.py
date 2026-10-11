@@ -317,3 +317,27 @@ def test_bracket_rejects_same_registration_in_multiple_matches_and_empty_pairing
             pairings=[(None, None)],
         )
     assert BracketMatch.objects.count() == 0
+
+@pytest.mark.django_db
+def test_postgres_filtered_discovery_pages_and_facets_stay_consistent():
+    for index in range(13):
+        make_tournament(slug=f"free-bracket-{index:02d}")
+    client = APIClient()
+    first = client.get(BASE + "tournaments/?price=free&status=open&page=1")
+    assert first.status_code == 200
+    assert first.data["pagination"] == {
+        "currentPage": 1, "totalPages": 2,
+        "totalItems": 13, "pageSize": 12,
+    }
+    assert len(first.data["items"]) == 12
+    assert len(first.data["filters"]["games"]) == 1
+    assert len(first.data["filters"]["cities"]) == 1
+    second = client.get(BASE + "tournaments/?price=free&status=open&page=2")
+    assert second.status_code == 200
+    assert len(second.data["items"]) == 1
+    assert second.data["items"][0]["tournamentId"] not in {
+        item["tournamentId"] for item in first.data["items"]
+    }
+    assert client.get(BASE + "tournaments/?verified=true").data["items"] == []
+    assert client.get(BASE + "tournaments/?status=filling").data["items"] == []
+    assert client.get(BASE + "tournaments/?city=nonexistent").data["items"] == []

@@ -1,8 +1,9 @@
 import hashlib
 import math
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.brackets.models import BracketRound
@@ -38,12 +39,16 @@ def gamer_tag(reg):
     return (profile.gamer_tag if profile and profile.gamer_tag else f"Player-{reg.user_id!s}"[:15])
 
 
-def city_key(t):
-    key = t.center_meta.get("cityKey")
+def _city_key(name, metadata):
+    key = metadata.get("cityKey")
     if key and isinstance(key, str) and key.isascii() and key.replace("-", "").isalnum():
         return key
-    digest = hashlib.sha1(t.center_city.encode()).hexdigest()[:12]
+    digest = hashlib.sha1(name.encode()).hexdigest()[:12]
     return f"city-{digest}"
+
+
+def city_key(t):
+    return _city_key(t.center_city, t.center_meta)
 
 
 def game(t):
@@ -94,58 +99,124 @@ def _date_match(t, day, now):
     return True
 
 
+
 def discovery(query):
-    all_items = list(Tournament.objects.all())
-    games = {
-        t.game_key: game(t) for t in all_items
-    }
-    cities = {
-        city_key(t): {"value": city_key(t), "label": t.center_city}
-        for t in all_items
-    }
-    results = list(all_items)
+    # Keep pagination/filtering on PostgreSQL; never hydrate the full tournament table.
+    # Facets stream distinct metadata rows, keeping only the supported top 100 identities.
+    games = {}
+    cities = {}
+    city_variants = {}
+    metadata_rows = Tournament.objects.values(
+        "game_key", "game_slug", "game_name", "center_city", "center_meta"
+    ).distinct()
+    for row in metadata_rows.iterator(chunk_size=1000):
+        game_id = row["game_key"]
+        if game_id not in games and len(games) < 100:
+            games[game_id] = {
+                "gameId": game_id, "slug": row["game_slug"],
+                "name": row["game_name"],
+            }
+        city = row["center_city"]
+        metadata = row["center_meta"]
+        city_id = _city_key(city, metadata)
+        if city_id not in cities and len(cities) < 100:
+            cities[city_id] = {"value": city_id, "label": city}
+        if query.get("city") == city_id:
+            city_variants[(city, repr(sorted(metadata.items())))] = (city, metadata)
+
+    qs = Tournament.objects.all()
     if query.get("game"):
-        results = [t for t in results if t.game_key == query["game"]]
+        qs = qs.filter(game_key=query["game"])
     if query.get("city"):
-        results = [t for t in results if city_key(t) == query["city"]]
+        match = Q(pk__in=[])
+        for name, metadata in city_variants.values():
+            match |= Q(center_city=name, center_meta=metadata)
+        qs = qs.filter(match)
     if query.get("verified"):
-        results = [t for t in results if t.center_verified]
-    if query.get("date"):
-        now = timezone.now()
-        results = [t for t in results if _date_match(t, query["date"], now)]
-    if query.get("status"):
-        results = [t for t in results if registration_state(t) == query["status"]]
-    if query.get("format"):
-        fmt = query["format"]
-        results = [
-            t for t in results
-            if (t.mode == "team" if fmt == "team" else
-                t.mode == "solo" if fmt == "1v1" else
-                fmt in t.bracket_format_label.lower().replace(" ", "-"))
-        ]
-    if query.get("price"):
-        bands = {
-            "free": lambda n: n == 0,
-            "lt300": lambda n: 0 < n < 3_000_000,
-            "300-500": lambda n: 3_000_000 <= n <= 5_000_000,
-            "gt500": lambda n: n > 5_000_000
-        }
-        results = [t for t in results if bands[query["price"]](t.entry_fee)]
+        qs = qs.filter(center_verified=True)
+
+    day_filter = query.get("date")
+    if day_filter:
+        today = timezone.now().astimezone(TEHRAN).date()
+        days = [today + timedelta(days=offset) for offset in range(7)]
+        if day_filter == "today":
+            days = days[:1]
+        elif day_filter == "tomorrow":
+            days = days[1:2]
+        elif day_filter == "weekend":
+            days = [day for day in days if day.weekday() in {3, 4}]
+        selection = Q(pk__in=[])
+        for day in days:
+            start = datetime.combine(day, time.min, tzinfo=TEHRAN)
+            end = datetime.combine(day + timedelta(days=1), time.min, tzinfo=TEHRAN)
+            selection |= Q(starts_at__gte=start, starts_at__lt=end)
+        qs = qs.filter(selection)
+
+    fmt = query.get("format")
+    if fmt == "team":
+        qs = qs.filter(mode=Tournament.Mode.TEAM)
+    elif fmt == "1v1":
+        qs = qs.filter(mode=Tournament.Mode.SOLO)
+    elif fmt:
+        qs = qs.filter(
+            Q(bracket_format_label__icontains=fmt)
+            | Q(bracket_format_label__icontains=fmt.replace("-", " "))
+        )
+
+    price = query.get("price")
+    if price == "free":
+        qs = qs.filter(entry_fee=0)
+    elif price == "lt300":
+        qs = qs.filter(entry_fee__gt=0, entry_fee__lt=3_000_000)
+    elif price == "300-500":
+        qs = qs.filter(entry_fee__gte=3_000_000, entry_fee__lte=5_000_000)
+    elif price == "gt500":
+        qs = qs.filter(entry_fee__gt=5_000_000)
+
+    desired = query.get("status")
+    if desired:
+        eligible = (
+            Q(entry_fee=0)
+            & Q(lifecycle__in=[Tournament.Lifecycle.OPEN, Tournament.Lifecycle.FILLING])
+            & Q(registered_count__lt=F("capacity"))
+            & (
+                Q(registration_closes_at__isnull=True)
+                | Q(registration_closes_at__gt=timezone.now())
+            )
+        )
+        if desired == "open":
+            qs = qs.filter(eligible, lifecycle=Tournament.Lifecycle.OPEN)
+        elif desired == "filling":
+            qs = qs.filter(eligible, lifecycle=Tournament.Lifecycle.FILLING)
+        elif desired == "upcoming":
+            qs = qs.filter(entry_fee=0, lifecycle=Tournament.Lifecycle.UPCOMING)
+        elif desired == "closed":
+            qs = qs.exclude(
+                Q(entry_fee__gt=0)
+                | Q(lifecycle=Tournament.Lifecycle.UPCOMING)
+                | eligible
+            )
+
     sort = query.get("sort", "suggested")
-    sort_key = {
-        "soonest": lambda t: (t.starts_at, str(t.id)),
-        "limited": lambda t: (t.capacity - t.registered_count, str(t.id)),
-        "cheapest": lambda t: (t.entry_fee, str(t.id)),
-        "prize": lambda t: (-t.fixed_prize, str(t.id))
-    }.get(sort, lambda t: (t.starts_at, str(t.id)))
-    results.sort(key=sort_key)
-    total = len(results)
+    if sort == "limited":
+        qs = qs.annotate(
+            remaining_slots=F("capacity") - F("registered_count")
+        ).order_by("remaining_slots", "id")
+    elif sort == "cheapest":
+        qs = qs.order_by("entry_fee", "id")
+    elif sort == "prize":
+        qs = qs.order_by("-fixed_prize", "id")
+    else:
+        qs = qs.order_by("starts_at", "id")
+
+    total = qs.count()
     pages = max(1, math.ceil(total / PAGE_SIZE))
     page = min(query.get("page", 1), pages)
-    page_items = results[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]
+    current = list(qs[(page - 1) * PAGE_SIZE:page * PAGE_SIZE])
     active = {
         "verified": query.get("verified", False),
-        "sort": sort, "page": query.get("page", 1)
+        "sort": sort,
+        "page": query.get("page", 1),
     }
     for key in ("game", "city", "date", "status", "format", "price"):
         if query.get(key):
@@ -153,15 +224,15 @@ def discovery(query):
     return {
         "schemaVersion": 1,
         "filters": {
-            "games": list(games.values())[:100],
-            "cities": list(cities.values())[:100]
+            "games": list(games.values()),
+            "cities": list(cities.values()),
         },
         "activeQuery": active,
-        "featuredTournamentId": str(page_items[0].id) if page_items else None,
-        "items": [discovery_item(t) for t in page_items],
+        "featuredTournamentId": str(current[0].id) if current else None,
+        "items": [discovery_item(t) for t in current],
         "pagination": {
-            "currentPage": page, "totalPages": pages, "totalItems": total,
-            "pageSize": PAGE_SIZE
+            "currentPage": page, "totalPages": pages,
+            "totalItems": total, "pageSize": PAGE_SIZE,
         },
     }
 
