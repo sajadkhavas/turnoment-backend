@@ -463,3 +463,51 @@ def test_cross_match_privacy_does_not_leak_results_or_evidence(match, players):
          "statement": "Completely fabricated dispute statement."},
         format="json", HTTP_IDEMPOTENCY_KEY="other-dispute-123",
     ).status_code == 404
+
+@pytest.mark.django_db
+def test_match_source_replay_rejects_changed_schedule_and_snapshots(players):
+    a, b, _ = players
+    baseline = {
+        "source_kind": "challenge",
+        "source_id": "immutable-source-1",
+        "participant_a": a,
+        "participant_b": b,
+        "game_id": "fc",
+        "game_name": "EA FC",
+        "competition_title": "Free challenge",
+        "starts_at": timezone.now(),
+        "venue_name": "Venue A",
+    }
+    first = create_match_for_source(**baseline)
+    assert create_match_for_source(**baseline).pk == first.pk
+    for changes in (
+        {"starts_at": baseline["starts_at"] + timedelta(hours=1)},
+        {"game_name": "Not the same game"},
+        {"competition_title": "Other challenge"},
+        {"venue_name": "Venue B"},
+    ):
+        with pytest.raises(ValidationError, match="different match"):
+            create_match_for_source(**{**baseline, **changes})
+    assert Match.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_dispute_replay_with_non_string_statement_is_controlled_validation(match, players):
+    from apps.disputes.services import create_dispute
+
+    a, b, _ = players
+    submit_score(match.pk, a, str(match.revision), 3, 1, "score-valid-replay")
+    match.refresh_from_db()
+    revision = str(match.revision)
+    existing = create_dispute(
+        match.pk, b, revision, "incorrect-score",
+        "The opponent reported the wrong game score.", "dispute-replay-unique"
+    )
+    assert existing["outcome"] == "accepted"
+    for malformed in (None, [], {}, 42):
+        repeated = create_dispute(
+            match.pk, b, revision, "incorrect-score",
+            malformed, "dispute-replay-unique"
+        )
+        assert repeated["outcome"] == "validation_error"
+    assert Dispute.objects.count() == 1
