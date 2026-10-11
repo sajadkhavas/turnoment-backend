@@ -387,3 +387,59 @@ def test_racing_accept_and_decline_only_one_transition(players, provider, monkey
     challenge = Challenge.objects.get(pk=cid)
     assert challenge.state in {Challenge.State.ACCEPTED, Challenge.State.DECLINED}
     assert creator.call_count == (1 if challenge.state == Challenge.State.ACCEPTED else 0)
+
+
+@pytest.mark.django_db
+def test_create_idempotency_replays_after_opponent_becomes_inactive(players, provider):
+    first, second, _ = players
+    client = api(first)
+    original = create(client, second)
+    assert original.status_code == 200
+    second.is_active = False
+    second.save(update_fields=["is_active"])
+    replay = create(client, second)
+    assert replay.status_code == 200
+    assert replay.data == original.data
+    assert Challenge.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_match_finalization_cannot_precede_acceptance(players, provider):
+    first, second, _ = players
+    issued = create(api(first), second)
+    with pytest.raises(ValueError, match="not bound"):
+        services.record_finalized_match(
+            issued.data["challengeId"], "unrelated-match",
+            challenger_outcome="win", score_label="1 - 0",
+        )
+    challenge = Challenge.objects.get(pk=issued.data["challengeId"])
+    assert challenge.state == Challenge.State.PENDING
+    assert challenge.final_outcome == ""
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_accept_and_cancel_cannot_both_win(players, provider, monkeypatch):
+    first, second, _ = players
+    issued = create(api(first), second)
+    cid, revision = issued.data["challengeId"], issued.data["revision"]
+    creator = Mock(return_value="match-race-safe")
+    monkeypatch.setattr(integrations, "create_match_for_challenge", creator)
+    barrier = threading.Barrier(2)
+
+    def attempt(user, action, key):
+        def work():
+            barrier.wait(timeout=15)
+            if action == "accept":
+                return respond(api(user), cid, revision, action, key).status_code
+            return cancel(api(user), cid, revision, key).status_code
+
+        return threaded_attempt(work)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a = pool.submit(attempt, second, "accept", "b07-accept-cancel-race-a")
+        b = pool.submit(attempt, first, "cancel", "b07-accept-cancel-race-b")
+        codes = sorted([a.result(timeout=30), b.result(timeout=30)])
+    assert codes == [200, 409]
+    challenge = Challenge.objects.get(pk=cid)
+    assert challenge.state in {Challenge.State.ACCEPTED, Challenge.State.CANCELLED}
+    assert creator.call_count == (1 if challenge.state == Challenge.State.ACCEPTED else 0)
