@@ -105,7 +105,8 @@ class OtpRequestState(models.Model):
 
 
 class NotificationPreference(models.Model):
-    """Owner-only preferences; mandatory operational notices cannot be disabled."""
+    """Owner-only operational notification preferences; required types stay enabled."""
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
         related_name="notification_preference",
