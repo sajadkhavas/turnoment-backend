@@ -12,4 +12,5 @@ urlpatterns = [
     path("api/v1/", include("apps.games.api.urls", namespace="games")),
     path("api/v1/", include("apps.rulesets.api.urls", namespace="rulesets")),
     path("api/v1/", include("apps.gaming_centers.api.urls", namespace="gaming_centers")),
+    path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
 ]
