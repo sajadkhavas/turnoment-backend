@@ -119,3 +119,128 @@ Decision:
 ### Closeout verification
 
 Re-reviewed 2026-09-06 after implementation and before freeze against the official Django 6.1 and DRF documentation above. No architecture deviation or source conflict was found. The P01 implementation remains aligned with the documented custom-user timing requirement, Django session/CSRF behavior, DRF same-session AJAX guidance, and DRF's warning not to use application throttling as a brute-force security boundary.
+---
+
+## B01 — Core Contract & Integration Foundation
+
+Reviewed 2026-10-11 for Issue #47 / PR #59 against frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+### Django 6.1 / PostgreSQL transaction and constraint primitives
+
+- Transactions and nested `atomic()`: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL explicit locking: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+
+- Producers record a durable domain event in the same outer transaction as the authoritative business transition. Nested `atomic()` does not independently commit an event while the owner rolls back.
+- PostgreSQL uniqueness on `(source, idempotency_key)` prevents duplicate event/audit rows under concurrent insertion. Nonempty event type/action constraints are database enforced.
+- B01 does not claim consumer delivery or immutable/tamper-proof audit storage; B99/B10 own dispatcher operations, and B09 owns per-consumer idempotency.
+
+### Django REST Framework
+
+- Exceptions: https://www.django-rest-framework.org/api-guide/exceptions/
+- Pagination: https://www.django-rest-framework.org/api-guide/pagination/
+- Authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- Permissions: https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+
+- Core exception/pagination helpers are opt-in, not global, to preserve the accepted P01 authentication/response contract.
+- Keep inherited `SessionAuthentication` and `IsAuthenticated` for private APIs. Public routes must make their authentication and permission policies explicit.
+- Domain serializers and output projections must match each precise frontend contract rather than automatically applying one paginator to every endpoint.
+
+### Celery
+
+- Task and retry semantics: https://docs.celeryq.dev/en/stable/userguide/tasks.html
+
+Decision:
+
+- Enqueuing a database outbox row is not notification delivery; publication, retry handling, offsets, and recovery are integration work. Do not publish transaction-sensitive side effects before commit.
+
+Financial execution remains explicitly excluded from B01.
+---
+
+## B03 — Games / Rules / Public Discovery
+
+Reviewed 2026-10-11 for Issue #49 and PR #60, frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+### Django / PostgreSQL
+
+- Constraints and uniqueness: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL text search: https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/search/
+- GIN indexes: https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/indexes/
+- Database migrations: https://docs.djangoproject.com/en/6.1/topics/migrations/
+- PostgreSQL locking and concurrent writes: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+- Published games and policy revisions are served from PostgreSQL rather than mock fixtures.
+- Stable game IDs and slugs are unique. `games_public_search_idx` indexes text search; relational consumers use game PK, not display labels.
+- `Ruleset` is versioned policy text; only one published revision per key is permitted using a partial unique constraint.
+- A maximum of 100 catalog items matches the frozen v1 frontend contract. Overflow returns explicit 503 until a separately approved pagination contract exists.
+- Tournament/center/ranking counts and projections require B04/B05/B09 authoritative data, not fabricated values. Their B03 integration seams remain a tracked B99 responsibility.
+
+### DRF
+
+- Authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- Permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- APIViews: https://www.django-rest-framework.org/api-guide/views/
+- Validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Public catalog/detail/rules/discovery endpoints explicitly set `AllowAny`; they offer GET only and preserve private P01 defaults.
+- Read projections must match the exact frontend schema; games do not own tournament registration, center staff or ranked-match decisions.
+- Financial execution added: NO.
+
+---
+
+## B04 — Gaming Centers / Host / Resources
+
+Reviewed 2026-10-11 against the frozen frontend contract
+`sajadkhavas/turnoment@1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+- Django constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializers: https://www.django-rest-framework.org/api-guide/serializers/
+- DRF throttling: https://www.django-rest-framework.org/api-guide/throttling/
+
+Decisions: center scope is checked per object, with no mapping to Django is_staff.
+Anonymous acquisition uses an explicit no-session authentication policy to avoid cookie-dependent
+CSRF behavior, with persistent transactional hourly admission buckets. DB constraints protect
+repeat memberships, station codes, resource labels, duplicate host submissions and public gallery
+positions. Rate buckets use row locks; duplicate identical 15-minute submissions return the same
+receipt. DRF cache throttles are not represented as complete abuse/DoS prevention. Public
+visibility requires publication and explicit contact/address/map consent. Financial execution is
+not implemented; B05 and B10 integration seams are documented in
+`docs/B04_GAMING_CENTERS_HANDOFF.md`.
+
+---
+
+## B05 — Tournament registration / PostgreSQL race protection (2026-10-11)
+
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — commit capacity + registration together in a short atomic transaction.
+- Django 6.1 querysets: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update — lock the parent tournament before duplicate/capacity checks.
+- Django 6.1 constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — use DB check/unique constraints as backstop.
+- DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — retain SessionAuthentication and CSRF on authenticated mutation endpoints.
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — public reads explicitly AllowAny with independent authentication_classes.
+- PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html — serialize competitors for the final available slot.
+
+---
+
+## B06 — Teams / Membership / Nonfinancial Achievements (2026-10-11)
+
+- Django 6.1 constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — partial unique constraints prevent duplicate member rows, simultaneous captains and outstanding duplicate invitations; a per-team captain's existence remains a transactional service invariant.
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — membership plus invitation transitions are atomic, including captain swap and increment/event persistence.
+- Django 6.1 query locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update — lock the parent team or user consistently to serialize concurrent competing writes.
+- PostgreSQL explicit locking: https://www.postgresql.org/docs/current/explicit-locking.html — row locks serialize acceptance/transfer and replay without unsafe in-memory locks.
+- DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — inherit P01 SessionAuthentication; no anonymous mutation override or token-auth bypass.
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — private team/achievement API uses IsAuthenticated; captain and invite-recipient permissions enforced in domain services, never through client role claims.
+- DRF serializers: https://www.django-rest-framework.org/api-guide/serializers/ — validate create/invite/transfer inputs, strict fields and UUIDs at boundary.
+
+Decision: private F14/F13 projections exactly follow frontend SHA
+`1668109bae5ec7abb5e022e5857ffa65cc131501`.
+No public roster, participant finance, gamified currency or achievements self-claim surface.
+B05 eligibility is an opt-in read-only seam; actual team registration rules remain integration-owned.

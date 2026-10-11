@@ -27,6 +27,132 @@ B00 does not alter the frozen completion evidence for P00/P01. Runtime domain im
 
 ---
 
+## B01 — Core Contract & Integration Foundation
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS` (this registry snapshot precedes the terminal closeout merge and CI).
+
+- Tracking Issue: `#47`
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`
+- Frozen frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Implementation branch: `phase/b01-core-contract-integration`
+- Agent implementation END_SHA: `cbb6e5b7dbad3ab3130882c0079c9f40654724e6`
+- Final reviewed implementation HEAD: `91dd280dc5b7355e0c7f557de0bee29e56547061`
+- Source-audit correction: `docs/OFFICIAL_SOURCES.md` amended in final reviewed head; official Django 6.1 links aligned.
+- Implementation PR: `#59` — MERGED with exact expected-head lock
+- Exact-head push CI: `38144471947` — PASS Python 3.12 / 3.14
+- Exact-head PR-context CI: `38144474605` — PASS Python 3.12 / 3.14
+- Open unresolved PR review threads at merge: `0`
+- Implementation merge/main SHA: `f0e1cc898d7d6170c9d54062a27dd681a962bd23`
+- Post-implementation main CI: `38144591828` — PASS Python 3.12 / 3.14
+- Closeout branch: `closeout/b01-core-contract-freeze`
+- Closeout PR: `#66` — opened for documentation-only closeout; final closeout merge SHA and post-main CI will be recorded in Issue #47.
+- Scope: stable identifiers, opt-in DRF error/pagination helpers, persistent audit/event outbox primitives, PostgreSQL uniqueness checks, idempotency/rollback tests; preserved P01 auth and CSRF. No new public endpoints.
+- Financial execution added: `NO`.
+- Integration dependencies: B99/B10 own outbox dispatch/retry/consumer registration; B09 owns exactly-once ranking consumer effects; B99 owns any system/meta frontend SHA migration.
+
+B01 is not terminally `DONE` until closeout PR merges, post-closeout `main` CI passes, and Issue #47 records exact terminal evidence.
+
+
+---
+
+## B03 — Games / Rules / Public Discovery
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final CI belong in Issue #49 after merge.
+
+- Issue: `#49`
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`
+- Final frontend contract: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Implementation branch: `phase/b03-games-rules-discovery`
+- Agent END_SHA: `ed3eff7f645a4445dc763ed377dbf4637170949e`
+- Final reviewed/integrated branch SHA: `d0399979e0b59503a10793573fb6d8f6d30f1fda`
+- Implementation PR: `#60`, MERGED with exact-head lock; unresolved review threads: `0`
+- Agent push/PR CI: `38144073264` and `38144076340` PASS.
+- Integrated head push/PR CI: `38147439081` and `38147443017` PASS on Python 3.12 / 3.14.
+- Implementation merge/main SHA: `60bc025bff20476aa56968e0e971dfa043baea84`
+- Post-implementation main CI: `38147536130` PASS Python 3.12 / 3.14.
+- Closeout branch: `closeout/b03-games-rules-freeze`; closeout PR and terminal merge/main CI recorded in Issue #49.
+- Delivered: public game catalog/detail, game-owned Home discovery projection, published rulesets, models/migrations, PostgreSQL search GIN and DB uniqueness, explicit anonymous public permissions.
+- Integration requirements: B05 provides authoritative tournament counts; B04/B05/B09 provide game detail related projections; B99 composes full Home discovery. Existing frontend `/rules` is version-controlled and not silently rewired.
+- B01 shared configuration and official sources were preserved during B03 integration.
+- Financial execution added: `NO`.
+
+B03 domain foundation is accepted; full cross-domain populated public projections are owned by B99, not claimed as delivered by B03.
+
+---
+
+## B04 — Gaming Centers / Host / Resources
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final main CI will be recorded in Issue #50 after merge.
+
+- Tracking Issue: `#50`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`.
+- Frozen frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- Implementation branch: `phase/b04-gaming-centers-host-resources`.
+- Agent END_SHA: `cfc922a900cc0e88a4e2a0af9a425b3b6d36c9d8`.
+- Final reviewed integrated branch SHA: `06e9708de5acae9ee2dbf45807fcd7f299db89e1`.
+- Implementation PR: `#64`, MERGED with exact-head lock; unresolved review threads: `0`.
+- Agent push/PR CI: `38144741463` and `38144744607` PASS.
+- Integrated head push/PR CI: `38148240275` and `38148243914` PASS Python 3.12 / 3.14.
+- Implementation merge/main SHA: `76d153deb72b36c40ae82530c8f26c1dcec1ffcb`.
+- Post-implementation main CI: `38148342124` PASS Python 3.12 / 3.14.
+- Closeout branch: `closeout/b04-gaming-centers-freeze`; closeout PR `#68` and terminal merged SHA/CI will be recorded in Issue #50.
+- Delivered: public centers list/detail, anonymous host application receipts, center-scoped staff/profile/resources/hours APIs, models, migrations, PostgreSQL idempotent rate bucket, admin registration, session-CSRF/privacy/permissions/concurrency tests.
+- Mother-agent repairs: safe B01/B03 shared-file reconciliation without force, reject malformed station equipment identifiers, reject duplicated/unknown center directory filters, add corresponding regression tests, preserve B01/B03 source audit while recording B04.
+- B99 dependency: tournament counts and event lists from B05, moderation and host-application review/retention purge from B10, and integration acceptance of center permissions with B02. No production deployment made.
+- Financial execution added: `NO`.
+
+B04-specific implementation acceptance is recorded; project-wide B99 and center frontend panel acceptance are not claimed here.
+
+---
+
+## B05 — Tournaments / Registration / Check-in / Brackets
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final main CI will be recorded in Issue #51 after merge.
+
+- Tracking Issue: `#51`
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`
+- Frozen frontend contract: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Implementation branch: `phase/b05-tournaments-registration-checkin-brackets`
+- Agent END_SHA: `e0c5beefd12ed1288daca9e6d9d707e0e8d223ab`
+- Mother integrated initial SHA: `22fecc95d322be0029157e138c4817e89f7d1663` (initial lint failed, fixed before acceptance).
+- Final reviewed implementation HEAD: `b5767377bb8df56851890656b8ec9f3d2e8cbc3f`
+- Implementation PR: `#61`, MERGED with exact-head SHA lock; unresolved review threads: `0`.
+- Original agent push/PR CI: `38144112201` and `38144115894` PASS.
+- Final integrated head push/PR CI: `38149554292` and `38149557544` PASS Python 3.12 / 3.14.
+- Implementation merge SHA: `e9a688ee09ea291931c9375efb04d7e2571092bd`
+- Post-implementation main CI: `38149658273` PASS Python 3.12 / 3.14.
+- Closeout branch: `closeout/b05-tournaments-registration-freeze`; closeout PR `#69` and terminal merge SHA/CI documented in Issue #51.
+- Delivery: public tournament discovery/detail, session-authenticated own registration/check-in, free-only retry-safe registration with row-locked PostgreSQL capacity, my-tournaments, lifecycle services, seeded bracket previews and four migrations.
+- Mother corrections: reconciled B01/B03/B04 shared app/URL registrations and official sources, prevented duplicate participant within a bracket round and empty bracket pairs, changed broad tournament discovery reads to bounded-memory ORM/PostgreSQL filtered/paginated querying, and added regression tests.
+- Deliberate cross-domain boundaries: B03 Game and B04 GamingCenter keys remain snapshots pending authoritative B99 validation; B06 owns team membership eligibility hook; B08 owns match/result/finalization; B99 owns public projections, full frontend integration and load testing.
+- Financial execution added: `NO` (paid tournament registration returns `BACKEND_PENDING_FINANCE`; no payment URL/ledger/refund/payout).
+
+B05-owned functionality is complete for phase acceptance. This does **not** claim overall backend acceptance or completed B06/B08/B99 integrations.
+
+---
+
+## B06 — Teams / Membership / Achievements
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Final frozen main SHA and terminal CI are recorded in Issue #52 after this closeout merges.
+
+- Issue: `#52`; frontend lock: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `ffe44e3d999479282115c4bebdb4f33b40f5a598`.
+- Implementation branch: `phase/b06-teams-membership-achievements`.
+- Agent END_SHA / final reviewed head: `192ddb086beb54d5e66fa64edf92cd414f8a3cf3`.
+- Implementation PR: `#71`, merged after exact-head review; unresolved PR review threads: `0`.
+- Pre-merge Push CI `38153556687` PASS Python 3.12/3.14.
+- Pre-merge PR-context CI `38153559138` PASS Python 3.12/3.14.
+- Implementation merge SHA: `a05d705618740c71e222698a1192da99e4954c0a`.
+- Post-implementation main CI `38153933404` PASS Python 3.12/3.14.
+- Closeout branch: `closeout/b06-teams-achievements-freeze`; Closeout PR `#72`, with terminal merge SHA/CI recorded in Issue #52.
+- Delivery: private F14 team hub, team membership/invite/transfer/leave lifecycle with PostgreSQL constraints and row locks, F13 achievements with trusted idempotent progress events, migrations, permission/privacy/CSRF/concurrency tests; no user-exposed monetary rewards.
+- Explicit remaining B99 handoffs: authoritative B05 tournament-specific team registration eligibility and B08/B09 finalized-game events for achievement progress. No claims of full team tournament or team match coverage.
+- Financial execution added: `NO`.
+
+B06 owned scope is frozen, not global backend acceptance.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`

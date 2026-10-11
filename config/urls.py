@@ -12,11 +12,18 @@ urlpatterns = [
     path("health/ready/", ReadyView.as_view(), name="ready"),
     path("api/v1/system/", include("apps.system.api.urls", namespace="system")),
     path("api/v1/", include("apps.accounts.api.urls", namespace="accounts")),
+    path("api/v1/", include("apps.games.api.urls", namespace="games")),
+    path("api/v1/", include("apps.rulesets.api.urls", namespace="rulesets")),
+    path("api/v1/", include("apps.gaming_centers.api.urls", namespace="gaming_centers")),
+    path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
+    path("api/v1/", include("apps.teams.api.urls", namespace="teams")),
+    path("api/v1/", include("apps.achievements.api.urls", namespace="achievements")),
     path("api/v1/me/matches/", MyMatchesView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/", ResultView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/confirm/", ConfirmView.as_view()),
     path("api/v1/matches/<uuid:match_id>/dispute/", DisputeView.as_view()),
     path(
-        "api/v1/matches/<uuid:match_id>/dispute/<uuid:dispute_id>/evidence/", EvidenceView.as_view()
+        "api/v1/matches/<uuid:match_id>/dispute/<uuid:dispute_id>/evidence/",
+        EvidenceView.as_view(),
     ),
 ]
