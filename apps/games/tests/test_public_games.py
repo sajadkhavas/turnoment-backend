@@ -147,3 +147,26 @@ def test_racing_duplicate_slug_is_rejected_at_database_boundary():
         outcomes = list(pool.map(create, [1, 2]))
     assert sorted(outcomes) == ["ok", "rejected"]
     assert Game.objects.filter(slug="tekken-8").count() == 1
+
+
+@pytest.mark.django_db
+def test_b03_schema_migrations_and_postgres_search_index_were_applied():
+    """Prove test DB migrated both owned apps and installed the real PostgreSQL GIN index."""
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT app FROM django_migrations
+            WHERE name = '0001_initial' AND app IN ('games', 'rulesets')
+            ORDER BY app
+            """
+        )
+        assert [row[0] for row in cursor.fetchall()] == ["games", "rulesets"]
+        cursor.execute(
+            """
+            SELECT indexname FROM pg_indexes
+            WHERE tablename = 'games_game' AND indexname = 'games_public_search_idx'
+            """
+        )
+        assert cursor.fetchone() == ("games_public_search_idx",)
