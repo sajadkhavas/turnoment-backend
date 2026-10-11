@@ -119,3 +119,28 @@ Decision:
 ### Closeout verification
 
 Re-reviewed 2026-09-06 after implementation and before freeze against the official Django 6.1 and DRF documentation above. No architecture deviation or source conflict was found. The P01 implementation remains aligned with the documented custom-user timing requirement, Django session/CSRF behavior, DRF same-session AJAX guidance, and DRF's warning not to use application throttling as a brute-force security boundary.
+
+---
+
+## B04 — Gaming Centers / Host / Resources
+
+Reviewed 2026-10-11 against the frozen frontend contract
+`sajadkhavas/turnoment@1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+- Django constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializers: https://www.django-rest-framework.org/api-guide/serializers/
+- DRF throttling: https://www.django-rest-framework.org/api-guide/throttling/
+
+Decisions: center scope is checked per object, with no mapping to Django is_staff.
+Anonymous acquisition uses an explicit no-session authentication policy to avoid cookie-dependent
+CSRF behavior, with persistent transactional hourly admission buckets. DB constraints protect
+repeat memberships, station codes, resource labels, duplicate host submissions and public gallery
+positions. Rate buckets use row locks; duplicate identical 15-minute submissions return the same
+receipt. DRF cache throttles are not represented as complete abuse/DoS prevention. Public
+visibility requires publication and explicit contact/address/map consent. Financial execution is
+not implemented; B05 and B10 integration seams are documented in
+`docs/B04_GAMING_CENTERS_HANDOFF.md`.
