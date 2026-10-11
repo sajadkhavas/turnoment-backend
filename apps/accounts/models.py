@@ -102,3 +102,15 @@ class OtpRequestState(models.Model):
 
     def __str__(self) -> str:
         return self.phone
+
+
+class NotificationPreference(models.Model):
+    """Owner-only preferences; mandatory operational notices cannot be disabled."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="notification_preference",
+    )
+    tournament = models.BooleanField(default=True)
+    match = models.BooleanField(default=True)
+    challenge = models.BooleanField(default=True)
+    revision = models.PositiveIntegerField(default=1)
