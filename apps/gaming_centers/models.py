@@ -54,7 +54,8 @@ class GamingCenter(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["publication_state", "city", "name"], name="center_public_city_idx")
+            models.Index(fields=["publication_state", "city", "name"],
+                name="center_public_city_idx")
         ]
         constraints = [
             models.CheckConstraint(
