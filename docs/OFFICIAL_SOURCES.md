@@ -159,6 +159,38 @@ Decision:
 - Enqueuing a database outbox row is not notification delivery; publication, retry handling, offsets, and recovery are integration work. Do not publish transaction-sensitive side effects before commit.
 
 Financial execution remains explicitly excluded from B01.
+---
+
+## B03 — Games / Rules / Public Discovery
+
+Reviewed 2026-10-11 for Issue #49 and PR #60, frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+
+### Django / PostgreSQL
+
+- Constraints and uniqueness: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL text search: https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/search/
+- GIN indexes: https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/indexes/
+- Database migrations: https://docs.djangoproject.com/en/6.1/topics/migrations/
+- PostgreSQL locking and concurrent writes: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+- Published games and policy revisions are served from PostgreSQL rather than mock fixtures.
+- Stable game IDs and slugs are unique. `games_public_search_idx` indexes text search; relational consumers use game PK, not display labels.
+- `Ruleset` is versioned policy text; only one published revision per key is permitted using a partial unique constraint.
+- A maximum of 100 catalog items matches the frozen v1 frontend contract. Overflow returns explicit 503 until a separately approved pagination contract exists.
+- Tournament/center/ranking counts and projections require B04/B05/B09 authoritative data, not fabricated values. Their B03 integration seams remain a tracked B99 responsibility.
+
+### DRF
+
+- Authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- Permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- APIViews: https://www.django-rest-framework.org/api-guide/views/
+- Validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Public catalog/detail/rules/discovery endpoints explicitly set `AllowAny`; they offer GET only and preserve private P01 defaults.
+- Read projections must match the exact frontend schema; games do not own tournament registration, center staff or ranked-match decisions.
+- Financial execution added: NO.
 
 ---
 

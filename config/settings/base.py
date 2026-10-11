@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.postgres",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -32,6 +33,8 @@ INSTALLED_APPS = [
     "apps.audit.apps.AuditConfig",
     "apps.gaming_centers.apps.GamingCentersConfig",
     "apps.gaming_resources.apps.GamingResourcesConfig",
+    "apps.games.apps.GamesConfig",
+    "apps.rulesets.apps.RulesetsConfig",
     "apps.system.apps.SystemConfig",
 ]
 

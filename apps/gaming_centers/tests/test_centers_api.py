@@ -314,3 +314,27 @@ def test_duplicate_host_submissions_are_atomic_under_concurrency():
     assert len({item.id for item in items}) == 1
     assert HostApplication.objects.count() == 1
     assert HostRateBucket.objects.get().accepted_count == 1
+
+
+@pytest.mark.django_db
+def test_center_directory_rejects_unknown_or_duplicate_filters(center_data):
+    client = APIClient()
+    for query in ("?foo=bar", "?city=karaj&city=tehran", "?page=1&page=2"):
+        response = client.get("/api/v1/centers/" + query)
+        assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_station_create_rejects_malformed_equipment_identifier(center_data):
+    manager = member(center_data, 707, CenterMembership.Role.MANAGER)
+    client = APIClient()
+    client.force_authenticate(manager)
+    endpoint = f"/api/v1/center-admin/centers/{center_data.id}/stations/"
+    for invalid_id in ("bad-uuid", " ", [], {"bad": "uuid"}):
+        response = client.post(
+            endpoint,
+            {"code": "Station-X", "equipmentId": invalid_id},
+            format="json",
+        )
+        assert response.status_code == 400
+    assert center_data.stations.count() == 0

@@ -57,8 +57,13 @@ class CenterDirectoryView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        city = request.query_params.get("city")
-        page_value = request.query_params.get("page", "1")
+        params = request.query_params
+        if set(params) - {"city", "page"} or any(
+            len(params.getlist(key)) != 1 for key in params
+        ):
+            return Response({"query": ["Unknown or duplicate filter."]}, status=400)
+        city = params.get("city")
+        page_value = params.get("page", "1")
         if not re.fullmatch(r"[0-9]{1,9}", page_value) or int(page_value) < 1:
             return Response({"page": ["Must be a positive integer."]}, status=400)
         if city is not None and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", city):
@@ -302,7 +307,11 @@ class CenterStationView(APIView):
         code = request.data.get("code")
         if not isinstance(code, str) or not 1 <= len(code.strip()) <= 40:
             return Response({"code": ["Invalid code."]}, status=400)
-        equipment = get_object_or_404(Equipment, pk=request.data["equipmentId"], center=center)
+        try:
+            equipment_id = uuid.UUID(str(request.data["equipmentId"]))
+        except (ValueError, TypeError, AttributeError):
+            return Response({"equipmentId": ["Invalid identifier."]}, status=400)
+        equipment = get_object_or_404(Equipment, pk=equipment_id, center=center)
         if center.stations.filter(code=code.strip()).exists():
             return Response({"detail": "Duplicate station."}, status=409)
         station = Station.objects.create(center=center, equipment=equipment, code=code.strip())
