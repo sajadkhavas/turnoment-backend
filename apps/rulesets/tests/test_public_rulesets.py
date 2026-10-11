@@ -1,11 +1,9 @@
 import pytest
-
 from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.games.models import Game
 from apps.rulesets.models import Ruleset
-
 
 SECTIONS = [{
     "id": "fair-play",

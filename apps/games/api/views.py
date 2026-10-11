@@ -38,7 +38,6 @@ class GameCatalogView(PublicGameAPIView):
             ):
                 raise ValidationError({param: "Invalid filter value."})
             value = raw.strip()
-                raise ValidationError({param: "Invalid filter value."})
             filters[param] = value
         for key in ("slug", "gameId"):
             pattern = r"[a-z0-9]+(?:-[a-z0-9]+)*" if key == "slug" else r"[A-Za-z0-9_-]{1,128}"
