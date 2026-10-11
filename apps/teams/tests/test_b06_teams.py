@@ -240,3 +240,15 @@ def test_concurrent_accept_replay_and_one_captain():
         assert list(pool.map(run, range(2))) == ["accepted", "accepted"]
     assert TeamMembership.objects.filter(team=team, user=guest).count() == 1
     assert TeamMembership.objects.filter(team=team, role="captain").count() == 1
+
+@pytest.mark.django_db
+def test_platform_admin_cannot_mutate_team_membership_outside_services():
+    from django.contrib import admin
+
+    from apps.teams.admin import TeamAdmin, TeamInviteAdmin, TeamMembershipAdmin
+
+    for cls in (TeamAdmin, TeamMembershipAdmin, TeamInviteAdmin):
+        instance = cls(cls.model, admin.site)
+        assert instance.has_add_permission(None) is False
+        assert instance.has_change_permission(None) is False
+        assert instance.has_delete_permission(None) is False
