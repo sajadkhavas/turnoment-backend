@@ -1,7 +1,14 @@
+import re
 import uuid
 
 from django.conf import settings
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
+from django.core.validators import (
+    MaxLengthValidator,
+    MaxValueValidator,
+    MinLengthValidator,
+    MinValueValidator,
+)
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -34,8 +41,10 @@ class GamingCenter(models.Model):
     verified = models.BooleanField(default=False)
     city = models.ForeignKey(City, on_delete=models.PROTECT, related_name="centers")
     district = models.CharField(max_length=240)
-    summary = models.CharField(max_length=420)
-    description = models.TextField()
+    summary = models.CharField(max_length=420, validators=[MinLengthValidator(20)])
+    description = models.TextField(
+        validators=[MinLengthValidator(40), MaxLengthValidator(1800)]
+    )
     cover_image = models.URLField(max_length=2048, blank=True)
     street_address = models.CharField(max_length=400, blank=True)
     address_locality = models.CharField(max_length=240, blank=True)
@@ -64,6 +73,22 @@ class GamingCenter(models.Model):
                 name="center_nonnegative_tournament_count",
             )
         ]
+
+    def clean(self):
+        super().clean()
+        if self.show_phone and not re.fullmatch(
+            r"\\+?[0-9۰-۹٠-٩ ()-]{7,32}", self.business_phone
+        ):
+            raise ValidationError({"business_phone": "A valid public business phone is required."})
+        if self.show_address and (
+            len(self.street_address.strip()) < 3
+            or not self.address_locality.strip()
+            or len(self.display_address.strip()) < 5
+            or (self.postal_code and len(self.postal_code.strip()) < 3)
+        ):
+            raise ValidationError({"show_address": "Complete address is required for publication."})
+        if self.show_map and not self.map_url:
+            raise ValidationError({"map_url": "A public map URL is required."})
 
     def __str__(self):
         return self.name
