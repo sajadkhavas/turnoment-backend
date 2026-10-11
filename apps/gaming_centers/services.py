@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import json
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -31,8 +31,8 @@ def receive_host_application(validated_data, remote_addr):
     now = timezone.now()
     hour_epoch = int(now.timestamp()) // 3600 * 3600
     replay_epoch = int(now.timestamp()) // HOST_WINDOW_SECONDS * HOST_WINDOW_SECONDS
-    hour_start = datetime.fromtimestamp(hour_epoch, tz=dt_timezone.utc)
-    replay_start = datetime.fromtimestamp(replay_epoch, tz=dt_timezone.utc)
+    hour_start = datetime.fromtimestamp(hour_epoch, tz=UTC)
+    replay_start = datetime.fromtimestamp(replay_epoch, tz=UTC)
     fingerprint = _secret_hash(json.dumps(validated_data, sort_keys=True, ensure_ascii=False))
     bucket, _ = HostRateBucket.objects.get_or_create(key=key, hour_start=hour_start)
     bucket = HostRateBucket.objects.select_for_update().get(pk=bucket.pk)
