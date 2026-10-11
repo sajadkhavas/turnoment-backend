@@ -27,9 +27,16 @@ def create_dispute(match_id, user, revision, reason, statement, key):
         if (
             existing.created_by_id == user.pk
             and existing.idempotency_key == key
-            and (existing.reason != reason or existing.statement != statement.strip())
+            and (
+                existing.reason != reason
+                or not isinstance(statement, str)
+                or existing.statement != statement.strip()
+            )
         ):
-            return {"outcome": "validation_error", "fields": {"form": "Idempotency key conflict"}}
+            return {
+                "outcome": "validation_error",
+                "fields": {"form": "Idempotency key conflict"},
+            }
         return {
             "outcome": "already_open",
             "matchId": str(match.pk),
