@@ -253,3 +253,66 @@ def test_concurrent_duplicate_delivery_is_one_rating_effect(competitive_setup):
     assert len({pk for pk, _ in results}) == 1
     assert AppliedMatchEvent.objects.count() == 1
     assert PlayerRating.objects.filter(played=1).count() == 2
+
+@pytest.mark.django_db
+def test_real_b08_match_result_finalization_updates_b09_exactly_once(competitive_setup):
+    from apps.matches.services import advance_match, create_match_for_source
+    from apps.rankings.services import apply_b08_event, drain_b08_events
+    from apps.results.models import FinalizedResultEvent
+
+    game, _, _, users = competitive_setup
+    first, second = users[:2]
+    match = create_match_for_source(
+        source_kind="challenge",
+        source_id="real-finalization-cross-app-1",
+        participant_a=first,
+        participant_b=second,
+        game_id=game.pk,
+        game_name=game.name,
+        competition_title="In-person nonfinancial challenge",
+        starts_at=timezone.now(),
+    )
+    advance_match(match.pk, "ready")
+    advance_match(match.pk, "awaiting-result")
+    first_client = APIClient()
+    second_client = APIClient()
+    first_client.force_authenticate(user=first)
+    second_client.force_authenticate(user=second)
+    url = f"/api/v1/matches/{match.pk}/result/"
+    first_view = first_client.get(url)
+    assert first_view.status_code == 200
+    command = {
+        "revision": first_view.data["revision"],
+        "playerScore": 4,
+        "opponentScore": 2,
+    }
+    submitted = first_client.post(
+        url, command, format="json", HTTP_IDEMPOTENCY_KEY="cross-b08-b09-score-1"
+    )
+    assert submitted.status_code == 200
+    assert submitted.data["outcome"] == "accepted"
+    second_view = second_client.get(url)
+    confirm = second_client.post(
+        url + "confirm/",
+        {
+            "revision": second_view.data["revision"],
+            "playerScore": 2,
+            "opponentScore": 4,
+        },
+        format="json",
+    )
+    assert confirm.status_code == 200
+    assert confirm.data["outcome"] == "finalized"
+    source = FinalizedResultEvent.objects.get(match_id=match.pk)
+    assert str(source.pk) == confirm.data["eventId"]
+    first_receipt, applied = apply_b08_event(source.pk)
+    assert applied
+    repeated, applied = apply_b08_event(source.pk)
+    assert not applied and repeated.pk == first_receipt.pk
+    assert drain_b08_events() == 0
+    assert AppliedMatchEvent.objects.filter(source_match_id=match.pk).count() == 1
+    alpha = PlayerRating.objects.get(user=first, kind="challenge")
+    bravo = PlayerRating.objects.get(user=second, kind="challenge")
+    assert (alpha.rating, alpha.played, alpha.wins) == (1016, 1, 1)
+    assert (bravo.rating, bravo.played, bravo.losses) == (984, 1, 1)
+    assert not PlayerRating.objects.filter(kind="tournament").exists()
