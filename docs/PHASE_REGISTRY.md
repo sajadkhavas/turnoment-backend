@@ -45,7 +45,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS` (this registry snapshot p
 - Implementation merge/main SHA: `f0e1cc898d7d6170c9d54062a27dd681a962bd23`
 - Post-implementation main CI: `38144591828` — PASS Python 3.12 / 3.14
 - Closeout branch: `closeout/b01-core-contract-freeze`
-- Closeout PR: pending at the time of this initial registry snapshot; the live Issue #47 records terminal closeout SHA and CI after merge.
+- Closeout PR: `#66` — opened for documentation-only closeout; final closeout merge SHA and post-main CI will be recorded in Issue #47.
 - Scope: stable identifiers, opt-in DRF error/pagination helpers, persistent audit/event outbox primitives, PostgreSQL uniqueness checks, idempotency/rollback tests; preserved P01 auth and CSRF. No new public endpoints.
 - Financial execution added: `NO`.
 - Integration dependencies: B99/B10 own outbox dispatch/retry/consumer registration; B09 owns exactly-once ranking consumer effects; B99 owns any system/meta frontend SHA migration.
