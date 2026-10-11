@@ -1,8 +1,14 @@
 from django.urls import path
 
 from .views import (
-    CenterDetailView, CenterDirectoryView, CenterEquipmentView, CenterOpeningHoursView,
-    CenterProfileView, CenterStaffDetailView, CenterStaffView, CenterStationView,
+    CenterDetailView,
+    CenterDirectoryView,
+    CenterEquipmentView,
+    CenterOpeningHoursView,
+    CenterProfileView,
+    CenterStaffDetailView,
+    CenterStaffView,
+    CenterStationView,
     HostApplicationView,
 )
 
