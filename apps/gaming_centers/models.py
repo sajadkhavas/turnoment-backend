@@ -59,7 +59,8 @@ class GamingCenter(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                condition=Q(upcoming_tournament_count__gte=0) | Q(upcoming_tournament_count__isnull=True),
+                condition=(Q(upcoming_tournament_count__gte=0)
+                           | Q(upcoming_tournament_count__isnull=True)),
                 name="center_nonnegative_tournament_count",
             )
         ]
