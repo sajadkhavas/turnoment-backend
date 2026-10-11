@@ -32,10 +32,17 @@ class Migration(migrations.Migration):
                 )),
             ],
             options={
-                "indexes": [models.Index(\n                    fields=["subject_type", "subject_id", "created_at"],\n                    name="audit_subject_idx",\n                )],
+                "indexes": [models.Index(
+                    fields=["subject_type", "subject_id", "created_at"],
+                    name="audit_subject_idx",
+                )],
                 "constraints": [
-                    models.UniqueConstraint(\n                        fields=("source", "idempotency_key"), name="audit_source_key_once",\n                    ),
-                    models.CheckConstraint(\n                        condition=~models.Q(action=""), name="audit_action_nonempty",\n                    ),
+                    models.UniqueConstraint(
+                        fields=("source", "idempotency_key"), name="audit_source_key_once",
+                    ),
+                    models.CheckConstraint(
+                        condition=~models.Q(action=""), name="audit_action_nonempty",
+                    ),
                 ],
             },
         ),
@@ -54,10 +61,17 @@ class Migration(migrations.Migration):
                 ("occurred_at", models.DateTimeField(auto_now_add=True, db_index=True)),
             ],
             options={
-                "indexes": [models.Index(\n                    fields=["subject_type", "subject_id", "occurred_at"],\n                    name="event_subject_idx",\n                )],
+                "indexes": [models.Index(
+                    fields=["subject_type", "subject_id", "occurred_at"],
+                    name="event_subject_idx",
+                )],
                 "constraints": [
-                    models.UniqueConstraint(\n                        fields=("source", "idempotency_key"), name="event_source_key_once",\n                    ),
-                    models.CheckConstraint(\n                        condition=~models.Q(event_type=""), name="event_type_nonempty",\n                    ),
+                    models.UniqueConstraint(
+                        fields=("source", "idempotency_key"), name="event_source_key_once",
+                    ),
+                    models.CheckConstraint(
+                        condition=~models.Q(event_type=""), name="event_type_nonempty",
+                    ),
                 ],
             },
         ),
