@@ -85,10 +85,6 @@ def create_challenge(actor, key, payload):
         if not access(actor)["canCreate"]:
             return {"outcome": "unavailable", "message": "Challenge access unavailable."}
         opponent = next((u for u in users if u.pk != actor.pk), None)
-        if opponent is None or not integrations.opponent_eligible(
-            actor, opponent, payload["gameId"]
-        ):
-            return {"outcome": "unavailable", "message": "Opponent is not eligible."}
         game = next(
             (g for g in integrations.creation_games(actor) if g.game_id == payload["gameId"]),
             None,
@@ -100,6 +96,10 @@ def create_challenge(actor, key, payload):
         )
         if match_format is None:
             return {"outcome": "validation_error", "fields": {"format": "Invalid format."}}
+        if opponent is None or not integrations.opponent_eligible(
+            actor, opponent, payload["gameId"]
+        ):
+            return {"outcome": "unavailable", "message": "Opponent is not eligible."}
         now = timezone.now()
         for old in Challenge.objects.select_for_update().filter(
             pair_low=pair[0], pair_high=pair[1],
