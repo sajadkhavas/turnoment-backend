@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     "apps.gaming_centers.apps.GamingCentersConfig",
     "apps.gaming_resources.apps.GamingResourcesConfig",
     "apps.tournaments.apps.TournamentsConfig",
+    "apps.teams.apps.TeamsConfig",
+    "apps.achievements.apps.AchievementsConfig",
     "apps.registrations.apps.RegistrationsConfig",
     "apps.checkins.apps.CheckinsConfig",
     "apps.brackets.apps.BracketsConfig",
