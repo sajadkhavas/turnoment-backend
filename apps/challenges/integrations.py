@@ -38,7 +38,24 @@ def player_challenge_stats(user) -> PlayerChallengeStats:
 
 
 def creation_games(user) -> tuple[GameChoice, ...]:
-    return ()
+    """Offer only published B03 games with solo-compatible formats.
+
+    Exposing a game never bypasses the finalized-match eligibility gate.
+    """
+    from apps.games.selectors import published_games
+
+    if not user.is_active:
+        return ()
+    choices = []
+    for game in published_games().prefetch_related("competitive_formats")[:100]:
+        formats = tuple(
+            FormatChoice(format_id=fmt.key, label=fmt.label)
+            for fmt in game.competitive_formats.all()
+            if fmt.team_size in (None, 1)
+        )
+        if formats:
+            choices.append(GameChoice(game_id=game.pk, name=game.name, formats=formats))
+    return tuple(choices)
 
 
 def opponent_eligible(challenger, opponent, game_id: str) -> bool:
