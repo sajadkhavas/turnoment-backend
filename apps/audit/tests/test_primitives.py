@@ -8,7 +8,6 @@ from apps.accounts.models import User
 from apps.audit.models import AuditRecord, DomainEvent
 from apps.audit.services import IdempotencyConflict, emit_event, record_audit
 
-
 ARGS = dict(
     source="matches", event_type="match.finalized", subject_type="match",
     subject_id="match_123", idempotency_key="matchfinal_12345678",
