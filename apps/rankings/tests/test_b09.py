@@ -158,6 +158,9 @@ def test_public_leaderboard_ordering_and_strict_schema_privacy(competitive_setup
     assert client.get(url + "&game=not-a-game").status_code == 400
     assert client.get(url + "&page=0").status_code == 400
     assert client.get(url + "&page=999").status_code == 404
+    assert client.get(url + "&page=1&page=2").status_code == 400
+    assert client.get(url + "&type=tournament&type=challenge").status_code == 400
+    assert client.get(url + "&unexpected=ignored").status_code == 400
     identity = PublicRankingIdentity.objects.get(user=users[0])
     identity.is_published = False
     identity.save(update_fields=["is_published"])
