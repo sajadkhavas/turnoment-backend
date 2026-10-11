@@ -247,6 +247,26 @@ B05 eligibility is an opt-in read-only seam; actual team registration rules rema
 
 ---
 
+## B08 — Matches / Results / Disputes (2026-10-11)
+
+Authoritative implementation references:
+- Django 6.1 transaction and transaction.atomic: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- QuerySet.select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Unique and check constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- DRF authentication/CSRF: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF parsers and file upload handling: https://www.django-rest-framework.org/api-guide/parsers/
+- PostgreSQL transaction row locks: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+- Each authoritative source (tournament or challenge ID) has exactly one Match. Idempotent repeat can return the original only when participants, game, competition, scheduled start and provided snapshots match; conflicting replay fails closed.
+- Result confirmation/finalization locks the Match row, checks real opponent identity and creates one durable FinalizedResultEvent. B09 consumes it with a separate exactly-once receipt; neither consumer nor Celery decides primary match truth.
+- Evidence upload is private quarantined binary data without public URL; signature and 5MiB limits are not malware scanning. Admin review and private evidence delivery require an explicitly approved secure operational pipeline.
+- Match lifecycle has required starts_at in the frozen frontend F05 result contract; F15 challenge creation contains no venue/date/time, so B07 acceptance cannot truthfully schedule its Match until B99 defines the policy. Never substitute a fabricated clock time.
+- Only authenticated participants see private result/dispute/evidence metadata. Center staff must not inherit central dispute resolution authority.
+- Financial execution added: NO.
+
+---
+
 ## B09 — Rankings / Stats / Rivalries (2026-10-11)
 
 Official references:
