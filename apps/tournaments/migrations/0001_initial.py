@@ -13,7 +13,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Tournament",
             fields=[
-                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("id", models.UUIDField(
+                    default=uuid.uuid4, editable=False, primary_key=True,
+                    serialize=False
+                )),
                 ("slug", models.SlugField(max_length=128, unique=True)),
                 ("title", models.CharField(max_length=240)),
                 ("description", models.TextField()),
@@ -36,7 +39,8 @@ class Migration(migrations.Migration):
                 ("display_time", models.CharField(max_length=120)),
                 ("lifecycle", models.CharField(
                     choices=[("registration_open", "Registration open"), ("filling", "Filling"),
-                             ("registration_closed", "Registration closed"), ("upcoming", "Upcoming"),
+                             ("registration_closed", "Registration closed"),
+                             ("upcoming", "Upcoming"),
                              ("check_in", "Check-in"), ("in_progress", "In progress"),
                              ("completed", "Completed"), ("cancelled", "Cancelled")],
                     default="upcoming", max_length=24
@@ -46,7 +50,9 @@ class Migration(migrations.Migration):
                 ("mode", models.CharField(choices=[("solo", "Solo"), ("team", "Team")],
                                           default="solo", max_length=8)),
                 ("format_label", models.CharField(default="1v1", max_length=100)),
-                ("bracket_format_label", models.CharField(default="Single elimination", max_length=100)),
+                ("bracket_format_label", models.CharField(
+                    default="Single elimination", max_length=100
+                )),
                 ("ruleset_key", models.CharField(default="standard", max_length=128)),
                 ("rules_version", models.CharField(default="1", max_length=60)),
                 ("rules", models.JSONField(blank=True, default=list)),
@@ -58,7 +64,9 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["starts_at", "id"],
                 "constraints": [
-                    models.CheckConstraint(condition=Q(capacity__gt=0), name="b05_capacity_positive"),
+                    models.CheckConstraint(
+                        condition=Q(capacity__gt=0), name="b05_capacity_positive"
+                    ),
                     models.CheckConstraint(
                         condition=Q(registered_count__lte=F("capacity")),
                         name="b05_capacity_bound"

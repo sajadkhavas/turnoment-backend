@@ -1,7 +1,7 @@
 import uuid
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -12,7 +12,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="BracketRound",
             fields=[
-                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("id", models.UUIDField(
+                    default=uuid.uuid4, editable=False, primary_key=True,
+                    serialize=False
+                )),
                 ("number", models.PositiveSmallIntegerField()),
                 ("title", models.CharField(max_length=100)),
                 ("tournament", models.ForeignKey(
@@ -30,7 +33,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="BracketMatch",
             fields=[
-                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("id", models.UUIDField(
+                    default=uuid.uuid4, editable=False, primary_key=True,
+                    serialize=False
+                )),
                 ("position", models.PositiveSmallIntegerField()),
                 ("label", models.CharField(max_length=100)),
                 ("state", models.CharField(
