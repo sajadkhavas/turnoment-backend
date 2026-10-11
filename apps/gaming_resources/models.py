@@ -75,7 +75,9 @@ class GalleryImage(models.Model):
     class Meta:
         ordering = ["position"]
         constraints = [
-            models.UniqueConstraint(fields=["center", "image_url"], name="center_gallery_url_unique"),
-            models.UniqueConstraint(fields=["center", "position"], name="center_gallery_pos_unique"),
+            models.UniqueConstraint(fields=["center", "image_url"],
+                name="center_gallery_url_unique"),
+            models.UniqueConstraint(fields=["center", "position"],
+                name="center_gallery_pos_unique"),
             models.CheckConstraint(condition=Q(position__lte=7), name="center_gallery_pos_range"),
         ]
