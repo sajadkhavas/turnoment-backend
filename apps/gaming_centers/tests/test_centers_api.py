@@ -3,7 +3,7 @@ from datetime import time
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, connection, transaction
+from django.db import IntegrityError, connections, transaction
 from rest_framework.test import APIClient
 
 from apps.gaming_centers.models import (
@@ -302,9 +302,15 @@ def test_duplicate_host_submissions_are_atomic_under_concurrency():
 
     valid = dict(HOST_PAYLOAD)
     valid["phone"] = normalize_iran_mobile(valid["phone"])
+    def submit(_):
+        try:
+            return receive_host_application(valid, "127.0.0.55")
+        finally:
+            # Closing each worker's Django connection prevents test-DB teardown leakage.
+            connections.close_all()
+
     with ThreadPoolExecutor(max_workers=5) as pool:
-        items = list(pool.map(lambda _: receive_host_application(valid, "127.0.0.55"), range(5)))
+        items = list(pool.map(submit, range(5)))
     assert len({item.id for item in items}) == 1
     assert HostApplication.objects.count() == 1
     assert HostRateBucket.objects.get().accepted_count == 1
-    connection.close()
