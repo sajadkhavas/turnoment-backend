@@ -13,10 +13,15 @@ from apps.accounts.models import PlayerProfile, User
 from apps.games.models import Game
 from apps.gaming_centers.models import City
 from apps.rankings.models import (
-    AppliedMatchEvent, PlayerRating, PublicRankingIdentity, Season,
+    AppliedMatchEvent,
+    PlayerRating,
+    PublicRankingIdentity,
+    Season,
 )
 from apps.rankings.services import (
-    FinalizedInput, apply_verified_finalization, elo_delta,
+    FinalizedInput,
+    apply_verified_finalization,
+    elo_delta,
 )
 
 
@@ -220,12 +225,11 @@ def test_rivalries_are_private_directional_and_never_include_nonfinalized(
 @pytest.mark.django_db
 def test_rating_record_database_constraint_prevents_inconsistent_stats(competitive_setup):
     game, season, _, users = competitive_setup
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            PlayerRating.objects.create(
-                user=users[0], game=game, season=season,
-                kind="tournament", played=3, wins=1,
-            )
+    with pytest.raises(IntegrityError), transaction.atomic():
+        PlayerRating.objects.create(
+            user=users[0], game=game, season=season,
+            kind="tournament", played=3, wins=1,
+        )
 
 
 @pytest.mark.django_db(transaction=True)
