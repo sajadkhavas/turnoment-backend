@@ -36,6 +36,9 @@ def core_exception_handler(exc, context):
             code = "api_error"
     else:
         code = "permission_denied" if response.status_code == 403 else "not_found"
-    detail = response.data.get("detail", "Request failed.") if isinstance(response.data, dict) else "Request failed."
+    detail = (
+        response.data.get("detail", "Request failed.")
+        if isinstance(response.data, dict) else "Request failed."
+    )
     response.data = {"error": {"code": code, "message": str(detail)}}
     return response

@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from uuid import uuid4
 
 import pytest
 from django.db import IntegrityError, connections, transaction
@@ -66,14 +65,12 @@ def test_payload_rejects_private_or_non_json_and_bad_identifier():
 @pytest.mark.django_db
 def test_database_uniqueness_and_nonempty_event_type():
     emit_event(**ARGS)
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
+    with pytest.raises(IntegrityError), transaction.atomic():
             DomainEvent.objects.create(
                 source=ARGS["source"], idempotency_key=ARGS["idempotency_key"],
                 event_type="match.other", subject_type="match", subject_id="match_123",
             )
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
+    with pytest.raises(IntegrityError), transaction.atomic():
             DomainEvent.objects.create(
                 source="results", idempotency_key="otherkey123",
                 event_type="", subject_type="match", subject_id="match_123",
@@ -82,8 +79,7 @@ def test_database_uniqueness_and_nonempty_event_type():
 
 @pytest.mark.django_db
 def test_atomic_rollback_removes_event_and_audit():
-    with pytest.raises(RuntimeError):
-        with transaction.atomic():
+    with pytest.raises(RuntimeError), transaction.atomic():
             emit_event(**ARGS)
             record_audit(
                 source="matches", action="match.finished", subject_type="match",
@@ -115,8 +111,7 @@ def test_audit_uniqueness_at_database_boundary():
         source="results", action="result.created", subject_type="match",
         subject_id="match_1", idempotency_key="auditresult_12345",
     )
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
+    with pytest.raises(IntegrityError), transaction.atomic():
             AuditRecord.objects.create(
                 source="results", action="result.changed", subject_type="match",
                 subject_id="match_1", idempotency_key="auditresult_12345",

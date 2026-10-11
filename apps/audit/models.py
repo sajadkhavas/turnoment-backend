@@ -28,7 +28,9 @@ class AuditRecord(models.Model):
             models.CheckConstraint(condition=~models.Q(action=""), name="audit_action_nonempty"),
         ]
         indexes = [
-            models.Index(fields=["subject_type", "subject_id", "created_at"], name="audit_subject_idx"),
+            models.Index(
+                fields=["subject_type", "subject_id", "created_at"], name="audit_subject_idx",
+            ),
         ]
 
 

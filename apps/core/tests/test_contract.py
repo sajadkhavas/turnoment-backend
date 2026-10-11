@@ -1,19 +1,17 @@
+import pytest
 from django.conf import settings
-from django.test import override_settings
 from django.middleware.csrf import get_token
+from django.test import override_settings
+from django.urls import path
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.test import APIClient
-from django.urls import path
 
 from apps.accounts.models import User
-from apps.core.api.pagination import ContractPagination
 from apps.core.api.views import CoreAPIView, CoreGenericAPIView
 from apps.core.identifiers import public_id, uuid_public_id
 from apps.core.testing import assert_contract_error, session_client
-
-import pytest
 
 
 class SecuredView(CoreAPIView):
@@ -71,7 +69,9 @@ def test_identifier_contract_from_frozen_frontend():
 @pytest.mark.django_db
 @override_settings(ROOT_URLCONF=__name__)
 def test_core_error_envelope_validation_and_unauthenticated():
-    assert_contract_error(APIClient().get("/api/v1/core-test/secured/"), status=403, code="not_authenticated")
+    assert_contract_error(
+        APIClient().get("/api/v1/core-test/secured/"), status=403, code="not_authenticated",
+    )
     response = APIClient().get("/api/v1/core-test/validation/")
     assert_contract_error(response, status=400, code="validation_error")
     assert response.data["error"]["fields"] == {"nickname": ["Required."]}
