@@ -1,5 +1,6 @@
 import re
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from apps.accounts.phone import normalize_iran_mobile
@@ -22,7 +23,7 @@ class HostApplicationInputSerializer(serializers.Serializer):
     def validate_phone(self, value):
         try:
             number = normalize_iran_mobile(value)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, DjangoValidationError):
             raise serializers.ValidationError("Invalid Iranian mobile.") from None
         if not re.fullmatch(r"\+989\d{9}", number):
             raise serializers.ValidationError("Invalid Iranian mobile.")
@@ -48,6 +49,8 @@ class CenterProfileSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        if set(self.initial_data) - set(self.fields):
+            raise serializers.ValidationError('Unknown profile fields.')
         instance = self.instance
         data = {name: attrs.get(name, getattr(instance, name)) for name in self.fields}
         if len(data["summary"].strip()) < 20 or len(data["description"].strip()) < 40:
