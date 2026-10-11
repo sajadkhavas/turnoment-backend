@@ -77,7 +77,7 @@ class GamingCenter(models.Model):
     def clean(self):
         super().clean()
         if self.show_phone and not re.fullmatch(
-            r"\\+?[0-9۰-۹٠-٩ ()-]{7,32}", self.business_phone
+            r"\+?[0-9۰-۹٠-٩ ()-]{7,32}", self.business_phone
         ):
             raise ValidationError({"business_phone": "A valid public business phone is required."})
         if self.show_address and (
