@@ -69,6 +69,8 @@ def test_scopes_idempotence_transitions_and_audit():
     assert listing.data["pagination"]["totalItems"] == 1
     assert listing.data["items"][0]["sourceType"] == "dispute"
     assert client.get("/api/v1/operator/moderation/?source_type=unknown").status_code == 400
+    assert client.get("/api/v1/operator/moderation/?page=1&page=2").status_code == 400
+    assert client.get("/api/v1/operator/moderation/?status=open&status=closed").status_code == 400
     case_url = f"/api/v1/operator/moderation/{cases[1].pk}/"
     assert client.get(case_url).data["status"] == "open"
     review_url = case_url + "review/"

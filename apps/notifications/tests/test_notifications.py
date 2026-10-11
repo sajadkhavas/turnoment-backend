@@ -43,6 +43,8 @@ def test_inbox_filters_pagination_and_foreign_read_privacy():
     assert client.get("/api/v1/me/notifications/?page=0").status_code == 400
     assert client.get("/api/v1/me/notifications/?kind=invalid").status_code == 400
     assert client.get("/api/v1/me/notifications/?evil=1").status_code == 400
+    assert client.get("/api/v1/me/notifications/?page=1&page=2").status_code == 400
+    assert client.get("/api/v1/me/notifications/?kind=match&kind=system").status_code == 400
     assert client.post(
         f"/api/v1/me/notifications/{alien.pk}/read/", {}, format="json"
     ).status_code == 404
