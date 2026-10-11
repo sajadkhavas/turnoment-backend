@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.disputes.api import DisputeView, EvidenceView
+from apps.matches.api import MyMatchesView
+from apps.results.api import ConfirmView, ResultView
 from apps.system.api.views import LiveView, ReadyView
 
 urlpatterns = [
@@ -15,4 +18,12 @@ urlpatterns = [
     path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
     path("api/v1/", include("apps.teams.api.urls", namespace="teams")),
     path("api/v1/", include("apps.achievements.api.urls", namespace="achievements")),
+    path("api/v1/me/matches/", MyMatchesView.as_view()),
+    path("api/v1/matches/<uuid:match_id>/result/", ResultView.as_view()),
+    path("api/v1/matches/<uuid:match_id>/result/confirm/", ConfirmView.as_view()),
+    path("api/v1/matches/<uuid:match_id>/dispute/", DisputeView.as_view()),
+    path(
+        "api/v1/matches/<uuid:match_id>/dispute/<uuid:dispute_id>/evidence/",
+        EvidenceView.as_view(),
+    ),
 ]
