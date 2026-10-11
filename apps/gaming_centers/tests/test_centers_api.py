@@ -7,7 +7,11 @@ from django.db import IntegrityError, connection, transaction
 from rest_framework.test import APIClient
 
 from apps.gaming_centers.models import (
-    CenterMembership, City, GamingCenter, HostApplication, HostRateBucket,
+    CenterMembership,
+    City,
+    GamingCenter,
+    HostApplication,
+    HostRateBucket,
 )
 from apps.gaming_centers.services import receive_host_application
 from apps.gaming_resources.models import Equipment, GalleryImage, OpeningHour, Station
