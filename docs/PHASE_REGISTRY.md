@@ -153,6 +153,29 @@ B06 owned scope is frozen, not global backend acceptance.
 
 ---
 
+## B08 — Matches / Results / Disputes
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal freeze main SHA and CI belong in Issue #54 after this registry PR merges.
+
+- Issue: `#54`; frontend lock `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`; branch `phase/b08-matches-results-disputes`.
+- Agent END_SHA: `23b1e73390471512947dafb826310187f811073e`.
+- Final reviewed implementation HEAD: `966a5104b02c6c83662ab5fd7d74333a0ea7b030`.
+- Implementation PR `#65` MERGED using exact-head SHA; unresolved review threads `0`.
+- Agent push/PR CI `38144140439`, `38144232312` PASS.
+- Final implementation Push CI `38154918899` and PR CI `38154923101` PASS Python 3.12 / 3.14.
+- Implementation merge SHA `1ef4b4f1aa6bf1ed0b0da72fa7de938473ec11a0`.
+- Post-implementation main CI `38155030789` PASS Python 3.12 / 3.14.
+- Closeout branch `closeout/b08-matches-results-freeze`; closeout PR number and terminal exact main SHA/CI recorded in Issue #54.
+- Delivered: source-unique participant Match identity, lifecycle, result submission/opponent confirmation, exactly one finalized event, dispute creation/review/finalization services, quarantine-only evidence and HTTP privacy/CSRF/retry/concurrency tests, initial migrations.
+- Mother improvements: reconciled B08 with B01/B03/B04/B05/B06 without force; reject conflicting source replay (schedule and snapshot metadata), avoid server errors from invalid replay dispute statement, record source audit and regression tests.
+- Integration still required: B05 tournament bracket → authoritative Match, B07 challenge accept → Match with truthful schedule, B09 finalized event consumer/season/rank projections, B10 operator moderation; B06 team match handling; quarantine scanning/private delivery operational gate. These are explicitly B99 acceptance tasks, not claimed completed.
+- Finance and wagering execution: `NO`.
+
+B08 bounded domain implementation accepted; full backend B99/E2E not yet accepted.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
