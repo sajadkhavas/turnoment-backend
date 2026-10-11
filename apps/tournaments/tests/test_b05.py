@@ -275,3 +275,21 @@ def test_capacity_database_constraint():
     t.registered_count = 2
     with pytest.raises(IntegrityError):
         t.save(update_fields=["registered_count"])
+
+
+@pytest.mark.django_db
+@override_settings(
+    TOURNAMENT_TEAM_ELIGIBILITY_HOOK="apps.tournaments.tests.test_b05.fake_team_hook"
+)
+def test_same_team_cannot_reserve_two_slots():
+    t = make_tournament(mode=Tournament.Mode.TEAM, capacity=2)
+    a, b = player(1), player(2)
+    assert register(
+        identifier=str(t.pk), user=a, payload=payload(teamId="team-1")
+    )["outcome"] == "confirmed"
+    assert register(
+        identifier=str(t.pk), user=b, payload=payload(teamId="team-1")
+    ) == {"outcome": "unavailable", "reason": "ineligible"}
+    t.refresh_from_db()
+    assert t.registered_count == 1
+    assert Registration.objects.count() == 1

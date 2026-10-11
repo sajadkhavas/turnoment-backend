@@ -39,9 +39,16 @@ class Migration(migrations.Migration):
                 )),
             ],
             options={
-                "constraints": [models.UniqueConstraint(
-                    fields=("tournament", "user"), name="b05_registration_one_per_user"
-                )],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("tournament", "user"), name="b05_registration_one_per_user"
+                    ),
+                    models.UniqueConstraint(
+                        fields=("tournament", "team_id"),
+                        condition=models.Q(status="confirmed") & ~models.Q(team_id=""),
+                        name="b05_one_active_team_per_tournament"
+                    ),
+                ],
             },
         ),
     ]

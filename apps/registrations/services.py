@@ -13,14 +13,14 @@ def register(*, identifier, user, payload):
     tournament = Tournament.objects.select_for_update().get(
         slug=identifier
     ) if not _is_uuid(identifier) else Tournament.objects.select_for_update().get(id=identifier)
-    previous = Registration.objects.filter(tournament=tournament, user=user).first()
-    if previous and previous.status == Registration.Status.CONFIRMED:
-        return {"outcome": "already_registered", "registrationId": str(previous.id)}
     if tournament.finance_pending:
         return {
             "outcome": "unavailable", "reason": "ineligible",
             "backendState": "BACKEND_PENDING_FINANCE"
         }
+    previous = Registration.objects.filter(tournament=tournament, user=user).first()
+    if previous and previous.status == Registration.Status.CONFIRMED:
+        return {"outcome": "already_registered", "registrationId": str(previous.id)}
     if (
         payload["detailVersion"] != tournament.detail_version
         or payload["rulesVersion"] != tournament.rules_version
@@ -40,6 +40,11 @@ def register(*, identifier, user, payload):
             None
         )
         if chosen is None:
+            return {"outcome": "unavailable", "reason": "ineligible"}
+        if Registration.objects.filter(
+            tournament=tournament, status=Registration.Status.CONFIRMED,
+            team_id=team_id
+        ).exclude(user=user).exists():
             return {"outcome": "unavailable", "reason": "ineligible"}
     elif team_id is not None:
         return {"outcome": "validation_error", "fields": {"teamId": "Must be null"}}
