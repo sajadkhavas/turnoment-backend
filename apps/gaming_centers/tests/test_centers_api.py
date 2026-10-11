@@ -80,6 +80,7 @@ def test_public_directory_and_detail_match_strict_frozen_contract_and_privacy(ce
     assert detail.data["tournaments"] == []
     assert not ({"phone", "email", "memberships", "managerName", "staff"} & set(detail.data))
     center.show_phone = center.show_address = center.show_map = True
+    center.full_clean()
     center.save()
     disclosed = APIClient().get(f"/api/v1/centers/{center.public_id}/").data
     assert disclosed["publicPhone"] == "+989121112233"
@@ -122,6 +123,10 @@ def test_center_scope_staff_permissions_no_escalation(center_data):
         f"/api/v1/center-admin/centers/{second.id}/",
         {"name": "Poison"}, format="json"
     ).status_code == 403
+    assert manager_client.patch(
+        f"/api/v1/center-admin/centers/{center_data.id}/",
+        {"publication_state": "hidden"}, format="json"
+    ).status_code == 400
     assert manager_client.patch(
         f"/api/v1/center-admin/centers/{center_data.id}/",
         {"name": "Renamed"}, format="json"
