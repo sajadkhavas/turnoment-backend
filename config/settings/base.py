@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     "apps.accounts.apps.AccountsConfig",
     "apps.core.apps.CoreConfig",
     "apps.audit.apps.AuditConfig",
+    "apps.gaming_centers.apps.GamingCentersConfig",
+    "apps.gaming_resources.apps.GamingResourcesConfig",
     "apps.games.apps.GamesConfig",
     "apps.rulesets.apps.RulesetsConfig",
     "apps.system.apps.SystemConfig",
