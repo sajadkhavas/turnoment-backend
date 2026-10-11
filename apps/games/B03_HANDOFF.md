@@ -36,11 +36,11 @@ Issue: https://github.com/sajadkhavas/turnoment-backend/issues/49
 
 ## Upstream design sources
 
-- https://docs.djangoproject.com/en/6.0/ref/models/constraints/ — model-level uniqueness/check constraints supplement validation
-- https://docs.djangoproject.com/en/6.0/ref/contrib/postgres/search/ — PostgreSQL search with GIN indexing
-- https://docs.djangoproject.com/en/6.0/topics/migrations/ — versioned, deterministic schema migrations
+- https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — model-level uniqueness/check constraints supplement validation
+- https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/search/ — PostgreSQL search with GIN indexing
+- https://docs.djangoproject.com/en/6.1/topics/migrations/ — versioned, deterministic schema migrations
 - https://www.django-rest-framework.org/api-guide/permissions/ — public views explicitly opt into AllowAny under the authenticated default
 - https://www.django-rest-framework.org/api-guide/serializers/ — backend validation and projection shape
-- https://docs.djangoproject.com/en/6.0/topics/db/transactions/ — transactions for later mutating command services
+- https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — transactions for later mutating command services
 
 FINANCIAL EXECUTION ADDED: NO
