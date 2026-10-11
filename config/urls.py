@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.rankings.api import PublicCompetitiveProfileView, PublicRankingView
-from apps.rivalries.api import MyRivalriesView
 from apps.system.api.views import LiveView, ReadyView
 
 urlpatterns = [
@@ -15,10 +13,8 @@ urlpatterns = [
     path("api/v1/", include("apps.rulesets.api.urls", namespace="rulesets")),
     path("api/v1/", include("apps.gaming_centers.api.urls", namespace="gaming_centers")),
     path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
-    path("api/v1/rankings/", PublicRankingView.as_view(), name="public-ranking"),
-    path("api/v1/me/rivalries/", MyRivalriesView.as_view(), name="my-rivalries"),
-    path(
-        "api/v1/players/<str:username>/public-profile/",
-        PublicCompetitiveProfileView.as_view(), name="public-competitive-profile",
-    ),
+    path("api/v1/", include("apps.teams.api.urls", namespace="teams")),
+    path("api/v1/", include("apps.achievements.api.urls", namespace="achievements")),
+    path("api/v1/", include("apps.rankings.api_urls", namespace="rankings")),
+    path("api/v1/", include("apps.rivalries.api_urls", namespace="rivalries")),
 ]

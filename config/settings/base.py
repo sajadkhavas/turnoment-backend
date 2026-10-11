@@ -34,14 +34,16 @@ INSTALLED_APPS = [
     "apps.gaming_centers.apps.GamingCentersConfig",
     "apps.gaming_resources.apps.GamingResourcesConfig",
     "apps.tournaments.apps.TournamentsConfig",
+    "apps.teams.apps.TeamsConfig",
+    "apps.achievements.apps.AchievementsConfig",
+    "apps.rankings.apps.RankingsConfig",
+    "apps.rivalries.apps.RivalriesConfig",
     "apps.registrations.apps.RegistrationsConfig",
     "apps.checkins.apps.CheckinsConfig",
     "apps.brackets.apps.BracketsConfig",
     "apps.games.apps.GamesConfig",
     "apps.rulesets.apps.RulesetsConfig",
     "apps.system.apps.SystemConfig",
-    "apps.rankings.apps.RankingsConfig",
-    "apps.rivalries.apps.RivalriesConfig",
 ]
 
 MIDDLEWARE = [

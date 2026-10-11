@@ -227,3 +227,20 @@ not implemented; B05 and B10 integration seams are documented in
 - DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — retain SessionAuthentication and CSRF on authenticated mutation endpoints.
 - DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — public reads explicitly AllowAny with independent authentication_classes.
 - PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html — serialize competitors for the final available slot.
+
+---
+
+## B06 — Teams / Membership / Nonfinancial Achievements (2026-10-11)
+
+- Django 6.1 constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — partial unique constraints prevent duplicate member rows, simultaneous captains and outstanding duplicate invitations; a per-team captain's existence remains a transactional service invariant.
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — membership plus invitation transitions are atomic, including captain swap and increment/event persistence.
+- Django 6.1 query locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update — lock the parent team or user consistently to serialize concurrent competing writes.
+- PostgreSQL explicit locking: https://www.postgresql.org/docs/current/explicit-locking.html — row locks serialize acceptance/transfer and replay without unsafe in-memory locks.
+- DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — inherit P01 SessionAuthentication; no anonymous mutation override or token-auth bypass.
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — private team/achievement API uses IsAuthenticated; captain and invite-recipient permissions enforced in domain services, never through client role claims.
+- DRF serializers: https://www.django-rest-framework.org/api-guide/serializers/ — validate create/invite/transfer inputs, strict fields and UUIDs at boundary.
+
+Decision: private F14/F13 projections exactly follow frontend SHA
+`1668109bae5ec7abb5e022e5857ffa65cc131501`.
+No public roster, participant finance, gamified currency or achievements self-claim surface.
+B05 eligibility is an opt-in read-only seam; actual team registration rules remain integration-owned.
