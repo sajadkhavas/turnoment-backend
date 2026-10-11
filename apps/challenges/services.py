@@ -73,15 +73,15 @@ def create_challenge(actor, key, payload):
         # Locks two user rows in deterministic order for cross-direction races.
         users = list(
             get_user_model().objects.select_for_update()
-            .filter(pk__in=pair, is_active=True).order_by("pk")
+            .filter(pk__in=pair).order_by("pk")
         )
-        if len(users) != 2 or pair[0] == pair[1]:
-            return {"outcome": "validation_error", "fields": {
-                "opponent": "Select another eligible player."
-            }}
         previous = receipt_or_none(actor, key, digest)
         if previous is not None:
             return previous
+        if len(users) != 2 or pair[0] == pair[1] or not all(u.is_active for u in users):
+            return {"outcome": "validation_error", "fields": {
+                "opponent": "Select another eligible player."
+            }}
         if not access(actor)["canCreate"]:
             return {"outcome": "unavailable", "message": "Challenge access unavailable."}
         opponent = next((u for u in users if u.pk != actor.pk), None)
