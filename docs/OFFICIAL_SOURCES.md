@@ -341,7 +341,7 @@ Decisions:
 Decisions:
 - Database enforces unordered active player pair + game uniqueness, no self-challenge and match-state consistency. Transactional writes require actor-scoped idempotency receipts.
 - The published B03 game and solo-compatible format records define the offered creation choices. They do not override B08 finalized-valid-match gate.
-- B07's production eligibility and synchronous match-creation services are intentionally fail-closed pending authoritative B08/B09 integration. No fake match count, rating, venue, starts_at or completed Match.
+- B07 now counts only completed persisted B08 FinalizedResultEvent records and reads B09 Challenge Rating only if a single unambiguous published scope exists. Creation stays disabled until truthful schedule/venue semantics and real synchronous B08 Match binding are approved. No fake match, rating or starts_at.
 - B08's source-unique Match model requires a timezone-aware starts_at. Frozen B07 create input has no scheduling/center fields; B99 must settle truthful in-person scheduling semantics before wiring accept.
 - Read-only challenge hub page uses PostgreSQL filtered counts and bounded pagination; GET never expires rows by writing.
 - Financial execution added: NO.

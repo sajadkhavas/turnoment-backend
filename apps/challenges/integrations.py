@@ -34,7 +34,33 @@ class MatchServiceUnavailable(Exception):
 
 
 def player_challenge_stats(user) -> PlayerChallengeStats:
-    return PlayerChallengeStats()
+    """Count only B08 completed, persisted finalized results; no synthetic unlock."""
+    from django.db.models import Q
+
+    from apps.matches.models import Match
+    from apps.rankings.models import PlayerRating
+    from apps.results.models import FinalizedResultEvent
+
+    if not user.is_authenticated or not user.is_active:
+        return PlayerChallengeStats()
+    finalized = FinalizedResultEvent.objects.filter(
+        Q(player_a_id=user.pk) | Q(player_b_id=user.pk),
+        match__state=Match.State.COMPLETED,
+    ).count()
+    scoped = list(
+        PlayerRating.objects.filter(
+            user=user, kind=PlayerRating.Kind.CHALLENGE,
+            season__is_published=True,
+        ).values_list("rating", flat=True)[:2]
+    )
+    # Never imply one global rating across several seasons or game scopes.
+    rating = scoped[0] if len(scoped) == 1 else None
+    return PlayerChallengeStats(finalized, rating)
+
+
+def match_creator_ready() -> bool:
+    """Blocked until B99 approves a real in-person start-time contract."""
+    return False
 
 
 def creation_games(user) -> tuple[GameChoice, ...]:
@@ -59,7 +85,24 @@ def creation_games(user) -> tuple[GameChoice, ...]:
 
 
 def opponent_eligible(challenger, opponent, game_id: str) -> bool:
-    return False
+    """Only active players with a real public tag and 30 finalized B08 games."""
+    from apps.accounts.models import PlayerProfile
+    from apps.games.models import Game
+
+    if (
+        not challenger.is_active or not opponent.is_active
+        or challenger.pk == opponent.pk
+    ):
+        return False
+    if not Game.objects.filter(
+        pk=game_id, publication_state=Game.Publication.PUBLISHED,
+    ).exists():
+        return False
+    if not PlayerProfile.objects.filter(
+        user=opponent, gamer_tag__isnull=False
+    ).exclude(gamer_tag="").exists():
+        return False
+    return player_challenge_stats(opponent).finalized_valid_matches >= 30
 
 
 def create_match_for_challenge(challenge) -> str:

@@ -50,7 +50,9 @@ def access(user):
     unlocked = count >= REQUIRED_FINALIZED_MATCHES
     return {
         "unlocked": unlocked,
-        "canCreate": bool(unlocked and games and user.is_active),
+        "canCreate": bool(
+            unlocked and games and user.is_active and integrations.match_creator_ready()
+        ),
         "challengeRating": stats.challenge_rating,
         "finalizedValidMatches": count,
         "requiredFinalizedMatches": REQUIRED_FINALIZED_MATCHES,

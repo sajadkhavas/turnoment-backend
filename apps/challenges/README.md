@@ -47,7 +47,7 @@ Expired invites are only physically expired inside writes; GET never mutates.
   only for finalized match in its transaction; stable replay, conflict failure.
   B08 must supply real outcome, score and (optional) rating deltas.
 
-Before B08/B09 integration, creation stays locked (no fake finalized matches or ratings),
+Even though B08 finalized-match counts and B09 scoped ratings are now real, creation remains locked until B99 approves a truthful schedule and B08 synchronous adapter,
 and any already-stored pending invite cannot be accepted without B08.
 B99 must wire the real providers and complete full-stack smoke tests.
 

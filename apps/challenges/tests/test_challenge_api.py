@@ -38,6 +38,7 @@ def provider(monkeypatch):
         lambda user: integrations.PlayerChallengeStats(30, 1500)
     )
     monkeypatch.setattr(integrations, "creation_games", lambda user: GAMES)
+    monkeypatch.setattr(integrations, "match_creator_ready", lambda: True)
     monkeypatch.setattr(
         integrations, "opponent_eligible",
         lambda challenger, opponent, game_id: (
