@@ -83,7 +83,7 @@ def test_concurrent_revision_updates_only_one_wins():
     assert original.status_code == 200
     revision = original.data["revision"]
 
-    def worker(disable_tournament):
+    def worker(disable_field):
         connections.close_all()
         try:
             requester = APIClient()
@@ -91,7 +91,9 @@ def test_concurrent_revision_updates_only_one_wins():
             data = {
                 "revision": revision,
                 "optional": {
-                    "tournament": disable_tournament, "match": True, "challenge": True
+                    "tournament": disable_field != "tournament",
+                    "match": disable_field != "match",
+                    "challenge": True,
                 },
             }
             return requester.patch(URL, data, format="json").status_code
@@ -99,6 +101,6 @@ def test_concurrent_revision_updates_only_one_wins():
             connections.close_all()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        statuses = list(pool.map(worker, (False, True)))
+        statuses = list(pool.map(worker, ("tournament", "match")))
 
     assert sorted(statuses) == [200, 409]
