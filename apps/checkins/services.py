@@ -9,6 +9,8 @@ from .models import CheckIn
 
 @transaction.atomic
 def check_in(*, tournament, user):
+    # Same parent lock as registration/lifecycle to serialize state changes.
+    tournament = Tournament.objects.select_for_update().get(pk=tournament.pk)
     registration = (
         Registration.objects.select_for_update()
         .filter(tournament=tournament, user=user, status=Registration.Status.CONFIRMED)

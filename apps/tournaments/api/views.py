@@ -2,6 +2,7 @@ import math
 import uuid
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -13,7 +14,6 @@ from apps.registrations.models import Registration
 from apps.registrations.services import register
 from apps.tournaments.models import Tournament
 from apps.tournaments.projections import context, detail, discovery
-from apps.tournaments.services import availability
 
 
 class DiscoveryQuery(serializers.Serializer):
@@ -95,10 +95,11 @@ class TournamentRegistrationView(APIView):
         if not serializer.is_valid():
             return Response(_error_fields(serializer.errors), status=400)
         tournament = _tournament(identifier)
-        return Response(register(
+        result = register(
             identifier=str(tournament.id), user=request.user,
             payload=serializer.validated_data
-        ))
+        )
+        return Response(result, status=400 if result["outcome"] == "validation_error" else 200)
 
 
 class TournamentCheckInView(APIView):
@@ -114,10 +115,16 @@ class TournamentCheckInView(APIView):
         record = CheckIn.objects.filter(registration=registration).first()
         if record is not None:
             return Response({"outcome": "completed", "checkedAt": record.checked_at.isoformat()})
-        return Response({
-            "outcome": "open" if availability(tournament) == "closed"
-            and tournament.check_in_opens_at else "not_open"
-        })
+        now = timezone.now()
+        can_check_in = (
+            tournament.lifecycle in {
+                Tournament.Lifecycle.CHECK_IN, Tournament.Lifecycle.CLOSED,
+                Tournament.Lifecycle.UPCOMING
+            }
+            and tournament.check_in_opens_at is not None
+            and tournament.check_in_opens_at <= now < tournament.starts_at
+        )
+        return Response({"outcome": "open" if can_check_in else "not_open"})
 
     def post(self, request, identifier):
         return Response(check_in(tournament=_tournament(identifier), user=request.user))
@@ -177,8 +184,6 @@ class MyTournamentsView(APIView):
             t = reg.tournament
             tournament_state = mapped_state(t)
             checked = reg.id in checkins
-            from django.utils import timezone
-
             now = timezone.now()
             if checked:
                 ci = "completed"
