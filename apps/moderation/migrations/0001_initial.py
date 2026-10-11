@@ -63,7 +63,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ModerationDecision",
             fields=[
-                ("id", models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ("id", models.UUIDField(
+                    primary_key=True, default=uuid.uuid4,
+                    editable=False, serialize=False,
+                )),
                 ("from_status", models.CharField(max_length=16, choices=[
                     ("open", "Open"), ("in_review", "In review"), ("closed", "Closed"),
                 ])),
