@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "apps.accounts.apps.AccountsConfig",
+    "apps.challenges.apps.ChallengesConfig",
     "apps.system.apps.SystemConfig",
 ]
 
