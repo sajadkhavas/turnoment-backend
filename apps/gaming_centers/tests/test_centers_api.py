@@ -185,6 +185,26 @@ def test_resources_hours_are_center_scoped_and_atomic(center_data):
         format="json"
     ).status_code == 409
     assert Station.objects.filter(center=center_data).count() == 1
+    assert c.patch(
+        base + "/stations/" + created.data["stationId"] + "/",
+        {"state": "maintenance"}, format="json"
+    ).status_code == 200
+    assert Station.objects.get(pk=created.data["stationId"]).state == "maintenance"
+    assert c.patch(
+        base + "/stations/" + created.data["stationId"] + "/",
+        {"state": "published"}, format="json"
+    ).status_code == 400
+    assert c.patch(
+        base + "/equipment/" + str(valid_equipment.id) + "/",
+        {"isPublic": False}, format="json"
+    ).status_code == 200
+    assert c.delete(
+        base + "/equipment/" + str(valid_equipment.id) + "/"
+    ).status_code == 409
+    assert c.patch(
+        base + "/equipment/" + str(foreign_equipment.id) + "/",
+        {"isPublic": True}, format="json"
+    ).status_code == 404
     invalid_hours = [
         {"weekday": 0, "opens": "10:00", "closes": "20:00", "isPublic": True},
         {"weekday": 0, "opens": "12:00", "closes": "21:00", "isPublic": True},
