@@ -176,6 +176,30 @@ B08 bounded domain implementation accepted; full backend B99/E2E not yet accepte
 
 ---
 
+## B09 — Rankings / Stats / Rivalries
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. The terminal main SHA and final CI belong in Issue #55 after this PR merges.
+
+- Issue `#55`; frontend contract SHA `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA `ffe44e3d999479282115c4bebdb4f33b40f5a598`; phase branch `phase/b09-rankings-stats-rivalries`.
+- Agent END_SHA `f537297bdc4c5b86e3409dd3ce95ed5fbe2a3672`.
+- Integrated initial SHA `ba65b82a734e3dae6831252329a02d7ee74a93cc`; first cross-app lint failed, corrected before merge.
+- Final reviewed implementation HEAD `9967cd24a81f249e2658be89812e1f842364a01f`.
+- Implementation PR `#70`, promoted from Draft after real B08 finalization→B09 exactly-once regression; MERGED with expected-head lock; unresolved review threads 0.
+- Agent push/PR CI `38152476856` / `38152480097` PASS Python 3.12/3.14.
+- Final integrated B08+B09 push/PR CI `38155629507` / `38155632205` PASS Python 3.12/3.14.
+- Implementation MERGE_SHA `7ec16d7223046a087753b0d4c6832439e8382ce7`.
+- Post-implementation main CI `38155796107` PASS Python 3.12/3.14.
+- Closeout branch `closeout/b09-rankings-rivalries-freeze`; closeout PR number and terminal SHA/CI recorded in Issue #55.
+- Delivered: B08 finalized Match event ingestion, receipt-unique Elo 1000/K32, distinct tournament/challenge ratings, published leaderboards and profiles, private rivalry projections, model/migration/permissions, PostgreSQL concurrency and B08 HTTP result confirmation→B09 exactly-once rating regression.
+- Mother changes: B09 safely reconciled with B06 and B08 shared URL/settings and source docs; repaired direct route imports, DB-backed ranking pagination, unknown/duplicate query filter validation, required official source audit and cross-app tests.
+- Explicit B99 work: trusted scheduled `drain_b08_events` consumer, historical chronological backfill+non-overlapping seasons, B02-vs-B09 public-profile route/identity ownership, B06 team ratings, rank movement historical snapshots. No invented seasons, paid outcomes or team scores.
+- Financial execution added: `NO`.
+
+B09-owned rating projection and real B08 event seam accepted; full B99 browser/production acceptance remains pending.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
