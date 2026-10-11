@@ -443,3 +443,74 @@ def test_concurrent_accept_and_cancel_cannot_both_win(players, provider, monkeyp
     challenge = Challenge.objects.get(pk=cid)
     assert challenge.state in {Challenge.State.ACCEPTED, Challenge.State.CANCELLED}
     assert creator.call_count == (1 if challenge.state == Challenge.State.ACCEPTED else 0)
+
+@pytest.mark.django_db
+def test_challenge_game_choices_are_real_published_b03_solo_formats(players):
+    from apps.games.models import CompetitiveFormat, Game
+
+    first, _, _ = players
+    published = Game.objects.create(
+        slug="approved-game", name="Approved Game", short_name="Approved",
+        description="A public competitive game entry.", platforms=["PC"],
+        publication_state=Game.Publication.PUBLISHED,
+    )
+    draft = Game.objects.create(
+        slug="private-game", name="Private Game", short_name="Private",
+        description="A private competitive game entry.", platforms=["PC"],
+        publication_state=Game.Publication.DRAFT,
+    )
+    CompetitiveFormat.objects.create(
+        game=published, key="solo", label="Solo", description="1v1", team_size=1
+    )
+    CompetitiveFormat.objects.create(
+        game=published, key="team", label="Team", description="3v3", team_size=3
+    )
+    CompetitiveFormat.objects.create(
+        game=draft, key="solo", label="Solo", description="1v1", team_size=1
+    )
+    response = api(first).get(HUB)
+    assert response.status_code == 200
+    assert response.data["access"]["canCreate"] is False
+    assert response.data["creation"]["games"] == [{
+        "gameId": published.id, "name": "Approved Game",
+        "formats": [{"formatId": "solo", "label": "Solo"}],
+    }]
+
+
+@pytest.mark.django_db
+def test_challenge_hub_database_pagination_keeps_virtual_expiry(players):
+    first, second, _ = players
+    now = timezone.now()
+    rows = [
+        Challenge(
+            challenger=first, opponent=second,
+            pair_low=min(str(first.pk), str(second.pk)),
+            pair_high=max(str(first.pk), str(second.pk)),
+            game_id=f"g_{i}", game_name=f"Game {i}",
+            format_id="solo", format_label="Solo",
+            expires_at=now + timedelta(days=1),
+        ) for i in range(25)
+    ]
+    Challenge.objects.bulk_create(rows)
+    stale = rows[0]
+    stale.expires_at = now - timedelta(seconds=1)
+    stale.save(update_fields=["expires_at"])
+    client = api(second)
+    first_page = client.get(HUB, {"status": "incoming", "page": 1})
+    second_page = client.get(HUB, {"status": "incoming", "page": 2})
+    assert first_page.status_code == 200
+    assert first_page.data["summary"]["incoming"] == 24
+    assert first_page.data["summary"]["completed"] == 1
+    assert first_page.data["pagination"] == {
+        "currentPage": 1, "totalPages": 2, "totalItems": 24
+    }
+    assert len(first_page.data["items"]) == 20
+    assert len(second_page.data["items"]) == 4
+    assert not (
+        {item["challengeId"] for item in first_page.data["items"]}
+        & {item["challengeId"] for item in second_page.data["items"]}
+    )
+    expired = client.get(HUB, {"status": "completed"})
+    assert expired.data["items"][0]["lifecycle"] == "invitation-expired"
+    stale.refresh_from_db()
+    assert stale.state == Challenge.State.PENDING
