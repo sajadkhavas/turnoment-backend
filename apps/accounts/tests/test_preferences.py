@@ -1,5 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
+
 from apps.accounts.models import User
 
 URL = "/api/v1/me/settings/notification-preferences/"
@@ -38,5 +39,6 @@ def test_invalid_mutation_rejected_and_no_revision_change():
     client.force_authenticate(user)
     revision = client.get(URL).data["revision"]
     for optional in ({"account": False}, {"tournament": 1, "match": True, "challenge": True}):
-        assert client.patch(URL, {"revision": revision, "optional": optional}, format="json").status_code == 400
+        response = client.patch(URL, {"revision": revision, "optional": optional}, format="json")
+        assert response.status_code == 400
     assert client.get(URL).data["revision"] == revision

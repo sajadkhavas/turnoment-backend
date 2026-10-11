@@ -15,12 +15,18 @@ class PublicPlayerProfileView(APIView):
 
     def get(self, request, gamer_tag):
         if not _USERNAME.fullmatch(gamer_tag):
-            return Response({"error": {"code": "player_not_found", "message": "Player not found."}}, status=404)
+            return Response(
+                {"error": {"code": "player_not_found", "message": "Player not found."}},
+                status=404,
+            )
         profile = PlayerProfile.objects.filter(
             gamer_tag__iexact=gamer_tag, user__is_active=True
         ).first()
         if profile is None:
-            return Response({"error": {"code": "player_not_found", "message": "Player not found."}}, status=404)
+            return Response(
+                {"error": {"code": "player_not_found", "message": "Player not found."}},
+                status=404,
+            )
         # B09/B08 alone own competitive snapshots and finalized match results.
         # Never synthesize rankings, timestamps, or results here.
         return Response({

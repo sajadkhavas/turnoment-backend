@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .preferences import NotificationPreferencesView
 from .player_views import PublicPlayerProfileView
+from .preferences import NotificationPreferencesView
 from .views import (
     CsrfView,
     LogoutView,
@@ -20,8 +20,16 @@ urlpatterns = [
     path("auth/otp/verify/", OtpVerifyView.as_view(), name="otp-verify"),
     path("auth/me/", MeView.as_view(), name="me"),
     path("auth/me/profile/", MeProfileView.as_view(), name="me-profile"),
-    path("me/settings/notification-preferences/", NotificationPreferencesView.as_view(), name="notification-preferences"),
+    path(
+        "me/settings/notification-preferences/",
+        NotificationPreferencesView.as_view(),
+        name="notification-preferences",
+    ),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
-    path("players/<str:gamer_tag>/public-profile/", PublicPlayerProfileView.as_view(), name="player-public-profile"),
+    path(
+        "players/<str:gamer_tag>/public-profile/",
+        PublicPlayerProfileView.as_view(),
+        name="player-public-profile",
+    ),
     path("players/<str:gamer_tag>/", PublicPlayerView.as_view(), name="player-public"),
 ]

@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
-from apps.accounts.models import User, PlayerProfile
+
+from apps.accounts.models import PlayerProfile, User
 from apps.accounts.roles import has_center_role, is_platform_operator
 
 
