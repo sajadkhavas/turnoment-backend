@@ -330,6 +330,7 @@ def test_parallel_confirmations_publish_exactly_one_finalized_event():
 @pytest.mark.django_db
 def test_evidence_retry_is_stable_and_quota_is_enforced(match, players):
     from django.core.files.uploadedfile import SimpleUploadedFile
+
     from apps.disputes.services import add_evidence, create_dispute
 
     a, b, _ = players
