@@ -227,3 +227,20 @@ not implemented; B05 and B10 integration seams are documented in
 - DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — retain SessionAuthentication and CSRF on authenticated mutation endpoints.
 - DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — public reads explicitly AllowAny with independent authentication_classes.
 - PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html — serialize competitors for the final available slot.
+
+---
+
+## B07 — Challenges / Opponent Search (2026-10-11)
+
+- Django transactions/row locking: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ and https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django constraints/partial unique: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL partial unique indexes: https://www.postgresql.org/docs/current/indexes-partial.html
+- DRF SessionAuthentication/CSRF and permissions: https://www.django-rest-framework.org/api-guide/authentication/ and https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+- Database enforces unordered active player pair + game uniqueness, no self-challenge and match-state consistency. Transactional writes require actor-scoped idempotency receipts.
+- The published B03 game and solo-compatible format records define the offered creation choices. They do not override B08 finalized-valid-match gate.
+- B07's production eligibility and synchronous match-creation services are intentionally fail-closed pending authoritative B08/B09 integration. No fake match count, rating, venue, starts_at or completed Match.
+- B08's source-unique Match model requires a timezone-aware starts_at. Frozen B07 create input has no scheduling/center fields; B99 must settle truthful in-person scheduling semantics before wiring accept.
+- Read-only challenge hub page uses PostgreSQL filtered counts and bounded pagination; GET never expires rows by writing.
+- Financial execution added: NO.
