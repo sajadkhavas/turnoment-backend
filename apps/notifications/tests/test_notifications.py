@@ -144,3 +144,21 @@ def test_concurrent_read_once_does_not_double_decrement():
         counts = list(pool.map(read, range(2)))
     assert counts == [0, 0]
     assert Notification.objects.get(pk=item.pk).read_at is not None
+
+
+@pytest.mark.django_db
+def test_authenticated_notification_write_enforces_session_csrf():
+    alice = user("+989126777777")
+    item, _ = emit_notification(
+        recipient_id=alice.pk, event_key="csrf-case", kind="account",
+        title="Account update", body="Your profile has changed",
+    )
+    client = APIClient(enforce_csrf_checks=True)
+    client.force_login(alice)
+    url = f"/api/v1/me/notifications/{item.pk}/read/"
+    assert client.post(url, {}, format="json").status_code == 403
+    assert Notification.objects.get(pk=item.pk).read_at is None
+    csrf = client.get("/api/v1/auth/csrf/").data["csrf_token"]
+    allowed = client.post(url, {}, format="json", HTTP_X_CSRFTOKEN=csrf)
+    assert allowed.status_code == 200
+    assert allowed.data["unreadCount"] == 0

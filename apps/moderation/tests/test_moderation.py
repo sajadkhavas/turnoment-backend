@@ -158,3 +158,28 @@ def test_concurrent_moderation_review_has_one_decision():
         changed = list(pool.map(review, range(2)))
     assert sorted(changed) == [False, True]
     assert ModerationDecision.objects.filter(case=case).count() == 1
+
+
+@pytest.mark.django_db
+def test_platform_admin_and_operator_review_require_correct_role_and_csrf():
+    center = make_user("+989128333333", is_staff=True)
+    operator = make_user("+989128444444", is_staff=True, is_superuser=True)
+    case, _ = record_moderation_case(
+        source_type="host_application", source_id="host-csrf", title="Review candidate"
+    )
+    center_client = APIClient(enforce_csrf_checks=True)
+    center_client.force_login(center)
+    assert center_client.get("/admin/").status_code == 302
+    assert center_client.get("/api/v1/operator/moderation/").status_code == 403
+
+    client = APIClient(enforce_csrf_checks=True)
+    client.force_login(operator)
+    assert client.get("/admin/").status_code == 200
+    url = f"/api/v1/operator/moderation/{case.pk}/review/"
+    payload = {"status": "in_review", "note": "Reviewed the host application"}
+    assert client.post(url, payload, format="json").status_code == 403
+    assert ModerationDecision.objects.filter(case=case).count() == 0
+    csrf = client.get("/api/v1/auth/csrf/").data["csrf_token"]
+    allowed = client.post(url, payload, format="json", HTTP_X_CSRFTOKEN=csrf)
+    assert allowed.status_code == 200
+    assert ModerationDecision.objects.filter(case=case).count() == 1
