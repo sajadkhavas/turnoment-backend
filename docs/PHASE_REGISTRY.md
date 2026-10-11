@@ -190,7 +190,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. The terminal main SHA an
 - Final integrated B08+B09 push/PR CI `38155629507` / `38155632205` PASS Python 3.12/3.14.
 - Implementation MERGE_SHA `7ec16d7223046a087753b0d4c6832439e8382ce7`.
 - Post-implementation main CI `38155796107` PASS Python 3.12/3.14.
-- Closeout branch `closeout/b09-rankings-rivalries-freeze`; closeout PR number and terminal SHA/CI recorded in Issue #55.
+- Closeout branch `closeout/b09-rankings-rivalries-freeze`; closeout PR `#74`; terminal SHA/CI recorded in Issue #55.
 - Delivered: B08 finalized Match event ingestion, receipt-unique Elo 1000/K32, distinct tournament/challenge ratings, published leaderboards and profiles, private rivalry projections, model/migration/permissions, PostgreSQL concurrency and B08 HTTP result confirmation→B09 exactly-once rating regression.
 - Mother changes: B09 safely reconciled with B06 and B08 shared URL/settings and source docs; repaired direct route imports, DB-backed ranking pagination, unknown/duplicate query filter validation, required official source audit and cross-app tests.
 - Explicit B99 work: trusted scheduled `drain_b08_events` consumer, historical chronological backfill+non-overlapping seasons, B02-vs-B09 public-profile route/identity ownership, B06 team ratings, rank movement historical snapshots. No invented seasons, paid outcomes or team scores.
