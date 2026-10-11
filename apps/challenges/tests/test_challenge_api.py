@@ -515,3 +515,54 @@ def test_challenge_hub_database_pagination_keeps_virtual_expiry(players):
     assert expired.data["items"][0]["lifecycle"] == "invitation-expired"
     stale.refresh_from_db()
     assert stale.state == Challenge.State.PENDING
+
+@pytest.mark.django_db
+def test_authoritative_thirty_finalizations_unlock_but_no_implicit_schedule(players):
+    from apps.games.models import CompetitiveFormat, Game
+    from apps.matches.services import advance_match, create_match_for_source
+    from apps.results.models import FinalizedResultEvent
+    from apps.results.services import confirm_score, submit_score
+
+    challenger, opponent, _ = players
+    game = Game.objects.create(
+        slug="b07-verified-game", name="Verified Game", short_name="Verified",
+        description="A real published game for finalized B08 acceptance tests.",
+        platforms=["PC"], publication_state=Game.Publication.PUBLISHED,
+    )
+    CompetitiveFormat.objects.create(
+        game=game, key="solo", label="Solo", description="1v1", team_size=1
+    )
+    for number in range(30):
+        match = create_match_for_source(
+            source_kind="tournament", source_id=f"verified-final-{number}",
+            participant_a=challenger, participant_b=opponent,
+            game_id=game.pk, game_name=game.name,
+            competition_title="Verified free tournament",
+            starts_at=timezone.now() - timedelta(hours=1),
+        )
+        advance_match(match.pk, "ready")
+        advance_match(match.pk, "awaiting-result")
+        match.refresh_from_db()
+        result = submit_score(
+            match.pk, challenger, str(match.revision), 3, 1,
+            f"b07-real-score-{number}",
+        )
+        assert result["outcome"] == "accepted"
+        match.refresh_from_db()
+        finalized = confirm_score(
+            match.pk, opponent, str(match.revision), 1, 3
+        )
+        assert finalized["outcome"] == "finalized"
+    assert FinalizedResultEvent.objects.count() == 30
+    stats = integrations.player_challenge_stats(challenger)
+    assert stats.finalized_valid_matches == 30
+    assert stats.challenge_rating is None  # no fabricated B09 rating/season
+    access = services.access(challenger)
+    assert access["unlocked"] is True
+    assert access["finalizedValidMatches"] == 30
+    assert access["canCreate"] is False  # scheduling contract deliberately unresolved
+    assert integrations.opponent_eligible(challenger, opponent, game.pk)
+    blocked = create(api(challenger), opponent, key="b07-real-locked",
+                     gameId=game.pk, formatId="solo")
+    assert blocked.data["outcome"] == "unavailable"
+    assert Challenge.objects.count() == 0
