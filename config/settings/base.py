@@ -29,6 +29,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.accounts.apps.AccountsConfig",
     "apps.system.apps.SystemConfig",
+    "apps.matches.apps.MatchesConfig",
+    "apps.results.apps.ResultsConfig",
+    "apps.disputes.apps.DisputesConfig",
 ]
 
 MIDDLEWARE = [
