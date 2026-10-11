@@ -34,7 +34,10 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ["position", "code"],
-                "constraints": [models.CheckConstraint(condition=models.Q(("target__gt", 0)), name="b06_achievement_target_gt0")],
+                "constraints": [
+                    models.CheckConstraint(condition=models.Q(("target__gt", 0)), name="b06_achievement_target_gt0"),
+                    models.CheckConstraint(condition=models.Q(("has_progress", True)) | models.Q(("target", 1)), name="b06_binary_target_one"),
+                ],
             },
         ),
         migrations.CreateModel(
