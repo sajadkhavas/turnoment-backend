@@ -326,3 +326,139 @@ def test_parallel_confirmations_publish_exactly_one_finalized_event():
     assert {x["outcome"] for x in outcomes} == {"finalized", "already_finalized"}
     assert FinalizedResultEvent.objects.count() == 1
     assert MatchResult.objects.get(match=instance).finalized_at is not None
+
+@pytest.mark.django_db
+def test_evidence_retry_is_stable_and_quota_is_enforced(match, players):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from apps.disputes.services import add_evidence, create_dispute
+
+    a, b, _ = players
+    submit_score(match.pk, a, str(match.revision), 2, 1, "score-evidence-1")
+    match.refresh_from_db()
+    opened = create_dispute(
+        match.pk, b, str(match.revision), "technical-issue",
+        "The network disconnected during the competitive game.",
+        "dispute-evidence-1",
+    )
+    dispute_id = opened["dispute"]["disputeId"]
+    match.refresh_from_db()
+    original_revision = str(match.revision)
+
+    def image_file(name="photo.png"):
+        return SimpleUploadedFile(
+            name, b"\x89PNG\r\n\x1a\n" + b"f" * 80, content_type="image/png"
+        )
+
+    first = add_evidence(
+        match.pk, dispute_id, b, original_revision, "upload-unique-1", image_file()
+    )
+    assert first["outcome"] == "accepted"
+    duplicate = add_evidence(
+        match.pk, dispute_id, b, original_revision, "upload-unique-1", image_file()
+    )
+    assert duplicate["outcome"] == "already_uploaded"
+    assert duplicate["evidence"]["evidenceId"] == first["evidence"]["evidenceId"]
+    assert DisputeEvidence.objects.count() == 1
+    match.refresh_from_db()
+    assert add_evidence(
+        match.pk, dispute_id, b, original_revision, "upload-unique-2", image_file()
+    )["outcome"] == "stale"
+    for number in (2, 3):
+        current = Match.objects.get(pk=match.pk)
+        accepted = add_evidence(
+            match.pk, dispute_id, b, str(current.revision),
+            f"upload-unique-{number}", image_file()
+        )
+        assert accepted["outcome"] == "accepted"
+    match.refresh_from_db()
+    assert add_evidence(
+        match.pk, dispute_id, b, str(match.revision), "upload-unique-4", image_file()
+    ) == {"outcome": "unavailable", "reason": "quota-reached"}
+    assert DisputeEvidence.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_evidence_and_dispute_writes_require_session_csrf(match, players):
+    a, b, outsider = players
+    submit_score(match.pk, a, str(match.revision), 2, 0, "score-csrf-1234")
+    match.refresh_from_db()
+    client = APIClient(enforce_csrf_checks=True)
+    client.force_login(b)
+    url = dispute_url(match)
+    body = {
+        "revision": str(match.revision), "reason": "incorrect-score",
+        "statement": "I disagree with the officially recorded game score.",
+    }
+    assert client.post(
+        url, body, format="json", HTTP_IDEMPOTENCY_KEY="csrf-dispute-1"
+    ).status_code == 403
+    csrf = client.get("/api/v1/auth/csrf/").data["csrf_token"]
+    created = client.post(
+        url, body, format="json", HTTP_IDEMPOTENCY_KEY="csrf-dispute-1",
+        HTTP_X_CSRFTOKEN=csrf,
+    )
+    assert created.data["outcome"] == "accepted"
+    evidence_url = (
+        f"/api/v1/matches/{match.pk}/dispute/"
+        f"{created.data['dispute']['disputeId']}/evidence/"
+    )
+    match.refresh_from_db()
+    assert client.post(
+        evidence_url, {"revision": str(match.revision)},
+        HTTP_IDEMPOTENCY_KEY="csrf-evidence-1"
+    ).status_code == 403
+    client.force_authenticate(user=outsider)
+    assert client.post(
+        evidence_url, {"revision": str(match.revision)},
+        HTTP_IDEMPOTENCY_KEY="csrf-evidence-2"
+    ).status_code == 404
+
+
+@pytest.mark.django_db
+def test_void_resolution_does_not_emit_ranking_event(match, players):
+    from apps.disputes.services import create_dispute
+
+    a, b, operator = players
+    submit_score(match.pk, a, str(match.revision), 4, 1, "score-void-12345")
+    match.refresh_from_db()
+    created = create_dispute(
+        match.pk, b, str(match.revision), "no-show",
+        "There was no match because my opponent never arrived.",
+        "dispute-void-1234",
+    )
+    operator.is_staff = True
+    operator.is_superuser = True
+    operator.save(update_fields=["is_staff", "is_superuser"])
+    resolved = resolve_dispute(
+        created["dispute"]["disputeId"], operator,
+        decision="voided", summary="Verified cancellation",
+    )
+    assert resolved.status == "resolved"
+    match.refresh_from_db()
+    assert match.state == "cancelled"
+    assert FinalizedResultEvent.objects.count() == 0
+    client = APIClient()
+    client.force_authenticate(user=a)
+    item = client.get("/api/v1/me/matches/").data["items"][0]
+    assert item["resultState"] == "void"
+    assert item["result"] is None
+
+
+@pytest.mark.django_db
+def test_cross_match_privacy_does_not_leak_results_or_evidence(match, players):
+    a, b, outsider = players
+    client = APIClient()
+    client.force_authenticate(user=outsider)
+    assert client.get(result_url(match)).status_code == 404
+    assert client.get(dispute_url(match)).status_code == 404
+    assert client.post(
+        result_url(match),
+        {"revision": str(match.revision), "playerScore": 1, "opponentScore": 0},
+        format="json", HTTP_IDEMPOTENCY_KEY="other-score-123",
+    ).status_code == 404
+    assert client.post(
+        dispute_url(match),
+        {"revision": str(match.revision), "reason": "other",
+         "statement": "Completely fabricated dispute statement."},
+        format="json", HTTP_IDEMPOTENCY_KEY="other-dispute-123",
+    ).status_code == 404
