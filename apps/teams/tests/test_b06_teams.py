@@ -246,9 +246,14 @@ def test_platform_admin_cannot_mutate_team_membership_outside_services():
     from django.contrib import admin
 
     from apps.teams.admin import TeamAdmin, TeamInviteAdmin, TeamMembershipAdmin
+    from apps.teams.models import Team, TeamInvite, TeamMembership
 
-    for cls in (TeamAdmin, TeamMembershipAdmin, TeamInviteAdmin):
-        instance = cls(cls.model, admin.site)
+    for cls, model in (
+        (TeamAdmin, Team),
+        (TeamMembershipAdmin, TeamMembership),
+        (TeamInviteAdmin, TeamInvite),
+    ):
+        instance = cls(model, admin.site)
         assert instance.has_add_permission(None) is False
         assert instance.has_change_permission(None) is False
         assert instance.has_delete_permission(None) is False
