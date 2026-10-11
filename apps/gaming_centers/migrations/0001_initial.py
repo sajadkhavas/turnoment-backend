@@ -38,8 +38,13 @@ class Migration(migrations.Migration):
                 ("city", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,
                                           related_name="centers", to="gaming_centers.city")),
                 ("district", models.CharField(max_length=240)),
-                ("summary", models.CharField(max_length=420)),
-                ("description", models.TextField()),
+                ("summary", models.CharField(max_length=420, validators=[
+                    django.core.validators.MinLengthValidator(20)
+                ])),
+                ("description", models.TextField(validators=[
+                    django.core.validators.MinLengthValidator(40),
+                    django.core.validators.MaxLengthValidator(1800),
+                ])),
                 ("cover_image", models.URLField(max_length=2048, blank=True)),
                 ("street_address", models.CharField(max_length=400, blank=True)),
                 ("address_locality", models.CharField(max_length=240, blank=True)),
