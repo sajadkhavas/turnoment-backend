@@ -23,7 +23,7 @@ Core error and pagination helpers are intentionally **opt-in**: changing the glo
 
 ## Shared configuration changes
 
-Only `config/settings/base.py`: register core/audit apps and replace outdated default frontend baseline SHA; `.github/workflows/quality.yml`: align frontend baseline CI env. No root dependencies, authentication, permission defaults, database, server URLs or CI steps changed.
+Only `config/settings/base.py`: register core/audit apps. `apps.core.frontend.FROZEN_FRONTEND_CONTRACT_SHA` pins the accepted B00 frontend SHA. The legacy P00 `/api/v1/system/meta/` baseline setting (and its CI expectation) is intentionally preserved because changing it breaks the frozen P00 health contract/test outside B01 ownership; B99 must authorize any subsequent meta endpoint migration. No shared CI, root dependencies, authentication, permission defaults, server URLs or CI steps changed.
 
 ## Official technical references and decisions
 

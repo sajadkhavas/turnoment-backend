@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.core.api.views import CoreAPIView, CoreGenericAPIView
+from apps.core.frontend import FROZEN_FRONTEND_CONTRACT_SHA
 from apps.core.identifiers import public_id, uuid_public_id
 from apps.core.testing import assert_contract_error, session_client
 
@@ -125,3 +126,8 @@ def test_pagination_matches_frozen_page_shape_and_rejects_bad_input():
 def test_pagination_rejects_out_of_range_page():
     response = APIClient().get("/api/v1/core-test/list/?page=99")
     assert_contract_error(response, status=404, code="not_found")
+
+
+def test_frozen_frontend_baseline_is_not_legacy_p00_meta():
+    assert FROZEN_FRONTEND_CONTRACT_SHA == "1668109bae5ec7abb5e022e5857ffa65cc131501"
+    assert settings.FRONTEND_BASELINE_SHA == "8d5736d788235e3e99765a5332f79f0cba861482"
