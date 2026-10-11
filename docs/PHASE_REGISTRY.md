@@ -144,7 +144,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Final frozen main SHA an
 - Pre-merge PR-context CI `38153559138` PASS Python 3.12/3.14.
 - Implementation merge SHA: `a05d705618740c71e222698a1192da99e4954c0a`.
 - Post-implementation main CI `38153933404` PASS Python 3.12/3.14.
-- Closeout branch: `closeout/b06-teams-achievements-freeze`; PR number added in the closeout branch after it is opened, with terminal merge SHA/CI recorded in Issue #52.
+- Closeout branch: `closeout/b06-teams-achievements-freeze`; Closeout PR `#72`, with terminal merge SHA/CI recorded in Issue #52.
 - Delivery: private F14 team hub, team membership/invite/transfer/leave lifecycle with PostgreSQL constraints and row locks, F13 achievements with trusted idempotent progress events, migrations, permission/privacy/CSRF/concurrency tests; no user-exposed monetary rewards.
 - Explicit remaining B99 handoffs: authoritative B05 tournament-specific team registration eligibility and B08/B09 finalized-game events for achievement progress. No claims of full team tournament or team match coverage.
 - Financial execution added: `NO`.
