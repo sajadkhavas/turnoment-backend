@@ -29,7 +29,8 @@ class AchievementDefinition(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(condition=Q(target__gt=0), name="b06_achievement_target_gt0"),
-            models.CheckConstraint(condition=Q(has_progress=True) | Q(target=1), name="b06_binary_target_one"),
+            models.CheckConstraint(condition=Q(has_progress=True) | Q(target=1),
+                name="b06_binary_target_one"),
         ]
         ordering = ["position", "code"]
 

@@ -6,7 +6,9 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import PlayerProfile, User
 from apps.achievements.models import (
-    AchievementCategory, AchievementDefinition, AchievementProgress,
+    AchievementCategory,
+    AchievementDefinition,
+    AchievementProgress,
     AchievementProgressEvent,
 )
 from apps.achievements.services import record_progress

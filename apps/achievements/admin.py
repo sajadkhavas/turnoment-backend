@@ -1,7 +1,10 @@
 from django.contrib import admin
 
 from .models import (
-    AchievementCategory, AchievementDefinition, AchievementProgress, AchievementProgressEvent,
+    AchievementCategory,
+    AchievementDefinition,
+    AchievementProgress,
+    AchievementProgressEvent,
 )
 
 admin.site.register(AchievementCategory)

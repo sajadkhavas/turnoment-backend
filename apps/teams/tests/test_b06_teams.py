@@ -6,10 +6,12 @@ from django.db import IntegrityError, connections, transaction
 from rest_framework.test import APIClient
 
 from apps.accounts.models import PlayerProfile, User
-from apps.teams.models import Team, TeamInvite, TeamMembership
+from apps.teams.models import TeamInvite, TeamMembership
 from apps.teams.services import (
-    TeamConflict, create_team, invite, respond, tournament_eligible_teams,
-    transfer_captain,
+    create_team,
+    invite,
+    respond,
+    tournament_eligible_teams,
 )
 
 ME = "/api/v1/me/teams/"
@@ -107,7 +109,8 @@ def test_create_invite_accept_replay_and_scoped_invite_read():
     assert authed(guest).post(url, {}, format="json").data == accepted.data
     assert TeamMembership.objects.filter(team_id=tid, user=guest).count() == 1
     assert authed(guest).get("/api/v1/me/team-invites/").data["items"] == []
-    assert authed(owner).post(endpoint, {"playerId": str(guest.pk)}, format="json").status_code == 409
+    assert authed(owner).post(endpoint, {"playerId": str(guest.pk)},
+        format="json").status_code == 409
 
 
 @pytest.mark.django_db

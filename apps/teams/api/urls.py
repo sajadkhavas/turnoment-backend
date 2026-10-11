@@ -1,8 +1,13 @@
 from django.urls import path
 
 from .views import (
-    CaptainTransferView, InvitationActionView, MyTeamInvitesView, MyTeamsView,
-    TeamCreateView, TeamInviteView, TeamLeaveView,
+    CaptainTransferView,
+    InvitationActionView,
+    MyTeamInvitesView,
+    MyTeamsView,
+    TeamCreateView,
+    TeamInviteView,
+    TeamLeaveView,
 )
 
 app_name = "teams"
