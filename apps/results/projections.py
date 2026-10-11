@@ -5,17 +5,29 @@ from apps.matches.projections import common
 def reported_score(match, result, user):
     if not result:
         return None
-    a, b = (result.score_a, result.score_b) if match.participant_a_id == user.pk else (result.score_b, result.score_a)
+    a, b = (
+        (result.score_a, result.score_b)
+        if match.participant_a_id == user.pk
+        else (result.score_b, result.score_a)
+    )
     return {"playerScore": a, "opponentScore": b, "reportedAt": result.reported_at.isoformat()}
 
 
 def final_result(match, result, user):
     if not result or not result.finalized_at:
         return None
-    a, b = (result.score_a, result.score_b) if match.participant_a_id == user.pk else (result.score_b, result.score_a)
-    return {"playerScore": a, "opponentScore": b,
-            "outcome": "draw" if a == b else "win" if a > b else "loss",
-            "ratingDelta": None, "finalizedAt": result.finalized_at.isoformat()}
+    a, b = (
+        (result.score_a, result.score_b)
+        if match.participant_a_id == user.pk
+        else (result.score_b, result.score_a)
+    )
+    return {
+        "playerScore": a,
+        "opponentScore": b,
+        "outcome": "draw" if a == b else "win" if a > b else "loss",
+        "ratingDelta": None,
+        "finalizedAt": result.finalized_at.isoformat(),
+    }
 
 
 def result_view(match, user):
@@ -23,20 +35,33 @@ def result_view(match, user):
     state = {
         Match.State.AWAITING_RESULT: "reportable",
         Match.State.AWAITING_CONFIRMATION: "awaiting-confirmation",
-        Match.State.COMPLETED: "finalized", Match.State.DISPUTED: "disputed",
+        Match.State.COMPLETED: "finalized",
+        Match.State.DISPUTED: "disputed",
     }.get(match.state, "unavailable")
     data = common(match, user)
-    data.update({"revision": str(match.revision), "submissionState": state,
-                 "scorePolicy": {"minScore": match.min_score, "maxScore": match.max_score, "allowDraw": match.allow_draw},
-                 "reportedScore": reported_score(match, result, user),
-                 "finalResult": final_result(match, result, user)})
+    data.update(
+        {
+            "revision": str(match.revision),
+            "submissionState": state,
+            "scorePolicy": {
+                "minScore": match.min_score,
+                "maxScore": match.max_score,
+                "allowDraw": match.allow_draw,
+            },
+            "reportedScore": reported_score(match, result, user),
+            "finalResult": final_result(match, result, user),
+        }
+    )
     return data
 
 
 def receipt(match, result, user, replay=False):
     status = "finalized" if result.finalized_at else "awaiting-confirmation"
-    payload = {"status": status, "reportedScore": reported_score(match, result, user),
-               "finalResult": final_result(match, result, user)}
+    payload = {
+        "status": status,
+        "reportedScore": reported_score(match, result, user),
+        "finalResult": final_result(match, result, user),
+    }
     if replay:
         return {"outcome": "already_submitted", **payload}
     return {"outcome": "accepted", "receiptId": str(result.pk), "matchId": str(match.pk), **payload}

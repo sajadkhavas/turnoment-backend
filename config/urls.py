@@ -16,5 +16,7 @@ urlpatterns = [
     path("api/v1/matches/<uuid:match_id>/result/", ResultView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/confirm/", ConfirmView.as_view()),
     path("api/v1/matches/<uuid:match_id>/dispute/", DisputeView.as_view()),
-    path("api/v1/matches/<uuid:match_id>/dispute/<uuid:dispute_id>/evidence/", EvidenceView.as_view()),
+    path(
+        "api/v1/matches/<uuid:match_id>/dispute/<uuid:dispute_id>/evidence/", EvidenceView.as_view()
+    ),
 ]

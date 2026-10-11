@@ -29,15 +29,28 @@ def create_match_for_source(
     Exactly one match per source. Repeated same-source calls return the same identity;
     conflicting source reuse fails closed. The source owner manages its own transaction.
     """
-    if source_kind not in Match.Source.values or not source_id or participant_a.pk == participant_b.pk:
+    if (
+        source_kind not in Match.Source.values
+        or not source_id
+        or participant_a.pk == participant_b.pk
+    ):
         raise ValidationError("Invalid match source or participants")
     if timezone.is_naive(starts_at):
         raise ValidationError("starts_at must have a timezone")
     if not all((game_id, game_name, competition_title)):
         raise ValidationError("Missing match identity")
     allowed = {
-        "tournament_slug", "round_label", "venue_id", "venue_name", "venue_city",
-        "timezone", "format_label", "check_in_state", "min_score", "max_score", "allow_draw",
+        "tournament_slug",
+        "round_label",
+        "venue_id",
+        "venue_name",
+        "venue_city",
+        "timezone",
+        "format_label",
+        "check_in_state",
+        "min_score",
+        "max_score",
+        "allow_draw",
     }
     if set(snapshots) - allowed:
         raise ValidationError("Unknown match snapshot")
@@ -45,9 +58,12 @@ def create_match_for_source(
         source_kind=source_kind,
         source_id=source_id,
         defaults={
-            "participant_a": participant_a, "participant_b": participant_b,
-            "game_id": game_id, "game_name": game_name,
-            "competition_title": competition_title, "starts_at": starts_at,
+            "participant_a": participant_a,
+            "participant_b": participant_b,
+            "game_id": game_id,
+            "game_name": game_name,
+            "competition_title": competition_title,
+            "starts_at": starts_at,
             **snapshots,
         },
     )

@@ -55,10 +55,12 @@ class MyMatchesView(APIView):
         total = len(items)
         pages = max(1, ceil(total / PAGE_SIZE))
         number = min(number, pages)
-        return Response({
-            "player": current_player(request.user),
-            "summary": summary,
-            "games": games,
-            "items": items[(number - 1) * PAGE_SIZE:number * PAGE_SIZE],
-            "pagination": {"currentPage": number, "totalPages": pages, "totalItems": total},
-        })
+        return Response(
+            {
+                "player": current_player(request.user),
+                "summary": summary,
+                "games": games,
+                "items": items[(number - 1) * PAGE_SIZE : number * PAGE_SIZE],
+                "pagination": {"currentPage": number, "totalPages": pages, "totalItems": total},
+            }
+        )

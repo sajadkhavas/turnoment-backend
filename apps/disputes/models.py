@@ -13,7 +13,9 @@ class Dispute(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     match = models.OneToOneField("matches.Match", on_delete=models.PROTECT, related_name="dispute")
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="raised_disputes")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="raised_disputes"
+    )
     idempotency_key = models.CharField(max_length=200)
     reason = models.CharField(max_length=32)
     statement = models.TextField()
@@ -36,9 +38,12 @@ class Dispute(models.Model):
 
 class DisputeEvidence(models.Model):
     """Opaque quarantined bytes; no storage URL, no execution/inline serving."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     dispute = models.ForeignKey(Dispute, on_delete=models.PROTECT, related_name="evidence")
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="dispute_evidence")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="dispute_evidence"
+    )
     idempotency_key = models.CharField(max_length=200)
     file_name = models.CharField(max_length=160)
     content_type = models.CharField(max_length=32)

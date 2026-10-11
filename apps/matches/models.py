@@ -53,7 +53,9 @@ class Match(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["source_kind", "source_id"], name="b08_match_source_once"),
+            models.UniqueConstraint(
+                fields=["source_kind", "source_id"], name="b08_match_source_once"
+            ),
             models.CheckConstraint(
                 condition=~Q(participant_a=F("participant_b")), name="b08_distinct_participants"
             ),

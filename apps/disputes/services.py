@@ -24,20 +24,25 @@ def create_dispute(match_id, user, revision, reason, statement, key):
     match = _lock(match_id, user)
     existing = Dispute.objects.filter(match=match).first()
     if existing:
-        if existing.created_by_id == user.pk and existing.idempotency_key == key and (
-            existing.reason != reason or existing.statement != statement.strip()
+        if (
+            existing.created_by_id == user.pk
+            and existing.idempotency_key == key
+            and (existing.reason != reason or existing.statement != statement.strip())
         ):
             return {"outcome": "validation_error", "fields": {"form": "Idempotency key conflict"}}
         return {
-            "outcome": "already_open", "matchId": str(match.pk),
-            "revision": str(match.revision), "dispute": dispute_data(existing),
+            "outcome": "already_open",
+            "matchId": str(match.pk),
+            "revision": str(match.revision),
+            "dispute": dispute_data(existing),
         }
     if str(match.revision) != revision:
         return {"outcome": "stale", "revision": str(match.revision)}
     if match.state != Match.State.AWAITING_CONFIRMATION:
-        return {"outcome": "unavailable", "reason": (
-            "cancelled" if match.state == Match.State.CANCELLED else "not-eligible"
-        )}
+        return {
+            "outcome": "unavailable",
+            "reason": ("cancelled" if match.state == Match.State.CANCELLED else "not-eligible"),
+        }
     errors = {}
     if reason not in REASONS:
         errors["reason"] = "Invalid reason"
@@ -46,15 +51,20 @@ def create_dispute(match_id, user, revision, reason, statement, key):
     if errors:
         return {"outcome": "validation_error", "fields": errors}
     dispute = Dispute.objects.create(
-        match=match, created_by=user, reason=reason, statement=statement.strip(),
+        match=match,
+        created_by=user,
+        reason=reason,
+        statement=statement.strip(),
         idempotency_key=key,
     )
     match.state = Match.State.DISPUTED
     match.revision += 1
     match.save(update_fields=["state", "revision"])
     return {
-        "outcome": "accepted", "matchId": str(match.pk),
-        "revision": str(match.revision), "dispute": dispute_data(dispute),
+        "outcome": "accepted",
+        "matchId": str(match.pk),
+        "revision": str(match.revision),
+        "dispute": dispute_data(dispute),
     }
 
 
@@ -79,14 +89,19 @@ def add_evidence(match_id, dispute_id, user, revision, key, file):
     ).first()
     if old:
         return {
-            "outcome": "already_uploaded", "matchId": str(match.pk),
-            "disputeId": str(dispute.pk), "revision": str(match.revision),
+            "outcome": "already_uploaded",
+            "matchId": str(match.pk),
+            "disputeId": str(dispute.pk),
+            "revision": str(match.revision),
             "evidence": evidence_data(old),
         }
     if revision != str(match.revision):
         return {"outcome": "stale", "revision": str(match.revision)}
     if dispute.status == "resolved" or dispute.review_locked:
-        return {"outcome": "unavailable", "reason": "resolved" if dispute.status == "resolved" else "review-locked"}
+        return {
+            "outcome": "unavailable",
+            "reason": "resolved" if dispute.status == "resolved" else "review-locked",
+        }
     if DisputeEvidence.objects.filter(dispute=dispute).count() >= MAX_FILES:
         return {"outcome": "unavailable", "reason": "quota-reached"}
     if file is None or file.size == 0 or file.size > MAX_BYTES:
@@ -98,15 +113,21 @@ def add_evidence(match_id, dispute_id, user, revision, key, file):
     original = file.name.replace("\\", "/").split("/")[-1]
     safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", original)[:160] or "evidence"
     item = DisputeEvidence.objects.create(
-        dispute=dispute, uploaded_by=user, idempotency_key=key,
-        file_name=safe_name, content_type=sniffed, size_bytes=file.size,
+        dispute=dispute,
+        uploaded_by=user,
+        idempotency_key=key,
+        file_name=safe_name,
+        content_type=sniffed,
+        size_bytes=file.size,
         quarantined_bytes=content,
     )
     match.revision += 1
     match.save(update_fields=["revision"])
     return {
-        "outcome": "accepted", "matchId": str(match.pk),
-        "disputeId": str(dispute.pk), "revision": str(match.revision),
+        "outcome": "accepted",
+        "matchId": str(match.pk),
+        "disputeId": str(dispute.pk),
+        "revision": str(match.revision),
         "evidence": evidence_data(item),
     }
 
@@ -141,7 +162,9 @@ def resolve_dispute(dispute_id, operator, *, decision, summary):
     dispute.resolution_summary = summary.strip()
     dispute.resolved_at = timezone.now()
     dispute.review_locked = True
-    dispute.save(update_fields=["status", "decision", "resolution_summary", "resolved_at", "review_locked"])
+    dispute.save(
+        update_fields=["status", "decision", "resolution_summary", "resolved_at", "review_locked"]
+    )
     return dispute
 
 

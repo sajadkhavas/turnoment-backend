@@ -31,11 +31,16 @@ def players(db):
 def match(players):
     a, b, _ = players
     instance = create_match_for_source(
-        source_kind="challenge", source_id="challenge-b08-1",
-        participant_a=a, participant_b=b,
-        game_id="fc", game_name="EA FC",
-        competition_title="Free challenge", starts_at=timezone.now() - timedelta(hours=2),
-        max_score=30, allow_draw=False,
+        source_kind="challenge",
+        source_id="challenge-b08-1",
+        participant_a=a,
+        participant_b=b,
+        game_id="fc",
+        game_name="EA FC",
+        competition_title="Free challenge",
+        starts_at=timezone.now() - timedelta(hours=2),
+        max_score=30,
+        allow_draw=False,
     )
     advance_match(instance.pk, "ready")
     advance_match(instance.pk, "awaiting-result")
@@ -55,11 +60,16 @@ def dispute_url(match):
 def test_match_source_seam_is_idempotent_and_cannot_change_participants(players):
     a, b, third = players
     kwargs = {
-        "source_kind": "tournament", "source_id": "round-999",
-        "participant_a": a, "participant_b": b,
-        "game_id": "fc", "game_name": "FC", "competition_title": "Cup",
+        "source_kind": "tournament",
+        "source_id": "round-999",
+        "participant_a": a,
+        "participant_b": b,
+        "game_id": "fc",
+        "game_name": "FC",
+        "competition_title": "Cup",
         "starts_at": timezone.now(),
-        "tournament_slug": "cup", "round_label": "Round 1",
+        "tournament_slug": "cup",
+        "round_label": "Round 1",
     }
     first = create_match_for_source(**kwargs)
     assert create_match_for_source(**kwargs).pk == first.pk
@@ -107,17 +117,33 @@ def test_result_authorization_csrf_validation_and_stale(match, players):
     url = result_url(match)
     assert client.get(url).data["submissionState"] == "reportable"
     command = {"revision": str(match.revision), "playerScore": 2, "opponentScore": 1}
-    assert client.post(url, command, format="json", HTTP_IDEMPOTENCY_KEY="submission-1").status_code == 403
+    assert (
+        client.post(url, command, format="json", HTTP_IDEMPOTENCY_KEY="submission-1").status_code
+        == 403
+    )
     csrf = client.get("/api/v1/auth/csrf/").data["csrf_token"]
-    invalid = client.post(url, {**command, "opponentScore": 2}, format="json",
-                          HTTP_X_CSRFTOKEN=csrf, HTTP_IDEMPOTENCY_KEY="submission-1")
+    invalid = client.post(
+        url,
+        {**command, "opponentScore": 2},
+        format="json",
+        HTTP_X_CSRFTOKEN=csrf,
+        HTTP_IDEMPOTENCY_KEY="submission-1",
+    )
     assert invalid.data["outcome"] == "validation_error"
-    stale = client.post(url, {**command, "revision": "old"}, format="json",
-                        HTTP_X_CSRFTOKEN=csrf, HTTP_IDEMPOTENCY_KEY="submission-2")
+    stale = client.post(
+        url,
+        {**command, "revision": "old"},
+        format="json",
+        HTTP_X_CSRFTOKEN=csrf,
+        HTTP_IDEMPOTENCY_KEY="submission-2",
+    )
     assert stale.data["outcome"] == "stale"
     client.force_authenticate(user=outsider)
     assert client.get(url).status_code == 404
-    assert client.post(url, command, format="json", HTTP_IDEMPOTENCY_KEY="submission-3").status_code == 404
+    assert (
+        client.post(url, command, format="json", HTTP_IDEMPOTENCY_KEY="submission-3").status_code
+        == 404
+    )
 
 
 @pytest.mark.django_db
@@ -156,28 +182,63 @@ def test_dispute_validation_idempotency_privacy_and_evidence_quarantine(match, p
     url = dispute_url(match)
     assert client.get(url).data["disputeState"] == "eligible"
     revision = str(match.revision)
-    bad = client.post(url, {"revision": revision, "reason": "untrusted", "statement": "x"},
-                      format="json", HTTP_IDEMPOTENCY_KEY="dispute-12345")
+    bad = client.post(
+        url,
+        {"revision": revision, "reason": "untrusted", "statement": "x"},
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="dispute-12345",
+    )
     assert bad.data["outcome"] == "validation_error"
-    good = client.post(url, {"revision": revision, "reason": "incorrect-score",
-                             "statement": "Score was incorrectly reported at venue."},
-                       format="json", HTTP_IDEMPOTENCY_KEY="dispute-12345")
+    good = client.post(
+        url,
+        {
+            "revision": revision,
+            "reason": "incorrect-score",
+            "statement": "Score was incorrectly reported at venue.",
+        },
+        format="json",
+        HTTP_IDEMPOTENCY_KEY="dispute-12345",
+    )
     assert good.data["outcome"] == "accepted"
     dispute_id = good.data["dispute"]["disputeId"]
-    assert client.post(url, {"revision": revision, "reason": "incorrect-score",
-                             "statement": "Score was incorrectly reported at venue."},
-                       format="json", HTTP_IDEMPOTENCY_KEY="dispute-12345").data["outcome"] == "already_open"
+    assert (
+        client.post(
+            url,
+            {
+                "revision": revision,
+                "reason": "incorrect-score",
+                "statement": "Score was incorrectly reported at venue.",
+            },
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="dispute-12345",
+        ).data["outcome"]
+        == "already_open"
+    )
     assert Dispute.objects.count() == 1
     from django.core.files.uploadedfile import SimpleUploadedFile
 
     ev_url = f"/api/v1/matches/{match.pk}/dispute/{dispute_id}/evidence/"
     match.refresh_from_db()
     rev = str(match.revision)
-    invalid = client.post(ev_url, {"revision": rev, "file": SimpleUploadedFile("fake.png", b"not-a-png", content_type="image/png")},
-                          HTTP_IDEMPOTENCY_KEY="evidence-123")
+    invalid = client.post(
+        ev_url,
+        {
+            "revision": rev,
+            "file": SimpleUploadedFile("fake.png", b"not-a-png", content_type="image/png"),
+        },
+        HTTP_IDEMPOTENCY_KEY="evidence-123",
+    )
     assert invalid.data["outcome"] == "validation_error"
-    valid = client.post(ev_url, {"revision": rev, "file": SimpleUploadedFile("../photo.png", b"\x89PNG\r\n\x1a\n" + b"x" * 64, content_type="image/png")},
-                        HTTP_IDEMPOTENCY_KEY="evidence-123")
+    valid = client.post(
+        ev_url,
+        {
+            "revision": rev,
+            "file": SimpleUploadedFile(
+                "../photo.png", b"\x89PNG\r\n\x1a\n" + b"x" * 64, content_type="image/png"
+            ),
+        },
+        HTTP_IDEMPOTENCY_KEY="evidence-123",
+    )
     assert valid.data["outcome"] == "accepted"
     assert DisputeEvidence.objects.count() == 1
     assert "quarantined_bytes" not in str(client.get(url).data)
@@ -185,7 +246,10 @@ def test_dispute_validation_idempotency_privacy_and_evidence_quarantine(match, p
     assert evidence.quarantined_bytes.startswith(b"\x89PNG")
     client.force_authenticate(user=outsider)
     assert client.get(url).status_code == 404
-    assert client.post(ev_url, {"revision": rev}, HTTP_IDEMPOTENCY_KEY="evidence-456").status_code == 404
+    assert (
+        client.post(ev_url, {"revision": rev}, HTTP_IDEMPOTENCY_KEY="evidence-456").status_code
+        == 404
+    )
 
 
 @pytest.mark.django_db
@@ -194,8 +258,15 @@ def test_dispute_operator_boundary_and_finalization(match, players):
     submit_score(match.pk, a, str(match.revision), 3, 1, "score-dispute-2")
     match.refresh_from_db()
     from apps.disputes.services import create_dispute
-    created = create_dispute(match.pk, b, str(match.revision), "incorrect-score",
-                             "I challenge the reported score because it is incorrect.", "dispute-key-2")
+
+    created = create_dispute(
+        match.pk,
+        b,
+        str(match.revision),
+        "incorrect-score",
+        "I challenge the reported score because it is incorrect.",
+        "dispute-key-2",
+    )
     dispute_id = created["dispute"]["disputeId"]
     with pytest.raises(PermissionDenied):
         start_review(dispute_id, outsider)
@@ -208,7 +279,10 @@ def test_dispute_operator_boundary_and_finalization(match, players):
     start_review(dispute_id, outsider)
     resolution = resolve_dispute(dispute_id, outsider, decision="no-action", summary="Verified")
     assert resolution.status == "resolved"
-    assert resolve_dispute(dispute_id, outsider, decision="no-action", summary="Verified").pk == resolution.pk
+    assert (
+        resolve_dispute(dispute_id, outsider, decision="no-action", summary="Verified").pk
+        == resolution.pk
+    )
     assert FinalizedResultEvent.objects.count() == 1
     client = APIClient()
     client.force_authenticate(user=a)
@@ -222,9 +296,16 @@ def test_dispute_operator_boundary_and_finalization(match, players):
 def test_parallel_confirmations_publish_exactly_one_finalized_event():
     a = User.objects.create_user(phone="09121234561")
     b = User.objects.create_user(phone="09121234562")
-    instance = create_match_for_source(source_kind="challenge", source_id="parallel-b08",
-        participant_a=a, participant_b=b, game_id="fc", game_name="FC",
-        competition_title="Free", starts_at=timezone.now())
+    instance = create_match_for_source(
+        source_kind="challenge",
+        source_id="parallel-b08",
+        participant_a=a,
+        participant_b=b,
+        game_id="fc",
+        game_name="FC",
+        competition_title="Free",
+        starts_at=timezone.now(),
+    )
     advance_match(instance.pk, "ready")
     advance_match(instance.pk, "awaiting-result")
     instance.refresh_from_db()

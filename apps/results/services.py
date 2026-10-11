@@ -17,8 +17,10 @@ def lock_private_match(match_id, user):
 def score_errors(match, a, b):
     errors = {}
     for field, value in (("playerScore", a), ("opponentScore", b)):
-        if type(value) is not int or value < match.min_score or (
-            match.max_score is not None and value > match.max_score
+        if (
+            type(value) is not int
+            or value < match.min_score
+            or (match.max_score is not None and value > match.max_score)
         ):
             errors[field] = "Invalid score"
     if not errors and not match.allow_draw and a == b:
@@ -34,20 +36,34 @@ def submit_score(match_id, user, revision, player_score, opponent_score, key):
     result = MatchResult.objects.filter(match=match).first()
     if result:
         if result.reported_by_id == user.pk and result.idempotency_key == key:
-            a, b = (result.score_a, result.score_b) if match.participant_a_id == user.pk else (result.score_b, result.score_a)
+            a, b = (
+                (result.score_a, result.score_b)
+                if match.participant_a_id == user.pk
+                else (result.score_b, result.score_a)
+            )
             if (a, b) != (player_score, opponent_score):
-                return {"outcome": "validation_error", "fields": {"form": "Idempotency key conflict"}}
+                return {
+                    "outcome": "validation_error",
+                    "fields": {"form": "Idempotency key conflict"},
+                }
         return receipt(match, result, user, replay=True)
     if str(match.revision) != revision:
         return {"outcome": "stale", "revision": str(match.revision)}
     if match.state != Match.State.AWAITING_RESULT:
-        reason = {Match.State.DISPUTED: "disputed", Match.State.COMPLETED: "finalized",
-                  Match.State.CANCELLED: "cancelled"}.get(match.state, "not-reportable")
+        reason = {
+            Match.State.DISPUTED: "disputed",
+            Match.State.COMPLETED: "finalized",
+            Match.State.CANCELLED: "cancelled",
+        }.get(match.state, "not-reportable")
         return {"outcome": "unavailable", "reason": reason}
     errors = score_errors(match, player_score, opponent_score)
     if errors:
         return {"outcome": "validation_error", "fields": errors}
-    a, b = (player_score, opponent_score) if match.participant_a_id == user.pk else (opponent_score, player_score)
+    a, b = (
+        (player_score, opponent_score)
+        if match.participant_a_id == user.pk
+        else (opponent_score, player_score)
+    )
     result = MatchResult.objects.create(
         match=match, reported_by=user, idempotency_key=key, score_a=a, score_b=b
     )
@@ -68,11 +84,15 @@ def finalize_locked(match, result, confirmer):
         result.finalized_at = timezone.now()
         result.save(update_fields=["confirmed_by", "finalized_at"])
     event, _ = FinalizedResultEvent.objects.get_or_create(
-        match=match, defaults={
-            "result": result, "score_a": result.score_a, "score_b": result.score_b,
-            "player_a_id": match.participant_a_id, "player_b_id": match.participant_b_id,
+        match=match,
+        defaults={
+            "result": result,
+            "score_a": result.score_a,
+            "score_b": result.score_b,
+            "player_a_id": match.participant_a_id,
+            "player_b_id": match.participant_b_id,
             "finalized_at": result.finalized_at,
-        }
+        },
     )
     match.state = Match.State.COMPLETED
     match.revision += 1
@@ -85,12 +105,23 @@ def confirm_score(match_id, user, revision, player_score, opponent_score):
     match = lock_private_match(match_id, user)
     result = MatchResult.objects.filter(match=match).first()
     if match.state == Match.State.COMPLETED and result:
-        return {"outcome": "already_finalized", "eventId": str(FinalizedResultEvent.objects.get(match=match).pk)}
+        return {
+            "outcome": "already_finalized",
+            "eventId": str(FinalizedResultEvent.objects.get(match=match).pk),
+        }
     if revision != str(match.revision):
         return {"outcome": "stale", "revision": str(match.revision)}
-    if match.state != Match.State.AWAITING_CONFIRMATION or result is None or result.reported_by_id == user.pk:
+    if (
+        match.state != Match.State.AWAITING_CONFIRMATION
+        or result is None
+        or result.reported_by_id == user.pk
+    ):
         return {"outcome": "unavailable"}
-    a, b = (result.score_a, result.score_b) if match.participant_a_id == user.pk else (result.score_b, result.score_a)
+    a, b = (
+        (result.score_a, result.score_b)
+        if match.participant_a_id == user.pk
+        else (result.score_b, result.score_a)
+    )
     if (a, b) != (player_score, opponent_score):
         return {"outcome": "score_mismatch"}
     event = finalize_locked(match, result, user)

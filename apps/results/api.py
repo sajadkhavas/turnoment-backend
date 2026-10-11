@@ -10,9 +10,13 @@ from .services import confirm_score, submit_score
 
 
 def private_match(match_id, user):
-    match = Match.objects.select_related(
-        "participant_a__player_profile", "participant_b__player_profile", "result"
-    ).filter(pk=match_id).first()
+    match = (
+        Match.objects.select_related(
+            "participant_a__player_profile", "participant_b__player_profile", "result"
+        )
+        .filter(pk=match_id)
+        .first()
+    )
     if match is None or not match.has_participant(user):
         raise Http404
     return match
@@ -28,11 +32,25 @@ class ResultView(APIView):
         private_match(match_id, request.user)
         key = request.headers.get("Idempotency-Key", "")
         if not 8 <= len(key) <= 200:
-            return Response({"outcome": "validation_error", "fields": {"form": "Invalid idempotency key"}}, status=400)
+            return Response(
+                {"outcome": "validation_error", "fields": {"form": "Invalid idempotency key"}},
+                status=400,
+            )
         data = request.data
         if not isinstance(data, dict) or not isinstance(data.get("revision"), str):
-            return Response({"outcome": "validation_error", "fields": {"form": "Invalid revision"}}, status=400)
-        return Response(submit_score(match_id, request.user, data["revision"], data.get("playerScore"), data.get("opponentScore"), key))
+            return Response(
+                {"outcome": "validation_error", "fields": {"form": "Invalid revision"}}, status=400
+            )
+        return Response(
+            submit_score(
+                match_id,
+                request.user,
+                data["revision"],
+                data.get("playerScore"),
+                data.get("opponentScore"),
+                key,
+            )
+        )
 
 
 class ConfirmView(APIView):
@@ -43,4 +61,12 @@ class ConfirmView(APIView):
         data = request.data
         if not isinstance(data, dict) or not isinstance(data.get("revision"), str):
             return Response({"detail": "Invalid request"}, status=400)
-        return Response(confirm_score(match_id, request.user, data["revision"], data.get("playerScore"), data.get("opponentScore")))
+        return Response(
+            confirm_score(
+                match_id,
+                request.user,
+                data["revision"],
+                data.get("playerScore"),
+                data.get("opponentScore"),
+            )
+        )
