@@ -11,7 +11,7 @@ def csv_env(name: str, default: str = "") -> list[str]:
 SERVICE_NAME = "turnoment-backend"
 API_VERSION = "v1"
 FRONTEND_BASELINE_SHA = os.getenv(
-    "FRONTEND_BASELINE_SHA", "8d5736d788235e3e99765a5332f79f0cba861482"
+    "FRONTEND_BASELINE_SHA", "1668109bae5ec7abb5e022e5857ffa65cc131501"
 )
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-development-only-change-me")
@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "apps.accounts.apps.AccountsConfig",
+    "apps.core.apps.CoreConfig",
+    "apps.audit.apps.AuditConfig",
     "apps.system.apps.SystemConfig",
 ]
 
