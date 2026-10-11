@@ -29,6 +29,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.accounts.apps.AccountsConfig",
     "apps.system.apps.SystemConfig",
+    "apps.tournaments.apps.TournamentsConfig",
+    "apps.registrations.apps.RegistrationsConfig",
+    "apps.checkins.apps.CheckinsConfig",
+    "apps.brackets.apps.BracketsConfig",
 ]
 
 MIDDLEWARE = [

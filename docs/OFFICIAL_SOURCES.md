@@ -119,3 +119,12 @@ Decision:
 ### Closeout verification
 
 Re-reviewed 2026-09-06 after implementation and before freeze against the official Django 6.1 and DRF documentation above. No architecture deviation or source conflict was found. The P01 implementation remains aligned with the documented custom-user timing requirement, Django session/CSRF behavior, DRF same-session AJAX guidance, and DRF's warning not to use application throttling as a brute-force security boundary.
+
+## B05 — Tournament registration / PostgreSQL race protection (2026-10-11)
+
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — commit capacity + registration together in a short atomic transaction.
+- Django 6.1 querysets: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update — lock the parent tournament before duplicate/capacity checks.
+- Django 6.1 constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — use DB check/unique constraints as backstop.
+- DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — retain SessionAuthentication and CSRF on authenticated mutation endpoints.
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — public reads explicitly AllowAny with independent authentication_classes.
+- PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html — serialize competitors for the final available slot.
