@@ -131,6 +131,99 @@ B05-owned functionality is complete for phase acceptance. This does **not** clai
 
 ---
 
+## B06 — Teams / Membership / Achievements
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Final frozen main SHA and terminal CI are recorded in Issue #52 after this closeout merges.
+
+- Issue: `#52`; frontend lock: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `ffe44e3d999479282115c4bebdb4f33b40f5a598`.
+- Implementation branch: `phase/b06-teams-membership-achievements`.
+- Agent END_SHA / final reviewed head: `192ddb086beb54d5e66fa64edf92cd414f8a3cf3`.
+- Implementation PR: `#71`, merged after exact-head review; unresolved PR review threads: `0`.
+- Pre-merge Push CI `38153556687` PASS Python 3.12/3.14.
+- Pre-merge PR-context CI `38153559138` PASS Python 3.12/3.14.
+- Implementation merge SHA: `a05d705618740c71e222698a1192da99e4954c0a`.
+- Post-implementation main CI `38153933404` PASS Python 3.12/3.14.
+- Closeout branch: `closeout/b06-teams-achievements-freeze`; Closeout PR `#72`, with terminal merge SHA/CI recorded in Issue #52.
+- Delivery: private F14 team hub, team membership/invite/transfer/leave lifecycle with PostgreSQL constraints and row locks, F13 achievements with trusted idempotent progress events, migrations, permission/privacy/CSRF/concurrency tests; no user-exposed monetary rewards.
+- Explicit remaining B99 handoffs: authoritative B05 tournament-specific team registration eligibility and B08/B09 finalized-game events for achievement progress. No claims of full team tournament or team match coverage.
+- Financial execution added: `NO`.
+
+B06 owned scope is frozen, not global backend acceptance.
+
+---
+
+## B08 — Matches / Results / Disputes
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal freeze main SHA and CI belong in Issue #54 after this registry PR merges.
+
+- Issue: `#54`; frontend lock `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`; branch `phase/b08-matches-results-disputes`.
+- Agent END_SHA: `23b1e73390471512947dafb826310187f811073e`.
+- Final reviewed implementation HEAD: `966a5104b02c6c83662ab5fd7d74333a0ea7b030`.
+- Implementation PR `#65` MERGED using exact-head SHA; unresolved review threads `0`.
+- Agent push/PR CI `38144140439`, `38144232312` PASS.
+- Final implementation Push CI `38154918899` and PR CI `38154923101` PASS Python 3.12 / 3.14.
+- Implementation merge SHA `1ef4b4f1aa6bf1ed0b0da72fa7de938473ec11a0`.
+- Post-implementation main CI `38155030789` PASS Python 3.12 / 3.14.
+- Closeout branch `closeout/b08-matches-results-freeze`; closeout PR `#73`; terminal exact main SHA/CI recorded in Issue #54.
+- Delivered: source-unique participant Match identity, lifecycle, result submission/opponent confirmation, exactly one finalized event, dispute creation/review/finalization services, quarantine-only evidence and HTTP privacy/CSRF/retry/concurrency tests, initial migrations.
+- Mother improvements: reconciled B08 with B01/B03/B04/B05/B06 without force; reject conflicting source replay (schedule and snapshot metadata), avoid server errors from invalid replay dispute statement, record source audit and regression tests.
+- Integration still required: B05 tournament bracket → authoritative Match, B07 challenge accept → Match with truthful schedule, B09 finalized event consumer/season/rank projections, B10 operator moderation; B06 team match handling; quarantine scanning/private delivery operational gate. These are explicitly B99 acceptance tasks, not claimed completed.
+- Finance and wagering execution: `NO`.
+
+B08 bounded domain implementation accepted; full backend B99/E2E not yet accepted.
+
+---
+
+## B09 — Rankings / Stats / Rivalries
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. The terminal main SHA and final CI belong in Issue #55 after this PR merges.
+
+- Issue `#55`; frontend contract SHA `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA `ffe44e3d999479282115c4bebdb4f33b40f5a598`; phase branch `phase/b09-rankings-stats-rivalries`.
+- Agent END_SHA `f537297bdc4c5b86e3409dd3ce95ed5fbe2a3672`.
+- Integrated initial SHA `ba65b82a734e3dae6831252329a02d7ee74a93cc`; first cross-app lint failed, corrected before merge.
+- Final reviewed implementation HEAD `9967cd24a81f249e2658be89812e1f842364a01f`.
+- Implementation PR `#70`, promoted from Draft after real B08 finalization→B09 exactly-once regression; MERGED with expected-head lock; unresolved review threads 0.
+- Agent push/PR CI `38152476856` / `38152480097` PASS Python 3.12/3.14.
+- Final integrated B08+B09 push/PR CI `38155629507` / `38155632205` PASS Python 3.12/3.14.
+- Implementation MERGE_SHA `7ec16d7223046a087753b0d4c6832439e8382ce7`.
+- Post-implementation main CI `38155796107` PASS Python 3.12/3.14.
+- Closeout branch `closeout/b09-rankings-rivalries-freeze`; closeout PR `#74`; terminal SHA/CI recorded in Issue #55.
+- Delivered: B08 finalized Match event ingestion, receipt-unique Elo 1000/K32, distinct tournament/challenge ratings, published leaderboards and profiles, private rivalry projections, model/migration/permissions, PostgreSQL concurrency and B08 HTTP result confirmation→B09 exactly-once rating regression.
+- Mother changes: B09 safely reconciled with B06 and B08 shared URL/settings and source docs; repaired direct route imports, DB-backed ranking pagination, unknown/duplicate query filter validation, required official source audit and cross-app tests.
+- Explicit B99 work: trusted scheduled `drain_b08_events` consumer, historical chronological backfill+non-overlapping seasons, B02-vs-B09 public-profile route/identity ownership, B06 team ratings, rank movement historical snapshots. No invented seasons, paid outcomes or team scores.
+- Financial execution added: `NO`.
+
+B09-owned rating projection and real B08 event seam accepted; full B99 browser/production acceptance remains pending.
+
+---
+
+## B10 — Notifications / Moderation / Admin Operations
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal main SHA and CI will be recorded in Issue #56 after closeout.
+
+- Issue: `#56`; frozen frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`.
+- Branch: `phase/b10-notifications-moderation-admin`.
+- Agent END_SHA: `19494b38edc8f21cab8bf0b04fa02964d412b196`.
+- Final reviewed integration HEAD: `d5caa3a1d234c82af229d921b0499d6f901cd7da`.
+- Implementation PR `#63`, MERGED with expected-head lock; unresolved review threads: `0`.
+- Agent Push/PR CI `38144144991`, `38144149065` PASS.
+- Final integration Push/PR CI `38159395977`, `38159399025` PASS Python 3.12 and 3.14.
+- Implementation merge SHA: `56392f8a9ec0a790993693604b00eb8ff1cc7a61`.
+- Post-implementation main CI `38159523802` PASS Python 3.12 and 3.14.
+- Closeout branch `closeout/b10-notifications-moderation-freeze`; closeout PR and final SHA/CI will be documented in Issue #56.
+- Delivery: authenticated typed-redirect notification inbox with idempotent emits and read/read-all, central platform operator moderation-case transitions, restricted Django Admin, migrations, permissions/privacy/CSRF/idempotent concurrency tests. Duplicate query filters rejected.
+- Mother integration changes: safe B01–B09 shared settings/URL reconciliation, B10 official-source audit, query filter ambiguity guard and regression tests.
+- B99 cross-domain handoff: authoritative event→notification emission, B04 host application moderation with personal information 180-day retention purge, B08 dispute decision integration/private scanned evidence delivery, and final frontend two-session acceptance. Mere moderation case review does not change B04/B08 source state.
+- FINANCIAL EXECUTION ADDED: `NO`.
+
+B10-owned scope can close after terminal CI; overall backend B99 is pending.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`

@@ -230,6 +230,107 @@ not implemented; B05 and B10 integration seams are documented in
 
 ---
 
+## B06 — Teams / Membership / Nonfinancial Achievements (2026-10-11)
+
+- Django 6.1 constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/ — partial unique constraints prevent duplicate member rows, simultaneous captains and outstanding duplicate invitations; a per-team captain's existence remains a transactional service invariant.
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — membership plus invitation transitions are atomic, including captain swap and increment/event persistence.
+- Django 6.1 query locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update — lock the parent team or user consistently to serialize concurrent competing writes.
+- PostgreSQL explicit locking: https://www.postgresql.org/docs/current/explicit-locking.html — row locks serialize acceptance/transfer and replay without unsafe in-memory locks.
+- DRF session authentication: https://www.django-rest-framework.org/api-guide/authentication/ — inherit P01 SessionAuthentication; no anonymous mutation override or token-auth bypass.
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/ — private team/achievement API uses IsAuthenticated; captain and invite-recipient permissions enforced in domain services, never through client role claims.
+- DRF serializers: https://www.django-rest-framework.org/api-guide/serializers/ — validate create/invite/transfer inputs, strict fields and UUIDs at boundary.
+
+Decision: private F14/F13 projections exactly follow frontend SHA
+`1668109bae5ec7abb5e022e5857ffa65cc131501`.
+No public roster, participant finance, gamified currency or achievements self-claim surface.
+B05 eligibility is an opt-in read-only seam; actual team registration rules remain integration-owned.
+
+---
+
+## B08 — Matches / Results / Disputes (2026-10-11)
+
+Authoritative implementation references:
+- Django 6.1 transaction and transaction.atomic: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- QuerySet.select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Unique and check constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- DRF authentication/CSRF: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF parsers and file upload handling: https://www.django-rest-framework.org/api-guide/parsers/
+- PostgreSQL transaction row locks: https://www.postgresql.org/docs/current/explicit-locking.html
+
+Decisions:
+- Each authoritative source (tournament or challenge ID) has exactly one Match. Idempotent repeat can return the original only when participants, game, competition, scheduled start and provided snapshots match; conflicting replay fails closed.
+- Result confirmation/finalization locks the Match row, checks real opponent identity and creates one durable FinalizedResultEvent. B09 consumes it with a separate exactly-once receipt; neither consumer nor Celery decides primary match truth.
+- Evidence upload is private quarantined binary data without public URL; signature and 5MiB limits are not malware scanning. Admin review and private evidence delivery require an explicitly approved secure operational pipeline.
+- Match lifecycle has required starts_at in the frozen frontend F05 result contract; F15 challenge creation contains no venue/date/time, so B07 acceptance cannot truthfully schedule its Match until B99 defines the policy. Never substitute a fabricated clock time.
+- Only authenticated participants see private result/dispute/evidence metadata. Center staff must not inherit central dispute resolution authority.
+- Financial execution added: NO.
+
+---
+
+## B09 — Rankings / Stats / Rivalries (2026-10-11)
+
+Official references:
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django 6.1 row locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django QuerySet count/slicing: https://docs.djangoproject.com/en/6.1/ref/models/querysets/
+- PostgreSQL locking: https://www.postgresql.org/docs/current/explicit-locking.html
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+- B08 FinalizedResultEvent is the sole rating source; receipt uniqueness on event+match forbids duplicate Elo changes and conflicting replay. B09 does not generate, adjust or cancel match truth.
+- A trusted consumer locks season before rating row updates. Backfill of past events must be chronological; missing/multiple seasons fail closed; no invented initial season.
+- Tournament and challenge Elo are independent. Ranking page counts and slices on PostgreSQL rather than materializing full leaderboards. Duplicate/unknown query filters fail closed.
+- Public username publication is separate from P01 gamer_tag. B02/B09 public-profile route ownership must be explicitly reconciled at B99; no identity fields are exposed by default.
+- B08 is unmerged, and exact real B08→B09 integration tests and consumer scheduling are acceptance blockers for B09 to be marked DONE. B06 team matches and prior ranking movement snapshots remain deliberately deferred.
+- Financial execution added: NO.
+
+---
+
+## B10 — Notifications / Moderation / Platform Admin (2026-10-11)
+
+Authoritative references:
+- Django 6.1 transaction.atomic: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django custom AdminSite and AdminConfig: https://docs.djangoproject.com/en/6.1/ref/contrib/admin/#customizing-the-adminsite-class
+- DRF SessionAuthentication and CSRF: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Published notifications only reflect persisted authoritative domain facts. An exact recipient+event_key receipt ensures idempotent delivery, and no client-controlled notification write endpoint exists. Mark read actions lock user and notification, retain first read timestamp and stay CSRF protected.
+- Typed navigation targets cannot represent untrusted external URLs; public responses exclude users' sensitive contact, OTP and session details.
+- Platform operator requires is_active AND is_staff AND is_superuser; center ownership/staff cannot imply central administrative privileges. Django Admin is protected by custom AdminSite.
+- Moderation case and audit decisions do not directly change B04 host application or B08 disputed match truth. B99 must wire domain-owned transitions with audited authorization, 180-day host application PII purge policy and private evidence scanning/delivery.
+- Duplicate and unknown API query params are rejected, not ambiguously interpreted.
+- Financial execution added: NO.
+
+---
+
+## B02 — Accounts / Player / Settings
+
+Reviewed 2026-10-11 against frontend contract `1668109bae5ec7abb5e022e5857ffa65cc131501`; implementation branch `phase/b02-accounts-player-settings`.
+
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django 6.1 queryset row locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django CSRF: https://docs.djangoproject.com/en/6.1/howto/csrf/
+- Django custom user authentication: https://docs.djangoproject.com/en/6.1/topics/auth/customizing/
+- DRF authentication: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Preserve the P01 session/OTP authentication boundary. Notification settings writes require a real authenticated session plus CSRF.
+- Per-user preferences are versioned with an opaque revision; use a database row lock for concurrent updates and return a typed stale result instead of last-write-wins.
+- Required account/system categories are never mutable. B09 owns explicit opt-in publication and public-player competitive profiles. B02 must not create an alternative gamer-tag-only public profile or expose private bio.
+- B02 role checks delegate platform operator authority to B10's is_active+is_staff+is_superuser restriction and use B04's real owner/manager/staff center membership roles.
+- Global platform-operator authority is distinct from object-scoped center membership; B04 owns the durable membership model.
+- Dashboard and competitive results must be composed from B05/B07/B08/B09/B10 authoritative sources during B99 integration, not from placeholders.
+- No financial execution.
+
+---
+
 ## B07 — Challenges / Opponent Search (2026-10-11)
 
 - Django transactions/row locking: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ and https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
