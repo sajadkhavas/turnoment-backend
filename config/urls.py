@@ -3,8 +3,8 @@ from django.urls import include, path
 
 from apps.disputes.api import DisputeView, EvidenceView
 from apps.matches.api import MyMatchesView
-from apps.results.api import ConfirmView, ResultView
 from apps.rankings.api import PublicCompetitiveProfileView, PublicRankingView
+from apps.results.api import ConfirmView, ResultView
 from apps.rivalries.api import MyRivalriesView
 from apps.system.api.views import LiveView, ReadyView
 
