@@ -264,3 +264,23 @@ Decisions:
 - Match lifecycle has required starts_at in the frozen frontend F05 result contract; F15 challenge creation contains no venue/date/time, so B07 acceptance cannot truthfully schedule its Match until B99 defines the policy. Never substitute a fabricated clock time.
 - Only authenticated participants see private result/dispute/evidence metadata. Center staff must not inherit central dispute resolution authority.
 - Financial execution added: NO.
+
+---
+
+## B09 — Rankings / Stats / Rivalries (2026-10-11)
+
+Official references:
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django 6.1 row locking: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django QuerySet count/slicing: https://docs.djangoproject.com/en/6.1/ref/models/querysets/
+- PostgreSQL locking: https://www.postgresql.org/docs/current/explicit-locking.html
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+- B08 FinalizedResultEvent is the sole rating source; receipt uniqueness on event+match forbids duplicate Elo changes and conflicting replay. B09 does not generate, adjust or cancel match truth.
+- A trusted consumer locks season before rating row updates. Backfill of past events must be chronological; missing/multiple seasons fail closed; no invented initial season.
+- Tournament and challenge Elo are independent. Ranking page counts and slices on PostgreSQL rather than materializing full leaderboards. Duplicate/unknown query filters fail closed.
+- Public username publication is separate from P01 gamer_tag. B02/B09 public-profile route ownership must be explicitly reconciled at B99; no identity fields are exposed by default.
+- B08 is unmerged, and exact real B08→B09 integration tests and consumer scheduling are acceptance blockers for B09 to be marked DONE. B06 team matches and prior ranking movement snapshots remain deliberately deferred.
+- Financial execution added: NO.

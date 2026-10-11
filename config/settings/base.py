@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "apps.matches.apps.MatchesConfig",
     "apps.results.apps.ResultsConfig",
     "apps.disputes.apps.DisputesConfig",
+    "apps.rankings.apps.RankingsConfig",
+    "apps.rivalries.apps.RivalriesConfig",
     "apps.registrations.apps.RegistrationsConfig",
     "apps.checkins.apps.CheckinsConfig",
     "apps.brackets.apps.BracketsConfig",
