@@ -121,7 +121,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA an
 - Final integrated head push/PR CI: `38149554292` and `38149557544` PASS Python 3.12 / 3.14.
 - Implementation merge SHA: `e9a688ee09ea291931c9375efb04d7e2571092bd`
 - Post-implementation main CI: `38149658273` PASS Python 3.12 / 3.14.
-- Closeout branch: `closeout/b05-tournaments-registration-freeze`; closeout PR and terminal merge SHA/CI documented in Issue #51.
+- Closeout branch: `closeout/b05-tournaments-registration-freeze`; closeout PR `#69` and terminal merge SHA/CI documented in Issue #51.
 - Delivery: public tournament discovery/detail, session-authenticated own registration/check-in, free-only retry-safe registration with row-locked PostgreSQL capacity, my-tournaments, lifecycle services, seeded bracket previews and four migrations.
 - Mother corrections: reconciled B01/B03/B04 shared app/URL registrations and official sources, prevented duplicate participant within a bracket round and empty bracket pairs, changed broad tournament discovery reads to bounded-memory ORM/PostgreSQL filtered/paginated querying, and added regression tests.
 - Deliberate cross-domain boundaries: B03 Game and B04 GamingCenter keys remain snapshots pending authoritative B99 validation; B06 owns team membership eligibility hook; B08 owns match/result/finalization; B99 owns public projections, full frontend integration and load testing.
