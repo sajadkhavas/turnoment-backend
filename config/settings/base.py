@@ -20,7 +20,7 @@ ALLOWED_HOSTS = csv_env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = csv_env("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    "apps.moderation.admin_site.PlatformAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.postgres",
@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     "apps.tournaments.apps.TournamentsConfig",
     "apps.teams.apps.TeamsConfig",
     "apps.achievements.apps.AchievementsConfig",
+    "apps.notifications.apps.NotificationsConfig",
+    "apps.moderation.apps.ModerationConfig",
     "apps.matches.apps.MatchesConfig",
     "apps.results.apps.ResultsConfig",
     "apps.disputes.apps.DisputesConfig",

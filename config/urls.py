@@ -20,6 +20,8 @@ urlpatterns = [
     path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
     path("api/v1/", include("apps.teams.api.urls", namespace="teams")),
     path("api/v1/", include("apps.achievements.api.urls", namespace="achievements")),
+    path("api/v1/", include("apps.notifications.api.urls", namespace="notifications")),
+    path("api/v1/", include("apps.moderation.api.urls", namespace="moderation")),
     path("api/v1/rankings/", PublicRankingView.as_view(), name="public-ranking"),
     path("api/v1/me/rivalries/", MyRivalriesView.as_view(), name="my-rivalries"),
     path(

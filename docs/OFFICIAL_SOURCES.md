@@ -284,3 +284,24 @@ Decisions:
 - Public username publication is separate from P01 gamer_tag. B02/B09 public-profile route ownership must be explicitly reconciled at B99; no identity fields are exposed by default.
 - B08 is unmerged, and exact real B08→B09 integration tests and consumer scheduling are acceptance blockers for B09 to be marked DONE. B06 team matches and prior ranking movement snapshots remain deliberately deferred.
 - Financial execution added: NO.
+
+---
+
+## B10 — Notifications / Moderation / Platform Admin (2026-10-11)
+
+Authoritative references:
+- Django 6.1 transaction.atomic: https://docs.djangoproject.com/en/6.1/topics/db/transactions/
+- Django select_for_update: https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django model constraints: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- Django custom AdminSite and AdminConfig: https://docs.djangoproject.com/en/6.1/ref/contrib/admin/#customizing-the-adminsite-class
+- DRF SessionAuthentication and CSRF: https://www.django-rest-framework.org/api-guide/authentication/
+- DRF permissions: https://www.django-rest-framework.org/api-guide/permissions/
+- DRF serializer validation: https://www.django-rest-framework.org/api-guide/serializers/
+
+Decisions:
+- Published notifications only reflect persisted authoritative domain facts. An exact recipient+event_key receipt ensures idempotent delivery, and no client-controlled notification write endpoint exists. Mark read actions lock user and notification, retain first read timestamp and stay CSRF protected.
+- Typed navigation targets cannot represent untrusted external URLs; public responses exclude users' sensitive contact, OTP and session details.
+- Platform operator requires is_active AND is_staff AND is_superuser; center ownership/staff cannot imply central administrative privileges. Django Admin is protected by custom AdminSite.
+- Moderation case and audit decisions do not directly change B04 host application or B08 disputed match truth. B99 must wire domain-owned transitions with audited authorization, 180-day host application PII purge policy and private evidence scanning/delivery.
+- Duplicate and unknown API query params are rejected, not ambiguously interpreted.
+- Financial execution added: NO.
