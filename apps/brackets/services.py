@@ -26,8 +26,13 @@ def publish_round(*, tournament, number, title, pairings):
     )
     if registration_ids != present:
         raise ValueError("Cross-tournament or unconfirmed participant")
+    if any(a is None and b is None for a, b in pairings):
+        raise ValueError("Bracket pair cannot be empty")
     if any(a is not None and a == b for a, b in pairings):
         raise ValueError("Same player cannot occupy both sides")
+    participants = [participant for pair in pairings for participant in pair if participant is not None]
+    if len(participants) != len(set(participants)):
+        raise ValueError("Registration may appear only once per bracket round")
     round_obj = BracketRound.objects.create(
         tournament=locked, number=number, title=title
     )

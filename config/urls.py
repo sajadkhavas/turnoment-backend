@@ -9,5 +9,8 @@ urlpatterns = [
     path("health/ready/", ReadyView.as_view(), name="ready"),
     path("api/v1/system/", include("apps.system.api.urls", namespace="system")),
     path("api/v1/", include("apps.accounts.api.urls", namespace="accounts")),
+    path("api/v1/", include("apps.games.api.urls", namespace="games")),
+    path("api/v1/", include("apps.rulesets.api.urls", namespace="rulesets")),
+    path("api/v1/", include("apps.gaming_centers.api.urls", namespace="gaming_centers")),
     path("api/v1/", include("apps.tournaments.api.urls", namespace="tournaments")),
 ]

@@ -293,3 +293,27 @@ def test_same_team_cannot_reserve_two_slots():
     t.refresh_from_db()
     assert t.registered_count == 1
     assert Registration.objects.count() == 1
+
+@pytest.mark.django_db
+def test_bracket_rejects_same_registration_in_multiple_matches_and_empty_pairings():
+    tournament = make_tournament(lifecycle=Tournament.Lifecycle.CLOSED)
+    players = [player(number) for number in (101, 102, 103)]
+    participants = [
+        Registration.objects.create(tournament=tournament, user=user)
+        for user in players
+    ]
+
+    with pytest.raises(ValueError, match="only once"):
+        publish_round(
+            tournament=tournament, number=1, title="First round",
+            pairings=[
+                (participants[0].id, participants[1].id),
+                (participants[0].id, participants[2].id),
+            ],
+        )
+    with pytest.raises(ValueError, match="cannot be empty"):
+        publish_round(
+            tournament=tournament, number=1, title="First round",
+            pairings=[(None, None)],
+        )
+    assert BracketMatch.objects.count() == 0
