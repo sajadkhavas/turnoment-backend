@@ -105,6 +105,32 @@ B04-specific implementation acceptance is recorded; project-wide B99 and center 
 
 ---
 
+## B05 — Tournaments / Registration / Check-in / Brackets
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final main CI will be recorded in Issue #51 after merge.
+
+- Tracking Issue: `#51`
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`
+- Frozen frontend contract: `1668109bae5ec7abb5e022e5857ffa65cc131501`
+- Implementation branch: `phase/b05-tournaments-registration-checkin-brackets`
+- Agent END_SHA: `e0c5beefd12ed1288daca9e6d9d707e0e8d223ab`
+- Mother integrated initial SHA: `22fecc95d322be0029157e138c4817e89f7d1663` (initial lint failed, fixed before acceptance).
+- Final reviewed implementation HEAD: `b5767377bb8df56851890656b8ec9f3d2e8cbc3f`
+- Implementation PR: `#61`, MERGED with exact-head SHA lock; unresolved review threads: `0`.
+- Original agent push/PR CI: `38144112201` and `38144115894` PASS.
+- Final integrated head push/PR CI: `38149554292` and `38149557544` PASS Python 3.12 / 3.14.
+- Implementation merge SHA: `e9a688ee09ea291931c9375efb04d7e2571092bd`
+- Post-implementation main CI: `38149658273` PASS Python 3.12 / 3.14.
+- Closeout branch: `closeout/b05-tournaments-registration-freeze`; closeout PR and terminal merge SHA/CI documented in Issue #51.
+- Delivery: public tournament discovery/detail, session-authenticated own registration/check-in, free-only retry-safe registration with row-locked PostgreSQL capacity, my-tournaments, lifecycle services, seeded bracket previews and four migrations.
+- Mother corrections: reconciled B01/B03/B04 shared app/URL registrations and official sources, prevented duplicate participant within a bracket round and empty bracket pairs, changed broad tournament discovery reads to bounded-memory ORM/PostgreSQL filtered/paginated querying, and added regression tests.
+- Deliberate cross-domain boundaries: B03 Game and B04 GamingCenter keys remain snapshots pending authoritative B99 validation; B06 owns team membership eligibility hook; B08 owns match/result/finalization; B99 owns public projections, full frontend integration and load testing.
+- Financial execution added: `NO` (paid tournament registration returns `BACKEND_PENDING_FINANCE`; no payment URL/ledger/refund/payout).
+
+B05-owned functionality is complete for phase acceptance. This does **not** claim overall backend acceptance or completed B06/B08/B99 integrations.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
