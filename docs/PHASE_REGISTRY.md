@@ -80,6 +80,31 @@ B03 domain foundation is accepted; full cross-domain populated public projection
 
 ---
 
+## B04 — Gaming Centers / Host / Resources
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final main CI will be recorded in Issue #50 after merge.
+
+- Tracking Issue: `#50`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`.
+- Frozen frontend contract SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- Implementation branch: `phase/b04-gaming-centers-host-resources`.
+- Agent END_SHA: `cfc922a900cc0e88a4e2a0af9a425b3b6d36c9d8`.
+- Final reviewed integrated branch SHA: `06e9708de5acae9ee2dbf45807fcd7f299db89e1`.
+- Implementation PR: `#64`, MERGED with exact-head lock; unresolved review threads: `0`.
+- Agent push/PR CI: `38144741463` and `38144744607` PASS.
+- Integrated head push/PR CI: `38148240275` and `38148243914` PASS Python 3.12 / 3.14.
+- Implementation merge/main SHA: `76d153deb72b36c40ae82530c8f26c1dcec1ffcb`.
+- Post-implementation main CI: `38148342124` PASS Python 3.12 / 3.14.
+- Closeout branch: `closeout/b04-gaming-centers-freeze`; closeout PR `#68` and terminal merged SHA/CI will be recorded in Issue #50.
+- Delivered: public centers list/detail, anonymous host application receipts, center-scoped staff/profile/resources/hours APIs, models, migrations, PostgreSQL idempotent rate bucket, admin registration, session-CSRF/privacy/permissions/concurrency tests.
+- Mother-agent repairs: safe B01/B03 shared-file reconciliation without force, reject malformed station equipment identifiers, reject duplicated/unknown center directory filters, add corresponding regression tests, preserve B01/B03 source audit while recording B04.
+- B99 dependency: tournament counts and event lists from B05, moderation and host-application review/retention purge from B10, and integration acceptance of center permissions with B02. No production deployment made.
+- Financial execution added: `NO`.
+
+B04-specific implementation acceptance is recorded; project-wide B99 and center frontend panel acceptance are not claimed here.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
