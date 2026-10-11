@@ -18,6 +18,7 @@ from ..models import CenterMembership, City, GamingCenter
 from ..services import RateLimitExceeded, receive_host_application
 from .serializers import CenterProfileSerializer, HostApplicationInputSerializer
 
+
 DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
