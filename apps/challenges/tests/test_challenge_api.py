@@ -271,7 +271,11 @@ def test_accept_creates_exactly_one_match_and_finalization_replay(
 
 
 @pytest.mark.django_db
-def test_accept_without_b08_does_not_mutate_or_store_receipt(players, provider):
+def test_b08_creator_failure_rolls_back_accept_and_receipt(players, provider, monkeypatch):
+    def unavailable_creator(challenge):
+        raise integrations.MatchServiceUnavailable("B08 unavailable")
+
+    monkeypatch.setattr(integrations, "create_match_for_challenge", unavailable_creator)
     first, second, _ = players
     created = create(api(first), second)
     cid, revision = created.data["challengeId"], created.data["revision"]
@@ -517,7 +521,7 @@ def test_challenge_hub_database_pagination_keeps_virtual_expiry(players):
     assert stale.state == Challenge.State.PENDING
 
 @pytest.mark.django_db
-def test_authoritative_thirty_finalizations_unlock_but_no_implicit_schedule(players):
+def test_verified_thirty_finalizations_allow_real_challenge_and_single_match(players):
     from apps.games.models import CompetitiveFormat, Game
     from apps.matches.services import advance_match, create_match_for_source
     from apps.results.models import FinalizedResultEvent
@@ -560,9 +564,28 @@ def test_authoritative_thirty_finalizations_unlock_but_no_implicit_schedule(play
     access = services.access(challenger)
     assert access["unlocked"] is True
     assert access["finalizedValidMatches"] == 30
-    assert access["canCreate"] is False  # scheduling contract deliberately unresolved
+    assert access["canCreate"] is True
     assert integrations.opponent_eligible(challenger, opponent, game.pk)
-    blocked = create(api(challenger), opponent, key="b07-real-locked",
+    created = create(api(challenger), opponent, key="b07-real-created",
                      gameId=game.pk, formatId="solo")
-    assert blocked.data["outcome"] == "unavailable"
-    assert Challenge.objects.count() == 0
+    assert created.status_code == 200
+    assert Challenge.objects.count() == 1
+    cid, revision = created.data["challengeId"], created.data["revision"]
+    accepted = respond(api(opponent), cid, revision, key="b07-real-accepted")
+    assert accepted.status_code == 200
+    accepted_replay = respond(api(opponent), cid, revision, key="b07-real-accepted")
+    assert accepted_replay.data == accepted.data
+    bound = Challenge.objects.get(pk=cid)
+    assert bound.state == Challenge.State.ACCEPTED
+    assert bound.match_id is not None
+    from apps.matches.models import Match
+
+    linked = Match.objects.get(pk=bound.match_id)
+    assert linked.source_kind == Match.Source.CHALLENGE
+    assert linked.source_id == cid
+    assert linked.state == Match.State.READY
+    assert linked.participant_a_id == challenger.pk
+    assert linked.participant_b_id == opponent.pk
+    assert linked.venue_id == ""
+    assert timezone.now() >= linked.starts_at
+    assert Match.objects.filter(source_kind="challenge", source_id=cid).count() == 1
