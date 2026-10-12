@@ -97,6 +97,26 @@ def finalize_locked(match, result, confirmer):
     match.state = Match.State.COMPLETED
     match.revision += 1
     match.save(update_fields=["state", "revision"])
+    if match.source_kind == Match.Source.CHALLENGE:
+        # B07 owns the invitation lifecycle. Existing B08-origin test fixtures
+        # without a corresponding invitation remain compatible; real B07-bound
+        # matches are finalized in the same database transaction.
+        from apps.challenges.models import Challenge
+        from apps.challenges.services import record_finalized_match
+
+        challenge = Challenge.objects.filter(pk=match.source_id).first()
+        if challenge is not None:
+            score_a, score_b = event.score_a, event.score_b
+            result_label = f"{score_a} - {score_b}"
+            challenger_outcome = (
+                "win" if score_a > score_b else "loss" if score_a < score_b else "draw"
+            )
+            record_finalized_match(
+                str(challenge.pk), str(match.pk),
+                challenger_outcome=challenger_outcome,
+                score_label=result_label,
+                completed_at=event.finalized_at,
+            )
     return event
 
 
