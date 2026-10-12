@@ -35,7 +35,10 @@ def label(user):
 
 def published_username(user):
     return PublicRankingIdentity.objects.filter(
-        user=user, is_published=True
+        user=user, is_published=True,
+        user__is_active=True, user__player_profile__gamer_tag__isnull=False,
+    ).exclude(
+        user__player_profile__gamer_tag=""
     ).values_list("username", flat=True).first()
 
 
@@ -72,14 +75,14 @@ def rank_for(scope, user):
 
 
 def ratings(user, scope):
-    challenge_rating = None
+    candidates = PlayerRating.objects.filter(
+        user=user, kind=PlayerRating.Kind.CHALLENGE, played__gt=0,
+        season__is_published=True, game__publication_state="published",
+    ).select_related("game")
     if scope is not None:
-        challenge = PlayerRating.objects.filter(
-            user=user, game=scope.game, season=scope.season,
-            kind=PlayerRating.Kind.CHALLENGE, played__gt=0,
-        ).first()
-        if challenge:
-            challenge_rating = challenge.rating
+        candidates = candidates.filter(game=scope.game, season=scope.season)
+    challenge = candidates.order_by("-last_finalized_at", "game__slug").first()
+    challenge_rating = challenge.rating if challenge else None
     if scope is None:
         history = []
     else:
@@ -91,7 +94,7 @@ def ratings(user, scope):
             event.rating_a_after if event.user_a_id == user.pk else event.rating_b_after
             for event in reversed(events)
         ]
-    return scope.rating if scope else None, rank_for(scope, user), challenge_rating, history
+    return scope.rating if scope else None, rank_for(scope, user), challenge_rating, history, challenge
 
 
 def tournament_state(tournament):
@@ -288,15 +291,25 @@ def build_dashboard(user):
     profile = getattr(user, "player_profile", None)
     name = label(user)
     scope = competition_scope(user)
-    tournament_rating, tournament_rank, challenge_rating, history = ratings(user, scope)
+    tournament_rating, tournament_rank, challenge_rating, history, challenge_scope = (
+        ratings(user, scope)
+    )
     registration_rows = list(
         Registration.objects.filter(
             user=user, status=Registration.Status.CONFIRMED
-        ).select_related("tournament").order_by("tournament__starts_at", "id")[:5]
+        ).exclude(tournament__lifecycle="cancelled").select_related(
+            "tournament"
+        ).order_by("-tournament__starts_at", "id")[:5]
     )
     tournaments = [tournament_item(reg) for reg in registration_rows]
-    next_tournament = next(
-        (item for item in tournaments if item["tournamentState"] == "upcoming"), None
+    upcoming_registration = Registration.objects.filter(
+        user=user, status=Registration.Status.CONFIRMED,
+        tournament__starts_at__gte=timezone.now(),
+    ).exclude(
+        tournament__lifecycle__in=["cancelled", "completed"]
+    ).select_related("tournament").order_by("tournament__starts_at", "id").first()
+    next_tournament = (
+        tournament_item(upcoming_registration) if upcoming_registration else None
     )
     match_qs = visible_matches(user)
     recents = list(match_qs.filter(
@@ -330,10 +343,12 @@ def build_dashboard(user):
         finalized_tournaments.filter(participant_a=user, result__score_a__gt=F("result__score_b"))
         | finalized_tournaments.filter(participant_b=user, result__score_b__gt=F("result__score_a"))
     ).distinct().count()
-    primary_game_id = scope.game_id if scope else (
+    primary_game_id = (
+        scope.game_id if scope else challenge_scope.game_id if challenge_scope else
         registration_rows[0].tournament.game_key if registration_rows else ""
     )
-    primary_game_name = scope.game.name if scope else (
+    primary_game_name = (
+        scope.game.name if scope else challenge_scope.game.name if challenge_scope else
         registration_rows[0].tournament.game_name if registration_rows else ""
     )
     return {
