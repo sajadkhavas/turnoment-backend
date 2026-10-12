@@ -224,6 +224,32 @@ B10-owned scope can close after terminal CI; overall backend B99 is pending.
 
 ---
 
+## B07 — Challenges / Opponent Search
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and CI are recorded in Issue #53 after the registry closeout merges.
+
+- Tracking Issue: `#53`.
+- Frozen frontend source SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- START_SHA: `0f5d44646b608106ad20db97ec8c559fa084e6ce`.
+- Workstream branch: `phase/b07-challenges-opponent-search`.
+- Agent initial END_SHA: `15558198c800709f77d33b7c03a27b2a1fe913a6`.
+- Mother first integrated SHA: `92b016134237bca6b4286741e45ab70749be61d6`.
+- Final reviewed implementation HEAD: `b79a7737133f439db01489cbb5a2203b7176d70f`.
+- Implementation PR `#62`, promoted from DRAFT to review only after real B08 integration checks and two-session CSRF test; merged with exact-head SHA; unresolved review threads: `0`.
+- Original agent push/PR CI `38144021120` / `38144026120` PASS.
+- Initial integration push/PR CI `38150845701` / `38150848749` PASS.
+- Final implementation push/PR CI `38222839563` / `38222845133` PASS Python 3.12 and 3.14.
+- Implementation MERGE_SHA: `6be55de20fd17f7e4ff47f13c2700f8403ea0491`.
+- Post-implementation main CI `38223098850`: PASS Python 3.12 and 3.14.
+- Closeout branch: `closeout/b07-challenges-freeze`. Closeout PR and terminal SHA/CI will be added here and in Issue #53.
+- Delivered: published B03 solo-game discovery, B08 finalized Match-based 30-match eligibility check, candidate search, real invitation create/respond/cancel with CSRF/row locks/idempotent receipts; acceptance synchronously produces exactly one B08 Match ready for **immediate in-person play** with no fabricated future booking or venue; B08 finalization atomically marks challenge completed. Tests include real 30 finalized B08 matches plus two independent authenticated session/CSRF clients and replay.
+- B99 integration still required: final browser Playwright two-player E2E; B09 event-drain / Elo update with configured season; notification delivery; venue/time product semantics for any *future scheduled* challenge flow; moderation void/cancellation propagation; operations and large-scale load tests.
+- Financial execution added: `NO`, challenges non-monetary only.
+
+B07 bounded workstream accepted; this is not the B99 end-to-end final system freeze.
+
+---
+
 ## P00 — Backend Foundation & Frontend Contract Baseline
 
 Status: `DONE / MERGED / FROZEN`
