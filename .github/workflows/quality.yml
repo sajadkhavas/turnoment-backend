@@ -56,7 +56,7 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379/1
       CELERY_BROKER_URL: redis://127.0.0.1:6379/2
       CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/3
-      FRONTEND_BASELINE_SHA: 8d5736d788235e3e99765a5332f79f0cba861482
+      FRONTEND_BASELINE_SHA: 1668109bae5ec7abb5e022e5857ffa65cc131501
 
     steps:
       - uses: actions/checkout@v4
@@ -80,6 +80,9 @@ jobs:
         run: |
           python manage.py check --settings=config.settings.test
           python manage.py makemigrations --check --dry-run --settings=config.settings.test
+
+      - name: Migrate empty PostgreSQL
+        run: python manage.py migrate --noinput --settings=config.settings.test
 
       - name: Tests
         run: pytest -q
