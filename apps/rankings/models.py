@@ -1,8 +1,18 @@
 import uuid
 
+
+class TsTzRange(Func):
+    """PostgreSQL timezone-aware half-open [start, end) season window."""
+
+    function = "TSTZRANGE"
+    output_field = DateTimeRangeField()
+
+
 from django.conf import settings
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F, Func, Q
 
 
 class Season(models.Model):
@@ -18,6 +28,12 @@ class Season(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(ends_at__gt=F("starts_at")), name="b09_season_window"
+            ),
+            ExclusionConstraint(
+                name="b09_no_season_overlap",
+                expressions=[
+                    (TsTzRange("starts_at", "ends_at", RangeBoundary()), RangeOperators.OVERLAPS),
+                ],
             ),
         ]
         ordering = ["-starts_at", "slug"]

@@ -365,3 +365,15 @@ Decisions:
 - Absent rating scope, published rank, or public username is explicitly `null`, never an invented positive rank/score/public profile.
 - The frozen frontend's `tournamentRank: positiveInt` and unconditional public-profile link are demonstrable empty-account contract bugs; a dedicated B99 frontend compatibility branch handles `null` without modifying historical contract SHA.
 - No payment, wallet, settlement, wager or prize payout.
+
+
+---
+
+## B99 — PostgreSQL season exclusion and Celery operational consumer (2026-10-12)
+
+- Django PostgreSQL exclusion constraints: https://docs.djangoproject.com/en/6.1/ref/contrib/postgres/constraints/ — `ExclusionConstraint` with `TsTzRange`, `RangeBoundary` and `OVERLAPS` applies half-open `[)` intervals; direct database constraint prevents concurrent overlapping season creation.
+- Django 6.1 transactions: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ — the batch consumer owns an outer `atomic()` boundary and cannot partially commit on exceptions.
+- PostgreSQL advisory locks: https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS — nonblocking transaction-level advisory lock serializes workers; it is automatically released at transaction end.
+- Celery 5.6 periodic scheduling: https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html — beat schedules worker tasks; only one beat instance is deployed, and overlaps require explicit locking; scheduler is disabled until operator opt-in. No Celery task may invent finalized match truth.
+
+Decision: preserve existing B08 primary records and B09 idempotent receipts, enforce global season non-overlap in PostgreSQL, fail closed on historical conflicts, schedule only after operational verification. Financial execution: NO.

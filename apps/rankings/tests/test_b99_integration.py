@@ -231,3 +231,38 @@ def test_ranking_drain_fails_closed_without_configured_season():
     with pytest.raises(CommandError, match="Ranking drain blocked"):
         call_command("drain_b08_events")
     assert AppliedMatchEvent.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_b99_database_refuses_ambiguous_overlapping_seasons():
+    """Even unpublished seasons cannot silently hijack B08 ranking attribution."""
+    from django.db import IntegrityError, transaction
+
+    now = timezone.now()
+    Season.objects.create(
+        slug="b99-first-window", label="First window",
+        starts_at=now - timedelta(days=1), ends_at=now,
+    )
+    # Adjacent [start, end) seasons are valid and deterministic.
+    Season.objects.create(
+        slug="b99-adjacent-window", label="Adjacent window",
+        starts_at=now, ends_at=now + timedelta(days=1),
+    )
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Season.objects.create(
+            slug="b99-ambiguous-window", label="Ambiguous overlap",
+            starts_at=now - timedelta(hours=1), ends_at=now + timedelta(hours=1),
+        )
+    assert Season.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_b99_scheduler_is_explicitly_opt_in_and_empty_drain_is_safe():
+    from django.conf import settings
+    from apps.rankings.tasks import drain_verified_b08
+
+    assert not settings.B99_ENABLE_RANKING_DRAIN
+    assert settings.CELERY_BEAT_SCHEDULE == {}
+    result = drain_verified_b08(limit=100)
+    assert result == {"applied": 0, "skipped": None}
+    assert AppliedMatchEvent.objects.count() == 0

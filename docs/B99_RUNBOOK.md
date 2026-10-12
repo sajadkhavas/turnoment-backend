@@ -29,3 +29,12 @@ Status: **IN PROGRESS; NOT BACKEND FINAL/FROZEN**. Issue [#77](https://github.co
 - Final user-assisted VS Code smoke acceptance.
 
 References: [Django management commands](https://docs.djangoproject.com/en/6.1/howto/custom-management-commands/), [Django migrations](https://docs.djangoproject.com/en/6.1/topics/migrations/), [Celery periodic tasks](https://docs.celeryq.dev/en/main/userguide/periodic-tasks.html).
+
+
+## B99 season DB policy and Celery consumer (ranking operations PR)
+
+- The PostgreSQL exclusion constraint `b09_no_season_overlap` rejects intersecting Season [starts_at, ends_at) windows, including unpublished windows. Adjacent windows sharing a boundary are allowed. The migration deliberately **fails closed** if existing season data overlap; inspect/repair conflicting windows according to business policy before migrating; do not erase rating receipts or invent seasons.
+- An explicit opt-in scheduler entry runs every 60 seconds when `B99_ENABLE_RANKING_DRAIN=1` and **both** Celery beat and Celery worker are running. Defaults to disabled and is never evidence that a production worker is live.
+- Task name `apps.rankings.drain_verified_b08`; a fixed PostgreSQL transaction advisory lock prevents overlapping workers from applying competing batches. Idempotent B08 event receipts continue to enforce exactly-once effect.
+- Operations: deploy migration first; configure exact season windows and verify no gaps for existing finalizations; perform chronological initial backfill using `manage.py drain_b08_events --limit 100` in repeated runs until zero; start **one** beat instance and workers with `B99_ENABLE_RANKING_DRAIN=1`; inspect Celery worker failure/retry logs and pending `FinalizedResultEvent` minus `AppliedMatchEvent` event IDs. A missing/ambiguous season or backdated event fails visibly and requires deliberate repair.
+- Do **not** declare scheduler acceptance until running production processes, observed dispatch, lag alarms, and end-to-end drain are verified against the target deployment. No finance.
