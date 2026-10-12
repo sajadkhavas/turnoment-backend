@@ -94,7 +94,8 @@ def ratings(user, scope):
             event.rating_a_after if event.user_a_id == user.pk else event.rating_b_after
             for event in reversed(events)
         ]
-    return scope.rating if scope else None, rank_for(scope, user), challenge_rating, history, challenge
+    return (scope.rating if scope else None, rank_for(scope, user),
+            challenge_rating, history, challenge)
 
 
 def tournament_state(tournament):
