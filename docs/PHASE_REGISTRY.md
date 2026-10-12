@@ -241,7 +241,7 @@ Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA an
 - Final implementation push/PR CI `38222839563` / `38222845133` PASS Python 3.12 and 3.14.
 - Implementation MERGE_SHA: `6be55de20fd17f7e4ff47f13c2700f8403ea0491`.
 - Post-implementation main CI `38223098850`: PASS Python 3.12 and 3.14.
-- Closeout branch: `closeout/b07-challenges-freeze`. Closeout PR and terminal SHA/CI will be added here and in Issue #53.
+- Closeout branch: `closeout/b07-challenges-freeze`. Closeout PR `#76`; terminal main SHA/CI will be recorded in Issue #53.
 - Delivered: published B03 solo-game discovery, B08 finalized Match-based 30-match eligibility check, candidate search, real invitation create/respond/cancel with CSRF/row locks/idempotent receipts; acceptance synchronously produces exactly one B08 Match ready for **immediate in-person play** with no fabricated future booking or venue; B08 finalization atomically marks challenge completed. Tests include real 30 finalized B08 matches plus two independent authenticated session/CSRF clients and replay.
 - B99 integration still required: final browser Playwright two-player E2E; B09 event-drain / Elo update with configured season; notification delivery; venue/time product semantics for any *future scheduled* challenge flow; moderation void/cancellation propagation; operations and large-scale load tests.
 - Financial execution added: `NO`, challenges non-monetary only.
