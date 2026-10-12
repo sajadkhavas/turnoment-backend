@@ -5,7 +5,7 @@ Status: **IN PROGRESS; NOT BACKEND FINAL/FROZEN**. Issue [#77](https://github.co
 ## Frozen inputs and known evidence
 - Backend START/main: `436cc7281fc7c4a64c14cca604f06c94327a0600`.
 - Frontend accepted snapshot: `1668109bae5ec7abb5e022e5857ffa65cc131501`, with explicit nullable/unranked compatibility correction in frontend PR #122.
-- Baseline correction: `FRONTEND_BASELINE_SHA` is aligned both in Django defaults and GitHub Actions.
+- B01 freezes the active frontend contract in `apps.core.frontend.FROZEN_FRONTEND_CONTRACT_SHA`. The legacy P00 `/api/v1/system/meta/` SHA (`8d5736d788235e3e99765a5332f79f0cba861482`) is intentionally preserved; changing it would violate P00 compatibility.
 - Last pre-B99 main quality: GitHub Actions [38226631690](https://github.com/sajadkhavas/turnoment-backend/actions/runs/38226631690), Python 3.12/3.14 PASS.
 - Financial execution remains disabled: no payments, wallet, settlement, payouts, prizes or wagering.
 
