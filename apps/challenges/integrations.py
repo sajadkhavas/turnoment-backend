@@ -59,8 +59,8 @@ def player_challenge_stats(user) -> PlayerChallengeStats:
 
 
 def match_creator_ready() -> bool:
-    """Blocked until B99 approves a real in-person start-time contract."""
-    return False
+    """Accepted invitations create immediate, ready-to-play B08 Matches."""
+    return True
 
 
 def creation_games(user) -> tuple[GameChoice, ...]:
@@ -106,4 +106,43 @@ def opponent_eligible(challenger, opponent, game_id: str) -> bool:
 
 
 def create_match_for_challenge(challenge) -> str:
-    raise MatchServiceUnavailable("B08 match creation service not wired")
+    """Create one real B08 Match within B07's locked accept transaction.
+
+    The frozen challenge command supplies no future time or venue. Acceptance is
+    immediate readiness to play in person, not a future booking. starts_at
+    records the real ready/acceptance instant; no venue or future time is made up.
+    """
+    from django.core.exceptions import ValidationError
+    from django.utils import timezone
+
+    from apps.matches.models import Match
+    from apps.matches.services import advance_match, create_match_for_source
+
+    if challenge.challenger_id == challenge.opponent_id:
+        raise MatchServiceUnavailable("Invalid challenge participants")
+    if (
+        len(challenge.game_id) > 100
+        or len(challenge.game_name) > 160
+        or len(challenge.format_label) > 100
+    ):
+        raise MatchServiceUnavailable("Game or format exceeds B08 snapshot limits")
+    try:
+        match = create_match_for_source(
+            source_kind=Match.Source.CHALLENGE,
+            source_id=str(challenge.pk),
+            participant_a=challenge.challenger,
+            participant_b=challenge.opponent,
+            game_id=challenge.game_id,
+            game_name=challenge.game_name,
+            competition_title="چالش حضوری",
+            starts_at=timezone.now(),
+            format_label=challenge.format_label,
+            check_in_state="not-required",
+        )
+        if match.state == Match.State.SCHEDULED:
+            match = advance_match(match.pk, Match.State.READY)
+        elif match.state != Match.State.READY:
+            raise MatchServiceUnavailable("Challenge match already progressed")
+    except ValidationError as exc:
+        raise MatchServiceUnavailable("B08 rejected challenge match") from exc
+    return str(match.pk)
