@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.tournaments.apps.TournamentsConfig",
     "apps.teams.apps.TeamsConfig",
     "apps.achievements.apps.AchievementsConfig",
+    "apps.challenges.apps.ChallengesConfig",
     "apps.notifications.apps.NotificationsConfig",
     "apps.moderation.apps.ModerationConfig",
     "apps.matches.apps.MatchesConfig",

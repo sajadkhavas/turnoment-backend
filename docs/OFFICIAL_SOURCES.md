@@ -328,3 +328,20 @@ Decisions:
 - Global platform-operator authority is distinct from object-scoped center membership; B04 owns the durable membership model.
 - Dashboard and competitive results must be composed from B05/B07/B08/B09/B10 authoritative sources during B99 integration, not from placeholders.
 - No financial execution.
+
+---
+
+## B07 — Challenges / Opponent Search (2026-10-11)
+
+- Django transactions/row locking: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ and https://docs.djangoproject.com/en/6.1/ref/models/querysets/#select-for-update
+- Django constraints/partial unique: https://docs.djangoproject.com/en/6.1/ref/models/constraints/
+- PostgreSQL partial unique indexes: https://www.postgresql.org/docs/current/indexes-partial.html
+- DRF SessionAuthentication/CSRF and permissions: https://www.django-rest-framework.org/api-guide/authentication/ and https://www.django-rest-framework.org/api-guide/permissions/
+
+Decisions:
+- Database enforces unordered active player pair + game uniqueness, no self-challenge and match-state consistency. Transactional writes require actor-scoped idempotency receipts.
+- The published B03 game and solo-compatible format records define the offered creation choices. They do not override B08 finalized-valid-match gate.
+- B07 now counts only completed persisted B08 FinalizedResultEvent records and reads B09 Challenge Rating only if a single unambiguous published scope exists. Creation stays disabled until truthful schedule/venue semantics and real synchronous B08 Match binding are approved. No fake match, rating or starts_at.
+- B08's source-unique Match model requires a timezone-aware starts_at. Frozen B07 create input has no scheduling/center fields; B99 must settle truthful in-person scheduling semantics before wiring accept.
+- Read-only challenge hub page uses PostgreSQL filtered counts and bounded pagination; GET never expires rows by writing.
+- Financial execution added: NO.
