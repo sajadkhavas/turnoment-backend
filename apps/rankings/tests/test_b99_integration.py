@@ -259,6 +259,7 @@ def test_b99_database_refuses_ambiguous_overlapping_seasons():
 @pytest.mark.django_db
 def test_b99_scheduler_is_explicitly_opt_in_and_empty_drain_is_safe():
     from django.conf import settings
+
     from apps.rankings.tasks import drain_verified_b08
 
     assert not settings.B99_ENABLE_RANKING_DRAIN
