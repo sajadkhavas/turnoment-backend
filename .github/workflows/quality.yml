@@ -81,6 +81,9 @@ jobs:
           python manage.py check --settings=config.settings.test
           python manage.py makemigrations --check --dry-run --settings=config.settings.test
 
+      - name: Migrate empty PostgreSQL
+        run: python manage.py migrate --noinput --settings=config.settings.test
+
       - name: Tests
         run: pytest -q
 
