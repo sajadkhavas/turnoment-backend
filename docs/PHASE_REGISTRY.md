@@ -55,6 +55,28 @@ B01 is not terminally `DONE` until closeout PR merges, post-closeout `main` CI p
 
 ---
 
+## B02 — Accounts / Player / Settings
+
+Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Final post-closeout `main` CI and issue freeze are recorded in Issue #48, not recursively in this file.
+
+- Tracking Issue: `#48`; implementation scope B02, integration handoff B99 Issue `#77`.
+- Frozen frontend source SHA: `1668109bae5ec7abb5e022e5857ffa65cc131501`.
+- Original B02 START: `0f5d44646b608106ad20db97ec8c559fa084e6ce`; final dashboard continuation START/main: `347782fc7b961b9a63f316994cb5269d982adda3`.
+- Implementation branch `phase/b02-accounts-player-settings`, agent initial END `cd8133579887ba7667515e791b3ea2dd7e7cc6fa`, reviewed HEAD `38c0cbb74ca29c4d70a6f312662fc0a9d2ec3ece`.
+- B02 partial implementation PR `#58` MERGED: `0d266e8334d48017e7bd25bd9da8ff9d2836a2a9`; exact-head Push/PR quality `38160247765` / `38160250106` PASS Python 3.12/3.14; post-main `38160445684` PASS.
+- Dashboard implementation continuation branch `phase/b02-dashboard-final-integration-20261012`; final reviewed HEAD `e2a5b7c4d83fdecc4c3c42656d27fe19f75f4273`; PR `#78` MERGED: `436cc7281fc7c4a64c14cca604f06c94327a0600`; Push/PR quality `38225987460` / `38225992193` PASS Python 3.12/3.14; post-main `38226631690` PASS.
+- Frontend intentional nullable/unranked correction PR `sajadkhavas/turnoment#122` MERGED: `d367aa23c6b33e4aaa05192d510d7c9122b5472c`; frontend post-main quality `38226299476` PASS.
+- B99 cross-domain API acceptance and empty PostgreSQL migration PR `#79` MERGED: `55acf26b21e3c221784fb007ebd923ab595b0954`, post-main gate `38228027756` PASS on Python 3.12/3.14.
+- Resolved B02 scope: P01 login/CSRF preserved; private player preferences with revision controls, role identity delegated to authoritative B04 membership/B10 platform operator boundaries; no extra public gamer-tag-only API; canonical B09 public opt-in profile. Owner-only `GET /api/v1/me/dashboard/` derives data from durable B05/B06/B07/B08/B09/B10 records; no fabricated rank, score, tournaments or achievements. Unranked player has `null` rating/rank/public username; private PII excluded.
+- No B02 dashboard migration. Previous B02 notification-preference migration `accounts.0002_notificationpreference` maintained; no migration drift. Both PRs: unresolved review threads `0`.
+- Closeout branch: `closeout/b02-accounts-dashboard-freeze-20261012`; closeout PR and terminal post-closeout main SHA/CI are to be frozen in Issue #48.
+- Remaining system-wide **B99** gates are **not** part of a claim of B02 total-system acceptance: live Playwright API-mode two-browser-session smoke, production event scheduler/season policy, B04/B05/B06/B08/B10 bridges, and user VS Code acceptance.
+- Financial execution added: `NO`.
+
+B02 bounded domain implementation has been reviewed and merged; terminal Issue closure occurs only after this documentation PR and post-main CI green. **B99 remains OPEN**.
+
+---
+
 ## B03 — Games / Rules / Public Discovery
 
 Status: `IMPLEMENTATION MERGED / CLOSEOUT IN PROGRESS`. Terminal closeout SHA and final CI belong in Issue #49 after merge.
