@@ -26,8 +26,27 @@ async function login(page, phone) {
   await page.goto(base + "/login?redirect=%2Fdashboard%2Fchallenges");
   await expect(page.getByRole("heading", { name: "ورود با کد یکبارمصرف" })).toBeVisible();
   await page.locator("#login-phone").fill(phone.replace(/^\+98/, "0"));
+  const otpHttp = page.waitForResponse(
+    (response) => response.url().includes("/api/v1/auth/otp/request/"),
+    { timeout: 15000 },
+  ).catch(() => null);
   await page.getByRole("button", { name: "دریافت کد ورود" }).click();
-  await expect(page.getByText("کد ورود ارسال شد. کد ۶ رقمی را وارد کن.")).toBeVisible();
+  const sentResponse = await otpHttp;
+  console.log("B99 OTP POST HTTP status:", sentResponse?.status() ?? "NO NETWORK RESPONSE");
+  try {
+    await expect(
+      page.getByText("کد ورود ارسال شد. کد ۶ رقمی را وارد کن."),
+    ).toBeVisible({ timeout: 8000 });
+  } catch (error) {
+    console.error("B99 OTP UI feedback:", await page.locator("#login-feedback").innerText());
+    console.error("B99 current browser URL:", page.url());
+    if (sentResponse) {
+      const payload = await sentResponse.json().catch(() => null);
+      console.error("B99 OTP HTTP error code:",
+        payload?.error?.code ?? "(no error code)");
+    }
+    throw error;
+  }
   const otp = await otpFor(phone);
   await page.locator('input[autocomplete="one-time-code"]').fill(otp);
   await page.getByRole("button", { name: "تأیید و ورود" }).click();
