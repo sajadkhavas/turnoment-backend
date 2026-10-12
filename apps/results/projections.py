@@ -43,6 +43,11 @@ def result_view(match, user):
         {
             "revision": str(match.revision),
             "submissionState": state,
+            "canConfirmResult": bool(
+                state == "awaiting-confirmation"
+                and result
+                and result.reported_by_id != user.pk
+            ),
             "scorePolicy": {
                 "minScore": match.min_score,
                 "maxScore": match.max_score,
