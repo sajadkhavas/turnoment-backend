@@ -1,3 +1,5 @@
+import uuid
+
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
@@ -104,7 +106,11 @@ def finalize_locked(match, result, confirmer):
         from apps.challenges.models import Challenge
         from apps.challenges.services import record_finalized_match
 
-        challenge = Challenge.objects.filter(pk=match.source_id).first()
+        try:
+            challenge_id = uuid.UUID(match.source_id)
+        except (ValueError, TypeError, AttributeError):
+            challenge_id = None
+        challenge = Challenge.objects.filter(pk=challenge_id).first() if challenge_id else None
         if challenge is not None:
             score_a, score_b = event.score_a, event.score_b
             result_label = f"{score_a} - {score_b}"
