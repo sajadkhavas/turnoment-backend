@@ -140,6 +140,21 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 270
 
+# B99 ratings are durable, non-financial projections. Never schedule work at
+# import time without an explicit operator opt-in and running Celery beat/worker.
+# A single beat instance must be deployed; the task also uses a PostgreSQL lock.
+B99_ENABLE_RANKING_DRAIN = os.getenv("B99_ENABLE_RANKING_DRAIN", "0") == "1"
+CELERY_BEAT_SCHEDULE = (
+    {
+        "b99-drain-finalized-match-ratings": {
+            "task": "apps.rankings.drain_verified_b08",
+            "schedule": 60.0,
+            "kwargs": {"limit": 100},
+        }
+    }
+    if B99_ENABLE_RANKING_DRAIN else {}
+)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",

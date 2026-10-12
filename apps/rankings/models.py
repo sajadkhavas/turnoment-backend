@@ -1,6 +1,8 @@
 import uuid
 
 from django.conf import settings
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeBoundary, RangeOperators
 from django.db import models
 from django.db.models import F, Q
 
@@ -18,6 +20,18 @@ class Season(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(ends_at__gt=F("starts_at")), name="b09_season_window"
+            ),
+            ExclusionConstraint(
+                name="b09_no_season_overlap",
+                expressions=[
+                    (
+                        models.Func(
+                            "starts_at", "ends_at", RangeBoundary(),
+                            function="TSTZRANGE", output_field=DateTimeRangeField(),
+                        ),
+                        RangeOperators.OVERLAPS,
+                    ),
+                ],
             ),
         ]
         ordering = ["-starts_at", "slug"]
