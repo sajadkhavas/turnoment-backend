@@ -345,3 +345,23 @@ Decisions:
 - B08's source-unique Match model requires a timezone-aware starts_at. Frozen B07 create input has no scheduling/center fields; B99 must settle truthful in-person scheduling semantics before wiring accept.
 - Read-only challenge hub page uses PostgreSQL filtered counts and bounded pagination; GET never expires rows by writing.
 - Financial execution added: NO.
+
+
+---
+
+## B02/B99 owner dashboard integration — 2026-10-12
+
+Frontend authority: `sajadkhavas/turnoment@1668109bae5ec7abb5e022e5857ffa65cc131501`.
+Backend reviewed baseline: `347782fc7b961b9a63f316994cb5269d982adda3`.
+
+- Django transactions and ORM aggregation: https://docs.djangoproject.com/en/6.1/topics/db/transactions/ and https://docs.djangoproject.com/en/6.1/topics/db/aggregation/
+- Django QuerySet lookups: https://docs.djangoproject.com/en/6.1/ref/models/querysets/
+- DRF authentication and object-level permissions: https://www.django-rest-framework.org/api-guide/authentication/ and https://www.django-rest-framework.org/api-guide/permissions/
+- OWASP API security (object access): https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/
+
+Decisions:
+- `GET /api/v1/me/dashboard/` is session-authenticated and owner-only; accepts no arbitrary filters.
+- B08 finalized-result records, B09 applied rating receipts, B05 confirmed registrations, B07 challenges, B06 teams/achievements and B10 notifications are read as durable truth.
+- Absent rating scope, published rank, or public username is explicitly `null`, never an invented positive rank/score/public profile.
+- The frozen frontend's `tournamentRank: positiveInt` and unconditional public-profile link are demonstrable empty-account contract bugs; a dedicated B99 frontend compatibility branch handles `null` without modifying historical contract SHA.
+- No payment, wallet, settlement, wager or prize payout.
