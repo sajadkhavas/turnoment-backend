@@ -607,3 +607,67 @@ def test_verified_thirty_finalizations_allow_real_challenge_and_single_match(pla
     repeated = confirm_score(linked.pk, opponent, str(linked.revision), 1, 2)
     assert repeated["outcome"] == "already_finalized"
     assert FinalizedResultEvent.objects.filter(match=linked).count() == 1
+
+@pytest.mark.django_db
+def test_two_independent_real_sessions_require_csrf_and_create_one_b08_match(players, provider):
+    """B07's P01 browser contract with independent actor cookies, not force_authenticate."""
+    from apps.matches.models import Match
+
+    challenger, opponent, outsider = players
+    client_a = APIClient(enforce_csrf_checks=True)
+    client_b = APIClient(enforce_csrf_checks=True)
+    client_a.force_login(challenger)
+    client_b.force_login(opponent)
+    csrf_a = client_a.get("/api/v1/auth/csrf/").data["csrf_token"]
+    csrf_b = client_b.get("/api/v1/auth/csrf/").data["csrf_token"]
+
+    data = {
+        "opponentPlayerId": str(opponent.pk), "gameId": "ea-fc-26",
+        "formatId": "bo3", "note": "Ready to play in person",
+    }
+    unprotected = client_a.post(
+        HUB, data, format="json", HTTP_IDEMPOTENCY_KEY="two-sessions-create-01"
+    )
+    assert unprotected.status_code == 403
+    assert Challenge.objects.count() == 0
+
+    created = client_a.post(
+        HUB, data, format="json", HTTP_IDEMPOTENCY_KEY="two-sessions-create-01",
+        HTTP_X_CSRFTOKEN=csrf_a,
+    )
+    assert created.status_code == 200
+    assert created.data["outcome"] == "accepted"
+    challenge_id, revision = created.data["challengeId"], created.data["revision"]
+    url = f"{HUB}{challenge_id}/response/"
+    payload = {"revision": revision, "action": "accept"}
+
+    outsider_client = APIClient(enforce_csrf_checks=True)
+    outsider_client.force_login(outsider)
+    outsider_csrf = outsider_client.get("/api/v1/auth/csrf/").data["csrf_token"]
+    blocked = outsider_client.post(
+        url, payload, format="json", HTTP_IDEMPOTENCY_KEY="outsider-accept-01",
+        HTTP_X_CSRFTOKEN=outsider_csrf,
+    )
+    assert blocked.status_code in (403, 404)
+    assert Match.objects.count() == 0
+
+    assert client_b.post(
+        url, payload, format="json", HTTP_IDEMPOTENCY_KEY="two-sessions-accept-01"
+    ).status_code == 403
+    accepted = client_b.post(
+        url, payload, format="json", HTTP_IDEMPOTENCY_KEY="two-sessions-accept-01",
+        HTTP_X_CSRFTOKEN=csrf_b,
+    )
+    assert accepted.status_code == 200
+    assert accepted.data["outcome"] == "accepted"
+    replay = client_b.post(
+        url, payload, format="json", HTTP_IDEMPOTENCY_KEY="two-sessions-accept-01",
+        HTTP_X_CSRFTOKEN=csrf_b,
+    )
+    assert replay.data == accepted.data
+    challenge = Challenge.objects.get(pk=challenge_id)
+    assert challenge.state == Challenge.State.ACCEPTED
+    assert Match.objects.filter(
+        source_kind=Match.Source.CHALLENGE, source_id=challenge_id
+    ).count() == 1
+    assert str(Match.objects.get(source_id=challenge_id).pk) == challenge.match_id
