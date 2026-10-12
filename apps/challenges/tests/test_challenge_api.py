@@ -589,3 +589,21 @@ def test_verified_thirty_finalizations_allow_real_challenge_and_single_match(pla
     assert linked.venue_id == ""
     assert timezone.now() >= linked.starts_at
     assert Match.objects.filter(source_kind="challenge", source_id=cid).count() == 1
+    advance_match(linked.pk, "awaiting-result")
+    linked.refresh_from_db()
+    submission = submit_score(
+        linked.pk, challenger, str(linked.revision),
+        2, 1, "b07-new-match-score",
+    )
+    assert submission["outcome"] == "accepted"
+    linked.refresh_from_db()
+    final = confirm_score(linked.pk, opponent, str(linked.revision), 1, 2)
+    assert final["outcome"] == "finalized"
+    assert FinalizedResultEvent.objects.filter(match=linked).count() == 1
+    bound.refresh_from_db()
+    assert bound.state == Challenge.State.COMPLETED
+    assert bound.final_outcome == "win"
+    assert bound.score_label == "2 - 1"
+    repeated = confirm_score(linked.pk, opponent, str(linked.revision), 1, 2)
+    assert repeated["outcome"] == "already_finalized"
+    assert FinalizedResultEvent.objects.filter(match=linked).count() == 1
