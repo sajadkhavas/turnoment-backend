@@ -8,6 +8,9 @@ from zoneinfo import ZoneInfo
 from django.db.models import Count, F, Q
 from django.utils import timezone
 from django.utils.timesince import timesince
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.achievements.models import AchievementDefinition, AchievementProgress
 from apps.challenges.integrations import player_challenge_stats
@@ -366,3 +369,12 @@ def build_dashboard(user):
         "achievements": achievement_preview(user),
         "notifications": notification_preview(user),
     }
+
+
+class MyDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.query_params:
+            return Response({"error": {"code": "unexpected_dashboard_query"}}, status=400)
+        return Response(build_dashboard(request.user))
