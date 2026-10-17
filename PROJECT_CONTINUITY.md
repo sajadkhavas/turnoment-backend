@@ -1,3 +1,5 @@
+> **2026-10-17 LOCAL QA CONTINUATION:** Read [local QA and launch handoff](docs/handoffs/2026-10-17-local-qa-launch-handoff.md) before continuing. Local fixes and manual tests exist beyond older checkpoints below; latest Windows code synchronization is NOT certified. Status: IN PROGRESS, not production-ready. This docs-only checkpoint does not merge or certify implementation.
+
 # TURNOMENT — BACKEND PROJECT CONTINUITY CHECKPOINT
 
 > **MANDATORY FIRST READ FOR EVERY CHAT / AGENT / SESSION**
