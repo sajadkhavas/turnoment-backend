@@ -56,6 +56,10 @@ def result_view(match, user):
             "canConfirmResult": bool(
                 state == "awaiting-confirmation" and result and result.reported_by_id != user.pk
             ),
+            "canCreateDispute": bool(
+                state == "awaiting-confirmation" and result and match.has_participant(user)
+                and not hasattr(match, "dispute")
+            ),
             "scorePolicy": {
                 "minScore": match.min_score,
                 "maxScore": match.max_score,

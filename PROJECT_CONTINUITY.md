@@ -1,3 +1,5 @@
+> **2026-10-21 ACTIONS / DISPUTE FOLLOW-UP:** Read [current follow-up](docs/handoffs/2026-10-21-actions-dispute-followup.md). Typed match actions and dispute entry implemented; real PostgreSQL/manual acceptance pending. Kavenegar/B99 unchanged.
+
 > **2026-10-21 SOURCE RECONCILIATION:** Read [source checkpoint](docs/handoffs/2026-10-21-source-reconciliation.md). Uploaded Windows changes are preserved on `sync/local-qa-20261021`; draft review and runtime acceptance remain pending. Do not overwrite the original Windows tree.
 
 # TURNOMENT — BACKEND PROJECT CONTINUITY CHECKPOINT
