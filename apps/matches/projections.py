@@ -109,6 +109,12 @@ def match_item(match, user):
     data.update(
         {
             "lifecycleState": match.state,
+            "revision": str(match.revision),
+            "canControlLifecycle": bool(
+                match.source_kind == Match.Source.CHALLENGE
+                and match.has_participant(user)
+                and match.state in (Match.State.READY, Match.State.LIVE)
+            ),
             "checkInState": match.check_in_state,
             "resultState": result_state(match),
             "disputeState": dispute_state(match),

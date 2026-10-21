@@ -511,3 +511,33 @@ def test_dispute_replay_with_non_string_statement_is_controlled_validation(match
         )
         assert repeated["outcome"] == "validation_error"
     assert Dispute.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_result_actions_follow_authoritative_dispute_state(match, players):
+    a, b, outsider = players
+    client = APIClient()
+    client.force_authenticate(user=a)
+    assert client.get(result_url(match)).data["canCreateDispute"] is False
+    submit_score(match.pk, a, str(match.revision), 3, 1, "dispute-entry-proof")
+    match.refresh_from_db()
+    for user, can_confirm in ((a, False), (b, True)):
+        client.force_authenticate(user=user)
+        page = client.get(result_url(match)).data
+        assert page["canCreateDispute"] is True
+        assert page["canConfirmResult"] is can_confirm
+    client.force_authenticate(user=outsider)
+    assert client.get(result_url(match)).status_code == 404
+    client.force_authenticate(user=b)
+    created = client.post(
+        dispute_url(match),
+        {"revision": str(match.revision), "reason": "incorrect-score",
+         "statement": "The reported score is incorrect and requires review."},
+        format="json", HTTP_IDEMPOTENCY_KEY="dispute-entry-open",
+    )
+    assert created.status_code == 200
+    assert created.data["outcome"] == "accepted"
+    page = client.get(result_url(match)).data
+    assert page["submissionState"] == "disputed"
+    assert page["canCreateDispute"] is False
+    assert page["canConfirmResult"] is False
