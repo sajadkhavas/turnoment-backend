@@ -1,3 +1,5 @@
+> **2026-10-21 SOURCE RECONCILIATION:** Read [source checkpoint](docs/handoffs/2026-10-21-source-reconciliation.md). Uploaded Windows changes are preserved on `sync/local-qa-20261021`; draft review and runtime acceptance remain pending. Do not overwrite the original Windows tree.
+
 # TURNOMENT — BACKEND PROJECT CONTINUITY CHECKPOINT
 
 > **MANDATORY FIRST READ FOR EVERY CHAT / AGENT / SESSION**

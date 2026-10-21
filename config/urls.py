@@ -3,6 +3,7 @@ from django.urls import include, path
 
 from apps.disputes.api import DisputeView, EvidenceView
 from apps.matches.api import MyMatchesView
+from apps.matches.lifecycle_api import ChallengeMatchLifecycleView
 from apps.rankings.api import PublicCompetitiveProfileView, PublicRankingView
 from apps.results.api import ConfirmView, ResultView
 from apps.rivalries.api import MyRivalriesView
@@ -30,6 +31,7 @@ urlpatterns = [
         PublicCompetitiveProfileView.as_view(), name="public-competitive-profile",
     ),
     path("api/v1/me/matches/", MyMatchesView.as_view()),
+    path("api/v1/matches/<uuid:match_id>/lifecycle/", ChallengeMatchLifecycleView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/", ResultView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/confirm/", ConfirmView.as_view()),
     path("api/v1/matches/<uuid:match_id>/dispute/", DisputeView.as_view()),

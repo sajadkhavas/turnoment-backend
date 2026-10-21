@@ -21,11 +21,21 @@ def final_result(match, result, user):
         if match.participant_a_id == user.pk
         else (result.score_b, result.score_a)
     )
+    from apps.rankings.models import AppliedMatchEvent
+
+    applied = AppliedMatchEvent.objects.filter(source_match_id=match.pk).first()
+    delta = None
+    if applied:
+        delta = (
+            applied.rating_a_after - applied.rating_a_before
+            if applied.user_a_id == user.pk
+            else applied.rating_b_after - applied.rating_b_before
+        )
     return {
         "playerScore": a,
         "opponentScore": b,
         "outcome": "draw" if a == b else "win" if a > b else "loss",
-        "ratingDelta": None,
+        "ratingDelta": delta,
         "finalizedAt": result.finalized_at.isoformat(),
     }
 
@@ -44,9 +54,7 @@ def result_view(match, user):
             "revision": str(match.revision),
             "submissionState": state,
             "canConfirmResult": bool(
-                state == "awaiting-confirmation"
-                and result
-                and result.reported_by_id != user.pk
+                state == "awaiting-confirmation" and result and result.reported_by_id != user.pk
             ),
             "scorePolicy": {
                 "minScore": match.min_score,

@@ -168,3 +168,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
 }
+
+
+PUSH_VAPID_PUBLIC_KEY = os.getenv("PUSH_VAPID_PUBLIC_KEY", "")
+PUSH_VAPID_PRIVATE_KEY = os.getenv("PUSH_VAPID_PRIVATE_KEY", "")
+PUSH_VAPID_SUBJECT = os.getenv("PUSH_VAPID_SUBJECT", "")
+PUSH_ALLOWED_HOSTS = csv_env(
+    "PUSH_ALLOWED_HOSTS",
+    "fcm.googleapis.com,updates.push.services.mozilla.com,web.push.apple.com",
+)
+NOTIFICATION_SMS_BACKEND = os.getenv(
+    "NOTIFICATION_SMS_BACKEND", "apps.notifications.delivery.DisabledSmsSender",
+)
