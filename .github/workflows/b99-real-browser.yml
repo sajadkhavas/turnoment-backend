@@ -1,0 +1,131 @@
+name: B99 Live Browser Acceptance
+
+on:
+  push:
+    branches:
+      - "phase/b99-real-browser-acceptance-*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/b99*"
+      - ".github/workflows/b99-real-browser.yml"
+      - "apps/**"
+      - "config/**"
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: turnoment
+          POSTGRES_PASSWORD: turnoment
+          POSTGRES_DB: turnoment_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U turnoment -d turnoment_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SECRET_KEY: b99-disposable-local-browser-only-django-secret-not-production
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      DB_NAME: turnoment_e2e
+      DB_USER: turnoment
+      DB_PASSWORD: turnoment
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/1
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/2
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/3
+      B99_BACKEND_LOG: /tmp/b99-backend.log
+      B99_ENABLE_RANKING_DRAIN: "0"
+      B99_BROWSER_ONLY: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout approved frontend API contract
+        uses: actions/checkout@v4
+        with:
+          repository: sajadkhavas/turnoment
+          ref: fb7c2942919a7e6237b2066fabd38b942cd3757e
+          path: frontend
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install backend and frontend dependencies
+        run: |
+          set -Eeuo pipefail
+          python -m pip install -e '.[dev]'
+          (cd frontend && bun install --frozen-lockfile)
+          npm install --no-save --no-package-lock --prefix . @playwright/test@1.56.1
+          ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Prepare isolated PostgreSQL B99 browser scenario
+        run: |
+          set -Eeuo pipefail
+          python manage.py migrate --noinput --settings=config.settings.local
+          python manage.py shell < scripts/b99_seed_browser.py
+
+      - name: Live API mode with three isolated browser sessions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -u manage.py runserver 127.0.0.1:8000 --noreload > "$B99_BACKEND_LOG" 2>&1 &
+          BACKEND_PID=$!
+          (cd frontend && VITE_DATA_ADAPTER=api VITE_API_BASE_URL=http://127.0.0.1:4173/ bun run dev -- --host 127.0.0.1 --port 4174) > /tmp/b99-frontend.log 2>&1 &
+          FRONTEND_PID=$!
+          node scripts/b99_local_proxy.mjs > /tmp/b99-proxy.log 2>&1 &
+          PROXY_PID=$!
+          cleanup() {
+            kill "$BACKEND_PID" "$FRONTEND_PID" "$PROXY_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          ready=0
+          for _ in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:4173/health/live/ >/dev/null 2>&1 && curl -fsS http://127.0.0.1:4173/login >/dev/null 2>&1; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat "$B99_BACKEND_LOG" /tmp/b99-frontend.log /tmp/b99-proxy.log
+            exit 1
+          fi
+          node scripts/b99-playwright/run.mjs
+
+      - name: Upload failed-browser evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b99-live-browser-failure
+          path: |
+            artifacts/b99-real-browser/
+            /tmp/b99-backend.log
+            /tmp/b99-frontend.log
+            /tmp/b99-proxy.log
+          if-no-files-found: ignore
+          retention-days: 3

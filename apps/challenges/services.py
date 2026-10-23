@@ -74,7 +74,7 @@ def create_challenge(actor, key, payload):
     with transaction.atomic():
         # Locks two user rows in deterministic order for cross-direction races.
         users = list(
-            get_user_model().objects.select_for_update()
+            get_user_model().objects.select_for_update(no_key=True)
             .filter(pk__in=pair).order_by("pk")
         )
         previous = receipt_or_none(actor, key, digest)
@@ -131,7 +131,7 @@ def create_challenge(actor, key, payload):
 def mutate_challenge(actor, challenge_id, key, command, payload):
     digest = fingerprint(command, {"challengeId": str(challenge_id), **payload})
     with transaction.atomic():
-        get_user_model().objects.select_for_update().get(pk=actor.pk)
+        get_user_model().objects.select_for_update(no_key=True).get(pk=actor.pk)
         previous = receipt_or_none(actor, key, digest)
         if previous is not None:
             return previous
