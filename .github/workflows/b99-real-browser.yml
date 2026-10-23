@@ -3,7 +3,7 @@ name: B99 Live Browser Acceptance
 on:
   push:
     branches:
-      - "phase/b99-real-browser-acceptance-*"
+      - "phase/b99-real-browser-*"
   pull_request:
     branches: [main]
     paths:
