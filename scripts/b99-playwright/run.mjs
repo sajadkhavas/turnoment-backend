@@ -323,6 +323,50 @@ try {
   console.log("B99 DISPUTE API PASS: score mismatch, participant dispute, replay, " +
     "outsider denial, no premature rating");
 
+  // Real center-admin API permissions: owner may manage the center, staff can
+  // read only permitted venue data, and an unrelated player has no access.
+  // Fixture is restricted to the disposable local PostgreSQL E2E database.
+  const centerSetup = backendCommand(
+    "from apps.accounts.models import User; " +
+    "from apps.gaming_centers.models import City, GamingCenter, CenterMembership; " +
+    "c=GamingCenter.objects.create(public_id='b99-browser-center', " +
+    "name='B99 Browser Center', city=City.objects.get(slug='b99-karaj'), " +
+    "district='QA', summary='Disposable center for browser permission checks.', " +
+    "description='Temporary gaming center used only in the isolated B99 PostgreSQL acceptance database.'); " +
+    "CenterMembership.objects.create(center=c, " +
+    "user=User.objects.get(phone=" + JSON.stringify(seed.phones.alpha) + "), " +
+    "role=CenterMembership.Role.OWNER); " +
+    "CenterMembership.objects.create(center=c, " +
+    "user=User.objects.get(phone=" + JSON.stringify(seed.phones.bravo) + "), " +
+    "role=CenterMembership.Role.STAFF); " +
+    "print('B99_CENTER_ID='+str(c.pk))",
+  );
+  const centerId = centerSetup.match(/B99_CENTER_ID=([0-9a-f-]{36})/)?.[1];
+  assert(centerId, "Disposable center was not created");
+  const centerApi = "/api/v1/center-admin/centers/" + centerId + "/";
+  assert.equal((await readJson(a, centerApi)).status, 200,
+    "Center owner must read own center");
+  assert.equal((await readJson(b, centerApi)).status, 200,
+    "Active center staff must read own center");
+  assert.equal((await readJson(third, centerApi)).status, 403,
+    "Unrelated player must not read private center admin data");
+  assert.equal((await readJson(a, centerApi + "staff/")).status, 200);
+  assert.equal((await readJson(b, centerApi + "staff/")).status, 403,
+    "Center staff must not enumerate memberships");
+  assert.equal((await readJson(third, centerApi + "staff/")).status, 403);
+  const equipment = { label: "B99 Disposable PC", isPublic: false };
+  assert.equal((await writeJson(b, centerApi + "equipment/", equipment)).status, 403,
+    "Center staff must not mutate equipment");
+  assert.equal((await writeJson(third, centerApi + "equipment/", equipment)).status, 403,
+    "Unrelated player must not mutate equipment");
+  assert.equal((await writeJson(a, centerApi + "equipment/", equipment)).status, 201,
+    "Center owner must be allowed to manage equipment");
+  const ownerEquipment = await readJson(a, centerApi + "equipment/");
+  assert.equal(ownerEquipment.status, 200);
+  assert.equal(ownerEquipment.payload.items.length, 1);
+  assert.equal((await readJson(third, centerApi + "equipment/")).status, 403);
+  console.log("B99 CENTER ADMIN API PASS: owner write, staff read-only, outsider denied");
+
   await a.goto(base + "/matches/" + matchId + "/result");
   await expect(a.getByText("نتیجه Match نهایی شده است")).toBeVisible();
   await b.goto(base + "/dashboard/challenges");
