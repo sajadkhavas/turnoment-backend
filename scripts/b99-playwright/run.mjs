@@ -403,8 +403,24 @@ try {
   assert.equal(uiMismatch.status, 200);
   assert.equal(uiMismatch.payload.outcome, "score_mismatch");
 
-  await b.goto(base + "/matches/" + uiMatchId + "/dispute");
-  await expect(b.getByRole("heading", { name: "اعتراض به Match" })).toBeVisible();
+  const uiNavigation = await b.goto(base + "/matches/" + uiMatchId + "/dispute");
+  try {
+    await expect(b.getByRole("heading", { name: "اعتراض به Match" })).toBeVisible();
+  } catch (error) {
+    const apiDispute = await readJson(b, "/api/v1/matches/" + uiMatchId + "/dispute/");
+    console.error("B99 dispute UI navigation diagnostics:", JSON.stringify({
+      navigationStatus: uiNavigation?.status() ?? null,
+      finalUrl: b.url(),
+      pageTitle: await b.title(),
+      visibleHeadings: await b.locator("h1,h2,[role=alert]").allInnerTexts().catch(() => []),
+      apiStatus: apiDispute.status,
+      apiDisputeState: apiDispute.payload?.disputeState ?? null,
+      pageErrors,
+    }));
+    await b.screenshot({ path: artifacts + "/dispute-ui-navigation-failure.png", fullPage: true })
+      .catch(() => null);
+    throw error;
+  }
   await expect(b.locator("#dispute-reason")).toBeVisible();
   await b.locator("#dispute-reason").selectOption("incorrect-score");
   await b.locator("#dispute-statement").fill(
