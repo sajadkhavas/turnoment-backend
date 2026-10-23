@@ -169,6 +169,26 @@ try {
 
   const deniedRead = await readJson(third, "/api/v1/matches/" + matchId + "/result/");
   assert.equal(deniedRead.status, 404, "Outsider must not read a private result");
+  // A separate authenticated user must not mutate the private result or
+  // access/open a dispute, even with a valid CSRF token and command shape.
+  const outsiderResultWrite = await writeJson(
+    third, "/api/v1/matches/" + matchId + "/result/",
+    { revision: "0", playerScore: 4, opponentScore: 2 },
+    "b99-browser-outsider-result",
+  );
+  assert.equal(outsiderResultWrite.status, 404, "Outsider must not submit a result");
+  const disputeEndpoint = "/api/v1/matches/" + matchId + "/dispute/";
+  const outsiderDisputeRead = await readJson(third, disputeEndpoint);
+  assert.equal(outsiderDisputeRead.status, 404, "Outsider must not read a dispute");
+  const outsiderDisputeWrite = await writeJson(
+    third, disputeEndpoint,
+    {
+      revision: "0", reason: "incorrect-score",
+      statement: "This match is private and I am not a participant.",
+    },
+    "b99-browser-outsider-dispute",
+  );
+  assert.equal(outsiderDisputeWrite.status, 404, "Outsider must not open a dispute");
   const deniedDashboard = await readJson(third, "/api/v1/me/dashboard/");
   assert.equal(deniedDashboard.status, 200);
   assert.equal(deniedDashboard.payload.snapshot.finalizedMatches, 0);
