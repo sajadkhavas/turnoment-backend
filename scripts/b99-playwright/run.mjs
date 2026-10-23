@@ -381,6 +381,7 @@ try {
     "m=create_match_for_source(source_kind='tournament', " +
     "source_id='b99-browser-dispute-ui-1', participant_a=a, participant_b=b, " +
     "game_id=g.pk, game_name=g.name, competition_title='B99 dispute UI acceptance', " +
+    "tournament_slug='b99-dispute-ui', round_label='QA round', " +
     "starts_at=timezone.now()); " +
     "advance_match(m.pk, 'ready'); advance_match(m.pk, 'awaiting-result'); " +
     "print('B99_UI_DISPUTE_MATCH_ID='+str(m.pk))",
