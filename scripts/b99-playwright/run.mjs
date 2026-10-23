@@ -367,6 +367,72 @@ try {
   assert.equal((await readJson(third, centerApi + "equipment/")).status, 403);
   console.log("B99 CENTER ADMIN API PASS: owner write, staff read-only, outsider denied");
 
+  // A third disposable match validates the actual dispute form in API mode.
+  // Operator setup remains isolated to the CI PostgreSQL database; player B
+  // submits the dispute through the rendered browser UI, not a direct fetch.
+  const uiSetup = backendCommand(
+    "from apps.accounts.models import User; " +
+    "from apps.games.models import Game; " +
+    "from apps.matches.services import create_match_for_source, advance_match; " +
+    "from django.utils import timezone; " +
+    "a=User.objects.get(phone=" + JSON.stringify(seed.phones.alpha) + "); " +
+    "b=User.objects.get(phone=" + JSON.stringify(seed.phones.bravo) + "); " +
+    "g=Game.objects.get(slug=" + JSON.stringify(seed.gameSlug) + "); " +
+    "m=create_match_for_source(source_kind='tournament', " +
+    "source_id='b99-browser-dispute-ui-1', participant_a=a, participant_b=b, " +
+    "game_id=g.pk, game_name=g.name, competition_title='B99 dispute UI acceptance', " +
+    "starts_at=timezone.now()); " +
+    "advance_match(m.pk, 'ready'); advance_match(m.pk, 'awaiting-result'); " +
+    "print('B99_UI_DISPUTE_MATCH_ID='+str(m.pk))",
+  );
+  const uiMatchId = uiSetup.match(/B99_UI_DISPUTE_MATCH_ID=([0-9a-f-]{36})/)?.[1];
+  assert(uiMatchId, "Disposable UI dispute match was not created");
+  const uiResultEndpoint = "/api/v1/matches/" + uiMatchId + "/result/";
+  const uiInitialResult = await readJson(a, uiResultEndpoint);
+  assert.equal(uiInitialResult.status, 200);
+  const uiSubmitted = await writeJson(a, uiResultEndpoint, {
+    revision: uiInitialResult.payload.revision, playerScore: 4, opponentScore: 2,
+  }, "b99-ui-dispute-score");
+  assert.equal(uiSubmitted.status, 200);
+  assert.equal(uiSubmitted.payload.outcome, "accepted");
+  const uiResultB = await readJson(b, uiResultEndpoint);
+  assert.equal(uiResultB.status, 200);
+  const uiMismatch = await writeJson(b, uiResultEndpoint + "confirm/", {
+    revision: uiResultB.payload.revision, playerScore: 3, opponentScore: 4,
+  });
+  assert.equal(uiMismatch.status, 200);
+  assert.equal(uiMismatch.payload.outcome, "score_mismatch");
+
+  await b.goto(base + "/matches/" + uiMatchId + "/dispute");
+  await expect(b.getByRole("heading", { name: "اعتراض به Match" })).toBeVisible();
+  await expect(b.locator("#dispute-reason")).toBeVisible();
+  await b.locator("#dispute-reason").selectOption("incorrect-score");
+  await b.locator("#dispute-statement").fill(
+    "The reported match score does not agree with the result seen by both players; please review the final score.",
+  );
+  await b.getByRole("button", { name: "بررسی اعتراض قبل از ثبت" }).click();
+  await expect(b.getByRole("heading", { name: "قبل از ثبت یک بار بررسی کن" })).toBeVisible();
+  const uiDisputePost = b.waitForResponse((response) =>
+    new URL(response.url()).pathname === "/api/v1/matches/" + uiMatchId + "/dispute/" &&
+    response.request().method() === "POST",
+  );
+  await b.getByRole("button", { name: "ثبت اعتراض", exact: true }).click();
+  assert.equal((await uiDisputePost).status(), 200, "Dispute UI must POST to the real API");
+  await expect(b.getByText("اعتراض ثبت شده است")).toBeVisible();
+  for (const participant of [a, b]) {
+    const uiDispute = await readJson(participant, "/api/v1/matches/" + uiMatchId + "/dispute/");
+    assert.equal(uiDispute.status, 200);
+    assert.equal(uiDispute.payload.disputeState, "open");
+  }
+  assert.equal((await readJson(third, "/api/v1/matches/" + uiMatchId + "/dispute/")).status, 404);
+  const uiDrain = backendCommand(
+    "from django.core.management import call_command; " +
+    "call_command('drain_b08_events', limit=100)",
+  );
+  assert.match(uiDrain, /Applied 0 B08 events/,
+    "UI-opened dispute must not finalize or change rankings");
+  console.log("B99 DISPUTE UI PASS: browser form review, real API POST, open state, outsider denied");
+
   await a.goto(base + "/matches/" + matchId + "/result");
   await expect(a.getByText("نتیجه Match نهایی شده است")).toBeVisible();
   await b.goto(base + "/dashboard/challenges");
