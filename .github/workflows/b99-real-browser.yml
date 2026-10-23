@@ -61,7 +61,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: sajadkhavas/turnoment
-          ref: d6e0195dea3cdce0b55cf066e0b0728b7d670202
+          ref: 7ffa1483d0c8c53ef8aed2fb4beef481c4a7fec6
           path: frontend
 
       - uses: actions/setup-python@v5
