@@ -131,8 +131,26 @@ try {
 
   await b.reload();
   await expect(b.getByRole("button", { name: "پذیرفتن چالش" })).toBeVisible();
-  await b.getByRole("button", { name: "پذیرفتن چالش" }).click();
-  await expect(b.getByText("دعوت چالش پذیرفته شد.")).toBeVisible();
+  const challengeAcceptResponses = [];
+  const recordChallengeAccept = (response) => {
+    const path = new URL(response.url()).pathname;
+    if (path.startsWith("/api/v1/challenges/")) {
+      challengeAcceptResponses.push({ method: response.request().method(), path, status: response.status() });
+    }
+  };
+  b.on("response", recordChallengeAccept);
+  try {
+    await b.getByRole("button", { name: "پذیرفتن چالش" }).click();
+    await expect(b.getByText("دعوت چالش پذیرفته شد.")).toBeVisible();
+  } catch (error) {
+    console.error("B99 challenge accept response metadata:", JSON.stringify(challengeAcceptResponses));
+    console.error("B99 challenge accept status/alert text:",
+      JSON.stringify(await b.locator('[role="status"], [role="alert"]').allInnerTexts().catch(() => [])));
+    console.error("B99 challenge accept URL:", b.url());
+    throw error;
+  } finally {
+    b.off("response", recordChallengeAccept);
+  }
 
   const matchesA = await readJson(a, "/api/v1/me/matches/");
   const matchesB = await readJson(b, "/api/v1/me/matches/");
