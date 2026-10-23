@@ -252,6 +252,77 @@ try {
   assert.equal(dashboardA.payload.snapshot.finalizedMatches, 31);
   assert.equal(dashboardB.payload.snapshot.finalizedMatches, 31);
 
+  // A second disposable match covers a participant score disagreement and
+  // dispute without disturbing the finalized challenge/ranking acceptance above.
+  // Its lifecycle is operator-driven; this does NOT certify the dispute UI.
+  const disputeSetup = backendCommand(
+    "from apps.accounts.models import User; " +
+    "from apps.games.models import Game; " +
+    "from apps.matches.services import create_match_for_source, advance_match; " +
+    "from django.utils import timezone; " +
+    "a=User.objects.get(phone=" + JSON.stringify(seed.phones.alpha) + "); " +
+    "b=User.objects.get(phone=" + JSON.stringify(seed.phones.bravo) + "); " +
+    "g=Game.objects.get(slug=" + JSON.stringify(seed.gameSlug) + "); " +
+    "m=create_match_for_source(source_kind='tournament', " +
+    "source_id='b99-browser-dispute-1', participant_a=a, participant_b=b, " +
+    "game_id=g.pk, game_name=g.name, competition_title='B99 disagreement acceptance', " +
+    "starts_at=timezone.now()); " +
+    "advance_match(m.pk, 'ready'); advance_match(m.pk, 'awaiting-result'); " +
+    "print('B99_DISPUTE_MATCH_ID='+str(m.pk))",
+  );
+  const disputeMatchId = disputeSetup.match(/B99_DISPUTE_MATCH_ID=([0-9a-f-]{36})/)?.[1];
+  assert(disputeMatchId, "Disposable disagreement match was not created");
+  const disputeResultEndpoint = "/api/v1/matches/" + disputeMatchId + "/result/";
+  const disputeResultA = await readJson(a, disputeResultEndpoint);
+  assert.equal(disputeResultA.status, 200);
+  const disputeSubmitted = await writeJson(a, disputeResultEndpoint, {
+    revision: disputeResultA.payload.revision, playerScore: 4, opponentScore: 2,
+  }, "b99-disagreement-result");
+  assert.equal(disputeSubmitted.status, 200);
+  assert.equal(disputeSubmitted.payload.outcome, "accepted");
+  const disputeResultB = await readJson(b, disputeResultEndpoint);
+  assert.equal(disputeResultB.status, 200);
+  const disagreement = await writeJson(b, disputeResultEndpoint + "confirm/", {
+    revision: disputeResultB.payload.revision, playerScore: 3, opponentScore: 4,
+  });
+  assert.equal(disagreement.status, 200);
+  assert.equal(disagreement.payload.outcome, "score_mismatch");
+  const disputePath = "/api/v1/matches/" + disputeMatchId + "/dispute/";
+  const eligibleDispute = await readJson(b, disputePath);
+  assert.equal(eligibleDispute.status, 200);
+  assert.equal(eligibleDispute.payload.disputeState, "eligible");
+  const disputeCommand = {
+    revision: eligibleDispute.payload.revision,
+    reason: "incorrect-score",
+    statement: "The opponent score was reported incorrectly in this match.",
+  };
+  const openedDispute = await writeJson(b, disputePath, disputeCommand, "b99-disagreement-open");
+  assert.equal(openedDispute.status, 200);
+  assert.equal(openedDispute.payload.outcome, "accepted");
+  const disputeReplay = await writeJson(b, disputePath, disputeCommand, "b99-disagreement-open");
+  assert.equal(disputeReplay.status, 200);
+  assert.equal(disputeReplay.payload.outcome, "already_open");
+  for (const participant of [a, b]) {
+    const visibleDispute = await readJson(participant, disputePath);
+    assert.equal(visibleDispute.status, 200);
+    assert.equal(visibleDispute.payload.disputeState, "open");
+    assert.equal(visibleDispute.payload.result.state, "disputed");
+  }
+  assert.equal((await readJson(third, disputePath)).status, 404);
+  const disputeDrain = backendCommand(
+    "from django.core.management import call_command; " +
+    "call_command('drain_b08_events', limit=100)",
+  );
+  assert.match(disputeDrain, /Applied 0 B08 events/,
+    "A disputed, unfinalized match must not create a ranking event");
+  const rankingAfterDispute = await readJson(
+    a, "/api/v1/rankings/?game=" + seed.gameSlug +
+      "&season=" + seed.season + "&type=challenge",
+  );
+  assert.deepEqual(rankingAfterDispute.payload.items.map((x) => x.rating), [1016, 984]);
+  console.log("B99 DISPUTE API PASS: score mismatch, participant dispute, replay, " +
+    "outsider denial, no premature rating");
+
   await a.goto(base + "/matches/" + matchId + "/result");
   await expect(a.getByText("نتیجه Match نهایی شده است")).toBeVisible();
   await b.goto(base + "/dashboard/challenges");
