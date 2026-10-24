@@ -646,6 +646,83 @@ try {
     assert.equal(uiDispute.payload.disputeState, "open");
   }
   assert.equal((await readJson(third, "/api/v1/matches/" + uiMatchId + "/dispute/")).status, 404);
+  // Exercise evidence upload through the actual React file input and multipart API.
+  // The file is disposable, valid PNG, and must remain quarantined (no public URL).
+  const evidenceBefore = await readJson(b, "/api/v1/matches/" + uiMatchId + "/dispute/");
+  const uiDisputeId = evidenceBefore.payload?.dispute?.disputeId;
+  assert.match(uiDisputeId, /^[0-9a-f-]{36}$/, "UI dispute must have a real UUID");
+  assert.equal(evidenceBefore.payload.dispute.evidence.length, 0);
+  const pngBytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lXcAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const evidenceEndpoint = "/api/v1/matches/" + uiMatchId + "/dispute/" + uiDisputeId + "/evidence/";
+  await expect(b.getByRole("heading", { name: "مدارک پرونده" })).toBeVisible();
+  await b.locator("#dispute-evidence").setInputFiles({
+    name: "b99-evidence.png", mimeType: "image/png", buffer: pngBytes,
+  });
+  const evidencePost = b.waitForResponse((response) =>
+    new URL(response.url()).pathname === evidenceEndpoint &&
+    response.request().method() === "POST",
+  );
+  await b.getByRole("button", { name: "افزودن مدرک", exact: true }).click();
+  const evidenceResponse = await evidencePost;
+  assert.equal(evidenceResponse.status(), 200, "React evidence upload must reach the real API");
+  const evidenceReceipt = await evidenceResponse.json();
+  assert.equal(evidenceReceipt.outcome, "accepted");
+  assert.equal(evidenceReceipt.matchId, uiMatchId);
+  assert.equal(evidenceReceipt.disputeId, uiDisputeId);
+  await expect(b.getByRole("list", { name: "مدارک ثبت‌شده" }).getByText("b99-evidence.png")).toBeVisible();
+  const evidenceAfter = await readJson(b, "/api/v1/matches/" + uiMatchId + "/dispute/");
+  assert.equal(evidenceAfter.status, 200);
+  assert.equal(evidenceAfter.payload.dispute.evidence.length, 1);
+  const evidenceMetadata = evidenceAfter.payload.dispute.evidence[0];
+  assert.equal(evidenceMetadata.evidenceId, evidenceReceipt.evidence.evidenceId);
+  assert.equal(evidenceMetadata.fileName, "b99-evidence.png");
+  assert.equal(evidenceMetadata.sizeBytes, pngBytes.length);
+  assert.deepEqual(Object.keys(evidenceMetadata).sort(),
+    ["evidenceId", "fileName", "contentType", "sizeBytes", "uploadedAt"].sort(),
+    "Evidence API must not expose quarantined bytes or storage URLs");
+
+  // Participant cannot upload a spoofed PNG; outsider cannot upload to this dispute.
+  async function attemptEvidence(page, revision, key, mime, bytes) {
+    return page.evaluate(async (args) => {
+      const csrfResponse = await fetch("/api/v1/auth/csrf/", { credentials: "include" });
+      if (!csrfResponse.ok) throw new Error("CSRF bootstrap failed");
+      const token = (await csrfResponse.json()).csrf_token;
+      const form = new FormData();
+      form.append("revision", args.revision);
+      form.append("file", new Blob([new Uint8Array(args.bytes)], { type: args.mime }), "proof.png");
+      const response = await fetch(args.endpoint, {
+        method: "POST", credentials: "include",
+        headers: { Accept: "application/json", "X-CSRFToken": token, "Idempotency-Key": args.key },
+        body: form,
+      });
+      return { status: response.status, payload: await response.json().catch(() => null) };
+    }, { endpoint: evidenceEndpoint, revision, key, mime, bytes: Array.from(bytes) });
+  }
+  const spoofed = await attemptEvidence(
+    b, evidenceAfter.payload.revision, "b99-evidence-spoofed-png", "image/png",
+    Buffer.from("not actually a PNG"),
+  );
+  assert.equal(spoofed.status, 200);
+  assert.equal(spoofed.payload?.outcome, "validation_error", "Spoofed PNG must be rejected");
+  const outsiderEvidence = await attemptEvidence(
+    third, evidenceAfter.payload.revision, "b99-evidence-outsider", "image/png", pngBytes,
+  );
+  assert.equal(outsiderEvidence.status, 404, "Outsider must not upload evidence");
+  const evidenceDb = backendCommand(
+    "from apps.disputes.models import DisputeEvidence; " +
+    "rows=DisputeEvidence.objects.filter(dispute_id=" + JSON.stringify(uiDisputeId) + "); " +
+    "assert rows.count()==1; e=rows.get(); " +
+    "assert str(e.uploaded_by_id)==" + JSON.stringify(bId) + "; " +
+    "assert e.content_type=='image/png' and e.size_bytes==" + pngBytes.length + "; " +
+    "assert bytes(e.quarantined_bytes)[:8]==bytes([137,80,78,71,13,10,26,10]); " +
+    "print('B99_EVIDENCE_QUARANTINE_PASS')",
+  );
+  assert.match(evidenceDb, /B99_EVIDENCE_QUARANTINE_PASS/);
+  console.log("B99 EVIDENCE UI PASS: React multipart, quarantined bytes, spoofed MIME and outsider denied");
+
   const uiDrain = backendCommand(
     "from django.core.management import call_command; " +
     "call_command('drain_b08_events', limit=100)",
