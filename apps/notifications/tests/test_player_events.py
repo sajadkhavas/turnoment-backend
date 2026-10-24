@@ -106,6 +106,41 @@ def test_failed_push_keeps_retry_without_exposing_exception(settings):
     assert item.last_error == "provider_failed" and item.sent_at is None
 
 
+
+@pytest.mark.django_db
+def test_queued_private_push_expires_if_subscription_owner_changes(settings):
+    # A future endpoint reclaim must not deliver account A's queued payload
+    # to account B even when the endpoint is still marked active.
+    settings.PUSH_VAPID_PRIVATE_KEY = "test-key"
+    settings.PUSH_VAPID_SUBJECT = "mailto:test@example.test"
+    a = User.objects.create_user(phone="09121111008")
+    b = User.objects.create_user(phone="09121111009")
+    data = subscription()
+    sub = PushSubscription.objects.create(
+        recipient=a, endpoint=data["endpoint"], **data["keys"]
+    )
+    notify([a.pk], "old-private-push", "system", "Private", "Account A only")
+    NotificationDelivery.objects.filter(channel="sms").delete()
+    item = NotificationDelivery.objects.get(channel="push")
+    assert item.notification.recipient_id == a.pk
+    assert item.state == "pending"
+
+    # Simulate an ownership change with an outstanding old delivery.
+    # This test does NOT authorize implementing endpoint reclaim.
+    sub.recipient = b
+    sub.save(update_fields=["recipient"])
+    assert sub.active
+
+    with patch("pywebpush.webpush") as send:
+        assert dispatch_one()
+        send.assert_not_called()
+    item.refresh_from_db()
+    assert item.state == "expired"
+    assert item.sent_at is None
+    assert item.attempts == 1
+    assert not dispatch_one()
+
+
 @pytest.mark.django_db
 def test_logout_revokes_push_endpoints_without_touching_other_users():
     # A service worker can keep receiving push after the session cookie is
