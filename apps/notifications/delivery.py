@@ -61,7 +61,9 @@ def dispatch_one():
                     item.state = "sent"
             else:
                 sub = item.subscription
-                if not sub or not sub.active:
+                # Never deliver an old account's queued private payload through
+                # a subscription whose ownership has changed.
+                if not sub or not sub.active or sub.recipient_id != notification.recipient_id:
                     item.state = "expired"
                 elif not settings.PUSH_VAPID_PRIVATE_KEY or not settings.PUSH_VAPID_SUBJECT:
                     item.state = "retry"
