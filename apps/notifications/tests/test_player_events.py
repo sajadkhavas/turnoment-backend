@@ -104,3 +104,38 @@ def test_failed_push_keeps_retry_without_exposing_exception(settings):
     assert item.state == "retry" and item.attempts == 1
     assert item.next_attempt_at > timezone.now() - timedelta(seconds=1)
     assert item.last_error == "provider_failed" and item.sent_at is None
+
+
+@pytest.mark.django_db
+def test_logout_revokes_push_endpoints_without_touching_other_users():
+    # A service worker can keep receiving push after the session cookie is
+    # removed. Fail closed on logout, including deliveries queued earlier.
+    a = User.objects.create_user(phone="09121111006")
+    b = User.objects.create_user(phone="09121111007")
+    data = subscription()
+    other_endpoint = "https://fcm.googleapis.com/fcm/send/other-device"
+    b_endpoint = "https://fcm.googleapis.com/fcm/send/unrelated-device"
+    for endpoint in (data["endpoint"], other_endpoint):
+        PushSubscription.objects.create(recipient=a, endpoint=endpoint, **data["keys"])
+    PushSubscription.objects.create(recipient=b, endpoint=b_endpoint, **data["keys"])
+    notify([a.pk], "logout-privacy", "system", "Private", "Sensitive")
+    NotificationDelivery.objects.filter(channel="sms").delete()
+    assert NotificationDelivery.objects.filter(channel="push", state="pending").count() == 2
+
+    client = APIClient(enforce_csrf_checks=True)
+    client.force_login(a)
+    assert client.post("/api/v1/auth/logout/").status_code == 403
+    assert PushSubscription.objects.filter(recipient=a, active=True).count() == 2
+    csrf = client.get("/api/v1/auth/csrf/").data["csrf_token"]
+    assert client.post("/api/v1/auth/logout/", HTTP_X_CSRFTOKEN=csrf).status_code == 204
+    assert not PushSubscription.objects.filter(recipient=a, active=True).exists()
+    assert PushSubscription.objects.filter(recipient=b, active=True).count() == 1
+    assert client.get("/api/v1/auth/me/").status_code in (401, 403)
+
+    assert dispatch_one() and dispatch_one()
+    assert not dispatch_one()
+    assert NotificationDelivery.objects.filter(channel="push", state="expired").count() == 2
+    notify([a.pk], "logout-new-event", "system", "Private", "Later")
+    assert not NotificationDelivery.objects.filter(
+        notification__event_key="logout-new-event", channel="push"
+    ).exists()
