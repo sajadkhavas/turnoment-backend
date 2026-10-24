@@ -58,6 +58,7 @@ for number in range(30):
         source_kind="tournament", source_id=f"b99-browser-free-{number}",
         participant_a=a, participant_b=b, game_id=game.pk,
         game_name=game.name, competition_title="B99 free preparation games",
+        tournament_slug="b99-free-preparation", round_label="QA preparation round",
         starts_at=timezone.now() - timedelta(hours=1),
     )
     advance_match(match.pk, "ready")
