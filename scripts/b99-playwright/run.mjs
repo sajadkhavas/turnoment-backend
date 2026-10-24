@@ -326,9 +326,20 @@ try {
         });
         let apiBaseOrigin = null;
         let baseError = null;
+        let csrfRequestStatus = null;
+        let csrfRequestError = null;
         try {
           const base = actions.matchActionsRepository.baseUrl?.();
           apiBaseOrigin = base ? new URL(base).origin : null;
+          // Safe GET only; never log the CSRF token or send a lifecycle command.
+          if (base) {
+            try {
+              const response = await actions.matchActionsRepository.request(
+                new URL("api/v1/auth/csrf/", base),
+              );
+              csrfRequestStatus = response.status;
+            } catch (error) { csrfRequestError = String(error); }
+          }
         } catch (error) { baseError = String(error); }
         return {
           adapterMode: adapter.getDataAdapterMode(),
@@ -338,7 +349,7 @@ try {
           ),
           repoClass: actions.matchActionsRepository.constructor.name,
           requestType: typeof actions.matchActionsRepository.request,
-          apiBaseOrigin, baseError,
+          apiBaseOrigin, baseError, csrfRequestStatus, csrfRequestError,
         };
       } catch (error) {
         return { importOrAdapterError: String(error) };
