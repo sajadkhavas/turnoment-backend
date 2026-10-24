@@ -145,6 +145,15 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # A browser push endpoint survives cookie logout. Fail closed so a
+        # shared browser cannot receive a previous player's private events.
+        # Without per-device session binding, revoke all of this user's push
+        # endpoints; other devices can explicitly subscribe again.
+        from apps.notifications.models import PushSubscription
+
+        PushSubscription.objects.filter(recipient_id=request.user.pk, active=True).update(
+            active=False
+        )
         logout(request)
         return Response(status=HTTP_204_NO_CONTENT)
 
