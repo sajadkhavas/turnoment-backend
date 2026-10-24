@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class Notification(models.Model):
@@ -16,6 +17,9 @@ class Notification(models.Model):
 
     class Target(models.TextChoices):
         NONE = "", "No target"
+        CHALLENGES = "my-challenges", "My challenges"
+        TEAMS = "my-teams", "My teams"
+        ACHIEVEMENTS = "my-achievements", "My achievements"
         MY_TOURNAMENTS = "my-tournaments", "My tournaments"
         MY_MATCHES = "my-matches", "My matches"
         TOURNAMENT = "tournament-detail", "Tournament detail"
@@ -53,9 +57,20 @@ class Notification(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    Q(target_kind__in=["", "my-tournaments", "my-matches", "player-profile"])
+                    Q(
+                        target_kind__in=[
+                            "",
+                            "my-tournaments",
+                            "my-matches",
+                            "player-profile",
+                            "my-challenges",
+                            "my-teams",
+                            "my-achievements",
+                        ]
+                    )
                     & Q(target_id="")
-                ) | (
+                )
+                | (
                     Q(target_kind__in=["tournament-detail", "result-submission", "match-dispute"])
                     & ~Q(target_id="")
                 ),
@@ -65,4 +80,33 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=["recipient", "-occurred_at"], name="notify_rec_time_idx"),
             models.Index(fields=["recipient", "read_at"], name="notify_rec_read_idx"),
+        ]
+
+
+class PushSubscription(models.Model):
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    endpoint = models.URLField(max_length=2048, unique=True)
+    p256dh = models.CharField(max_length=200)
+    auth = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class NotificationDelivery(models.Model):
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
+    channel = models.CharField(max_length=8, choices=[("push", "Push"), ("sms", "SMS")])
+    subscription = models.ForeignKey(PushSubscription, null=True, on_delete=models.CASCADE)
+    destination_key = models.CharField(max_length=80)
+    state = models.CharField(max_length=16, default="pending")
+    attempts = models.PositiveIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(null=True)
+    last_error = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["notification", "channel", "destination_key"],
+                name="notify_delivery_once",
+            )
         ]
