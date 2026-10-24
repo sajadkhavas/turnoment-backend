@@ -1,4 +1,4 @@
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user, login, logout
 from django.db import IntegrityError
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
@@ -45,6 +45,14 @@ def _error(code: str, message: str, *, status: int, extra: dict | None = None) -
 def _request_ip(request) -> str | None:
     value = request.META.get("REMOTE_ADDR")
     return value or None
+
+
+def _revoke_push_for_user(user_id):
+    # Push endpoints outlive session cookies. Until they are device-bound,
+    # fail closed for every endpoint owned by the departing account.
+    from apps.notifications.models import PushSubscription
+
+    PushSubscription.objects.filter(recipient_id=user_id, active=True).update(active=False)
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -112,6 +120,12 @@ class OtpVerifyView(APIView):
         except AccountsDomainError as exc:
             return _error(exc.code, str(exc), status=HTTP_400_BAD_REQUEST)
 
+        # OTP verification is deliberately anonymous to DRF, but Django's
+        # session may still belong to a different account in this browser.
+        # Revoke that account's push endpoints before replacing the session.
+        previous_user = get_user(request._request)
+        if previous_user.is_authenticated and previous_user.pk != user.pk:
+            _revoke_push_for_user(previous_user.pk)
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         return Response(MeSerializer(user).data, status=HTTP_200_OK)
 
@@ -145,6 +159,11 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # A browser push endpoint survives cookie logout. Fail closed so a
+        # shared browser cannot receive a previous player's private events.
+        # Without per-device session binding, revoke all of this user's push
+        # endpoints; other devices can explicitly subscribe again.
+        _revoke_push_for_user(request.user.pk)
         logout(request)
         return Response(status=HTTP_204_NO_CONTENT)
 
