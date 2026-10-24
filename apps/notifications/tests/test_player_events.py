@@ -174,3 +174,52 @@ def test_logout_revokes_push_endpoints_without_touching_other_users():
     assert not NotificationDelivery.objects.filter(
         notification__event_key="logout-new-event", channel="push"
     ).exists()
+
+
+@pytest.mark.django_db
+def test_inactive_cross_account_endpoint_fails_closed_and_old_queue_expires():
+    # This pins the CURRENT no-transfer policy without approving endpoint reclaim.
+    # A browser push service may return the same endpoint after an account switch.
+    old = User.objects.create_user(phone="09121111010")
+    new = User.objects.create_user(phone="09121111011")
+    data = subscription()
+    old_sub = PushSubscription.objects.create(
+        recipient=old, endpoint=data["endpoint"], **data["keys"]
+    )
+    notify([old.pk], "inactive-old-private", "system", "Private", "Old account only")
+    NotificationDelivery.objects.filter(channel="sms").delete()
+    queued = NotificationDelivery.objects.get(channel="push")
+    assert queued.subscription_id == old_sub.pk
+    assert queued.state == "pending"
+
+    # Model the logout/OTP-switch revocation already covered separately.
+    old_sub.active = False
+    old_sub.save(update_fields=["active"])
+    new_client = APIClient()
+    new_client.force_authenticate(user=new)
+    with patch("pywebpush.webpush") as send:
+        reused = new_client.post(
+            "/api/v1/me/notifications/push/subscription/", data, format="json"
+        )
+        assert reused.status_code == 409
+        old_sub.refresh_from_db()
+        assert old_sub.recipient_id == old.pk
+        assert old_sub.active is False
+        assert dispatch_one() is True
+        send.assert_not_called()
+
+    queued.refresh_from_db()
+    assert queued.state == "expired"
+    assert queued.sent_at is None
+    assert not NotificationDelivery.objects.filter(channel="push", state="sent").exists()
+
+    # A distinct endpoint is still registerable for the new account.
+    fresh = {**data, "endpoint": "https://fcm.googleapis.com/fcm/send/new-account-device"}
+    assert new_client.post(
+        "/api/v1/me/notifications/push/subscription/", fresh, format="json"
+    ).status_code == 200
+    new_sub = PushSubscription.objects.get(endpoint=fresh["endpoint"])
+    assert new_sub.recipient_id == new.pk
+    assert new_sub.active is True
+    old_sub.refresh_from_db()
+    assert old_sub.recipient_id == old.pk and old_sub.active is False
