@@ -1,0 +1,104 @@
+name: B99 Ranking Celery Worker Beat Acceptance
+
+on:
+  push:
+    branches:
+      - "phase/b99-real-browser-*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/b99_verify_celery_ops.py"
+      - ".github/workflows/b99-ranking-ops.yml"
+      - "apps/rankings/**"
+      - "apps/results/**"
+      - "config/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ranking-ops:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: turnoment
+          POSTGRES_PASSWORD: turnoment
+          POSTGRES_DB: turnoment_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U turnoment -d turnoment_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SECRET_KEY: b99-disposable-ranking-ops-ci-secret-not-production
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      DB_NAME: turnoment_e2e
+      DB_USER: turnoment
+      DB_PASSWORD: turnoment
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/1
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/2
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/3
+      B99_BROWSER_ONLY: "1"
+      B99_ENABLE_RANKING_DRAIN: "1"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install and migrate isolated PostgreSQL
+        run: |
+          set -Eeuo pipefail
+          python -m pip install -e '.[dev]'
+          python manage.py migrate --noinput --settings=config.settings.local
+          python manage.py shell < scripts/b99_seed_browser.py
+
+      - name: Verify real Beat dispatch, Redis worker and exactly-once replay
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m celery -A config.celery:app worker --pool=solo --concurrency=1 --loglevel=INFO --hostname=b99-ranking-ci@localhost > /tmp/b99-worker.log 2>&1 &
+          WORKER_PID=$!
+          python -m celery -A config.celery:app beat --loglevel=INFO --max-interval=5 > /tmp/b99-beat.log 2>&1 &
+          BEAT_PID=$!
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              echo "=== Celery worker diagnostic ==="
+              tail -n 120 /tmp/b99-worker.log || true
+              echo "=== Celery Beat diagnostic ==="
+              tail -n 120 /tmp/b99-beat.log || true
+            fi
+            kill "$WORKER_PID" "$BEAT_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          python manage.py shell < scripts/b99_verify_celery_ops.py
+          grep -q "b99-drain-finalized-match-ratings" /tmp/b99-beat.log
+          grep -q "B99 ranking drain applied 30 verified B08 events" /tmp/b99-worker.log
+
+      - name: Upload failed ranking operations diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b99-ranking-ops-failure
+          path: |
+            /tmp/b99-worker.log
+            /tmp/b99-beat.log
+          if-no-files-found: ignore
+          retention-days: 3
