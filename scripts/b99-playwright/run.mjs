@@ -212,8 +212,30 @@ try {
   assert.equal(outsiderLifecycle.status, 404,
     "Outsider must not start a participant's challenge match");
 
-  await a.goto(base + "/dashboard/matches");
-  await expect(a.getByRole("heading", { name: "Matchهای من" })).toBeVisible();
+  const matchesNavigation = await a.goto(base + "/dashboard/matches");
+  try {
+    await expect(a.getByRole("heading", { name: "Matchهای من" })).toBeVisible();
+  } catch (error) {
+    const matchList = await readJson(a, "/api/v1/me/matches/").catch(() => null);
+    const first = matchList?.payload?.items?.[0];
+    console.error("B99 lifecycle UI navigation diagnostics:", JSON.stringify({
+      navigationStatus: matchesNavigation?.status() ?? null,
+      finalUrl: a.url(),
+      title: await a.title().catch(() => null),
+      headingsAndAlerts: await a.locator("h1,h2,[role=alert],[role=status]")
+        .allInnerTexts().catch(() => []),
+      matchListStatus: matchList?.status ?? null,
+      matchListKeys: matchList?.payload ? Object.keys(matchList.payload) : [],
+      firstMatchKeys: first ? Object.keys(first) : [],
+      firstMatchState: first?.lifecycleState ?? null,
+      firstMatchResultState: first?.resultState ?? null,
+      pageErrors,
+    }));
+    await a.screenshot({
+      path: artifacts + "/lifecycle-ui-navigation-failure.png", fullPage: true,
+    }).catch(() => null);
+    throw error;
+  }
   const startHttp = a.waitForResponse((response) =>
     new URL(response.url()).pathname === lifecycleEndpoint &&
     response.request().method() === "POST",
