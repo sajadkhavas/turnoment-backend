@@ -240,6 +240,27 @@ try {
       pagination: matchList?.payload?.pagination ?? null,
       firstMatch: first ?? null,
     }));
+    const parsedContract = await a.evaluate(async () => {
+      try {
+        const module = await import("/src/lib/my-matches-http-repository.ts");
+        const data = await new module.ApiMyMatchesRepository().getMyMatches({
+          state: "all", kind: "all", page: 1,
+        });
+        return { valid: true, items: data.items.length };
+      } catch (caught) {
+        return {
+          valid: false,
+          error: String(caught),
+          issues: Array.isArray(caught?.issues)
+            ? caught.issues.map((issue) => ({
+                path: issue.path, code: issue.code, message: issue.message,
+              })).slice(0, 20)
+            : [],
+        };
+      }
+    }).catch((caught) => ({ valid: false, moduleError: String(caught) }));
+    console.error("B99 lifecycle frontend contract parser diagnostics:",
+      JSON.stringify(parsedContract));
     try {
       await a.goto(base + "/dashboard/challenges");
       await expect(a.getByRole("heading", { name: "چالش‌های من" })).toBeVisible();
