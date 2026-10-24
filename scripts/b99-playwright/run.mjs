@@ -672,7 +672,7 @@ try {
   assert.equal(evidenceReceipt.outcome, "accepted");
   assert.equal(evidenceReceipt.matchId, uiMatchId);
   assert.equal(evidenceReceipt.disputeId, uiDisputeId);
-  await expect(b.getByText("b99-evidence.png")).toBeVisible();
+  await expect(b.getByRole("list", { name: "مدارک ثبت‌شده" }).getByText("b99-evidence.png")).toBeVisible();
   const evidenceAfter = await readJson(b, "/api/v1/matches/" + uiMatchId + "/dispute/");
   assert.equal(evidenceAfter.status, 200);
   assert.equal(evidenceAfter.payload.dispute.evidence.length, 1);
