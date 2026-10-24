@@ -278,12 +278,107 @@ try {
     }
     throw error;
   }
-  const startHttp = a.waitForResponse((response) =>
-    new URL(response.url()).pathname === lifecycleEndpoint &&
-    response.request().method() === "POST",
-  );
-  await a.getByRole("button", { name: "شروع بازی" }).click();
-  const startResponse = await startHttp;
+  // Keep the acceptance assertion unchanged. On failure, record only
+  // method/path/status and UI state; never log cookies, CSRF values or PII.
+  const lifecycleNetwork = [];
+  const recordLifecycleRequest = (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path === lifecycleEndpoint || path === "/api/v1/auth/csrf/") {
+      lifecycleNetwork.push({ event: "request", method: request.method(), path });
+    }
+  };
+  const recordLifecycleResponse = (response) => {
+    const path = new URL(response.url()).pathname;
+    if (path === lifecycleEndpoint || path === "/api/v1/auth/csrf/") {
+      lifecycleNetwork.push({
+        event: "response", method: response.request().method(),
+        path, status: response.status(),
+      });
+    }
+  };
+  a.on("request", recordLifecycleRequest);
+  a.on("response", recordLifecycleResponse);
+  const startButton = a.getByRole("button", { name: "شروع بازی" });
+  let startResponse;
+  try {
+    const startHttp = a.waitForResponse((response) =>
+      new URL(response.url()).pathname === lifecycleEndpoint &&
+      response.request().method() === "POST",
+    );
+    await startButton.click();
+    startResponse = await startHttp;
+  } catch (error) {
+    const button = await startButton.evaluate((node) => ({
+      disabled: node.disabled, busy: node.getAttribute("aria-busy"),
+      visible: Boolean(node.getClientRects().length),
+    })).catch(() => null);
+    const liveList = await readJson(a, "/api/v1/me/matches/").catch(() => null);
+    const target = liveList?.payload?.items?.find((item) => item.matchId === matchId);
+    // Preflight the exact client-side action adapter without issuing a mutation.
+    const actionPreflight = await a.evaluate(async (revision) => {
+      try {
+        const [actions, adapter] = await Promise.all([
+          import("/src/lib/match-actions-repository.ts"),
+          import("/src/lib/data-adapter.ts"),
+        ]);
+        const parsed = actions.lifecycleCommandSchema.safeParse({
+          command: "start", revision,
+        });
+        let apiBaseOrigin = null;
+        let baseError = null;
+        let csrfRequestStatus = null;
+        let csrfRequestError = null;
+        try {
+          const base = actions.matchActionsRepository.baseUrl?.();
+          apiBaseOrigin = base ? new URL(base).origin : null;
+          // Safe GET only; never log the CSRF token or send a lifecycle command.
+          if (base) {
+            try {
+              const response = await actions.matchActionsRepository.request(
+                new URL("api/v1/auth/csrf/", base),
+              );
+              csrfRequestStatus = response.status;
+            } catch (error) { csrfRequestError = String(error); }
+          }
+        } catch (error) { baseError = String(error); }
+        return {
+          adapterMode: adapter.getDataAdapterMode(),
+          commandValid: parsed.success,
+          commandIssues: parsed.success ? [] : parsed.error.issues.map(
+            (issue) => ({ path: issue.path, code: issue.code }),
+          ),
+          repoClass: actions.matchActionsRepository.constructor.name,
+          requestType: typeof actions.matchActionsRepository.request,
+          apiBaseOrigin, baseError, csrfRequestStatus, csrfRequestError,
+        };
+      } catch (error) {
+        return { importOrAdapterError: String(error) };
+      }
+    }, target?.revision).catch((error) => ({ evaluationError: String(error) }));
+    console.error("B99 lifecycle start diagnostic:", JSON.stringify({
+      expectedPath: lifecycleEndpoint,
+      network: lifecycleNetwork,
+      actionPreflight,
+      button,
+      apiStatus: liveList?.status ?? null,
+      target: target ? {
+        matchId: target.matchId, lifecycleState: target.lifecycleState,
+        canControlLifecycle: target.canControlLifecycle,
+        hasRevision: Boolean(target.revision),
+        revisionLength: String(target.revision ?? "").length,
+      } : null,
+      feedback: await a.locator('[role="status"],[role="alert"]')
+        .allInnerTexts().catch(() => []),
+      pageErrors,
+    }));
+    await a.screenshot({
+      path: artifacts + "/lifecycle-start-network-failure.png", fullPage: true,
+    }).catch(() => null);
+    throw error;
+  } finally {
+    a.off("request", recordLifecycleRequest);
+    a.off("response", recordLifecycleResponse);
+  }
   assert.equal(startResponse.status(), 200, "Start must reach the real API");
   const started = await startResponse.json();
   assert.equal(started.outcome, "accepted");
