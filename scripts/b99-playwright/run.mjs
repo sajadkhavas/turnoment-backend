@@ -193,12 +193,57 @@ try {
   assert.equal(deniedDashboard.status, 200);
   assert.equal(deniedDashboard.payload.snapshot.finalizedMatches, 0);
 
-  // Operator advances real B08 match lifecycle; players own score/confirmation.
+  // The source/operator only makes the scheduled challenge match ready.
+  // Both real start/finish transitions must be driven through the React UI.
   backendCommand(
     "from apps.matches.services import advance_match; " +
-    "advance_match('" + matchId + "', 'ready'); " +
-    "advance_match('" + matchId + "', 'awaiting-result')",
+    "advance_match('" + matchId + "', 'ready')",
   );
+  const readyMatches = await readJson(a, "/api/v1/me/matches/");
+  assert.equal(readyMatches.status, 200);
+  const readyMatch = readyMatches.payload.items.find((item) => item.matchId === matchId);
+  assert(readyMatch, "Accepted challenge must appear in the player's match list");
+  assert.equal(readyMatch.lifecycleState, "ready");
+  assert.equal(readyMatch.canControlLifecycle, true);
+  const lifecycleEndpoint = "/api/v1/matches/" + matchId + "/lifecycle/";
+  const outsiderLifecycle = await writeJson(third, lifecycleEndpoint, {
+    command: "start", revision: readyMatch.revision,
+  });
+  assert.equal(outsiderLifecycle.status, 404,
+    "Outsider must not start a participant's challenge match");
+
+  await a.goto(base + "/dashboard/matches");
+  await expect(a.getByRole("heading", { name: "Matchهای من" })).toBeVisible();
+  const startHttp = a.waitForResponse((response) =>
+    new URL(response.url()).pathname === lifecycleEndpoint &&
+    response.request().method() === "POST",
+  );
+  await a.getByRole("button", { name: "شروع بازی" }).click();
+  const startResponse = await startHttp;
+  assert.equal(startResponse.status(), 200, "Start must reach the real API");
+  const started = await startResponse.json();
+  assert.equal(started.outcome, "accepted");
+  assert.equal(started.state, "live");
+
+  await expect(a.getByRole("button", {
+    name: "بازی تمام شد؛ ثبت نتیجه",
+  })).toBeVisible();
+  const finishHttp = a.waitForResponse((response) =>
+    new URL(response.url()).pathname === lifecycleEndpoint &&
+    response.request().method() === "POST",
+  );
+  await a.getByRole("button", { name: "بازی تمام شد؛ ثبت نتیجه" }).click();
+  const finishResponse = await finishHttp;
+  assert.equal(finishResponse.status(), 200, "Finish must reach the real API");
+  const finished = await finishResponse.json();
+  assert.equal(finished.outcome, "accepted");
+  assert.equal(finished.state, "awaiting-result");
+  const finishedMatchesB = await readJson(b, "/api/v1/me/matches/");
+  assert.equal(finishedMatchesB.status, 200);
+  assert.equal(finishedMatchesB.payload.items.find(
+    (item) => item.matchId === matchId,
+  )?.lifecycleState, "awaiting-result");
+  console.log("B99 MATCH LIFECYCLE UI PASS: participant start/finish via React, outsider denied");
   const endpoint = "/api/v1/matches/" + matchId + "/result/";
   const resultA = await readJson(a, endpoint);
   assert.equal(resultA.status, 200);
