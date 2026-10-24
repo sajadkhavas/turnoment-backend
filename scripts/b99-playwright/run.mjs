@@ -234,6 +234,27 @@ try {
     await a.screenshot({
       path: artifacts + "/lifecycle-ui-navigation-failure.png", fullPage: true,
     }).catch(() => null);
+    console.error("B99 lifecycle UI API contract values:", JSON.stringify({
+      player: matchList?.payload?.player ?? null,
+      summary: matchList?.payload?.summary ?? null,
+      pagination: matchList?.payload?.pagination ?? null,
+      firstMatch: first ?? null,
+    }));
+    try {
+      await a.goto(base + "/dashboard/challenges");
+      await expect(a.getByRole("heading", { name: "چالش‌های من" })).toBeVisible();
+      await a.getByRole("link", { name: "Matchهای من" }).first().click();
+      await a.waitForTimeout(1500);
+      console.error("B99 lifecycle client-navigation comparison:", JSON.stringify({
+        finalUrl: a.url(),
+        headingsAndAlerts: await a.locator("h1,h2,[role=alert],[role=status]")
+          .allInnerTexts().catch(() => []),
+        pageErrors,
+      }));
+    } catch (navigationError) {
+      console.error("B99 lifecycle client-navigation diagnostic failed:",
+        String(navigationError));
+    }
     throw error;
   }
   const startHttp = a.waitForResponse((response) =>
