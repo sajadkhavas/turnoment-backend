@@ -63,4 +63,8 @@ for attempt in range(2):
     ) == snapshot, "Replay changed materialized ranking state"
 
 assert AppliedMatchEvent.objects.count() == FinalizedResultEvent.objects.count() == 30
-print("B99 CELERY BEAT WORKER PASS: scheduled 30 chronological B08 events, replay 0, ratings unchanged", flush=True)
+print(
+    "B99 CELERY BEAT WORKER PASS: scheduled 30 chronological B08 events, "
+    "replay 0, ratings unchanged",
+    flush=True,
+)
