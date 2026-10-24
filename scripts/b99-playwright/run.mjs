@@ -314,9 +314,40 @@ try {
     })).catch(() => null);
     const liveList = await readJson(a, "/api/v1/me/matches/").catch(() => null);
     const target = liveList?.payload?.items?.find((item) => item.matchId === matchId);
+    // Preflight the exact client-side action adapter without issuing a mutation.
+    const actionPreflight = await a.evaluate(async (revision) => {
+      try {
+        const [actions, adapter] = await Promise.all([
+          import("/src/lib/match-actions-repository.ts"),
+          import("/src/lib/data-adapter.ts"),
+        ]);
+        const parsed = actions.lifecycleCommandSchema.safeParse({
+          command: "start", revision,
+        });
+        let apiBaseOrigin = null;
+        let baseError = null;
+        try {
+          const base = actions.matchActionsRepository.baseUrl?.();
+          apiBaseOrigin = base ? new URL(base).origin : null;
+        } catch (error) { baseError = String(error); }
+        return {
+          adapterMode: adapter.getDataAdapterMode(),
+          commandValid: parsed.success,
+          commandIssues: parsed.success ? [] : parsed.error.issues.map(
+            (issue) => ({ path: issue.path, code: issue.code }),
+          ),
+          repoClass: actions.matchActionsRepository.constructor.name,
+          requestType: typeof actions.matchActionsRepository.request,
+          apiBaseOrigin, baseError,
+        };
+      } catch (error) {
+        return { importOrAdapterError: String(error) };
+      }
+    }, target?.revision).catch((error) => ({ evaluationError: String(error) }));
     console.error("B99 lifecycle start diagnostic:", JSON.stringify({
       expectedPath: lifecycleEndpoint,
       network: lifecycleNetwork,
+      actionPreflight,
       button,
       apiStatus: liveList?.status ?? null,
       target: target ? {
