@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.avatars import profile_avatar
 from apps.achievements.models import AchievementDefinition, AchievementProgress
 from apps.challenges.integrations import player_challenge_stats
 from apps.challenges.models import Challenge
@@ -361,6 +362,7 @@ def build_dashboard(user):
             "primaryGameId": primary_game_id, "primaryGame": primary_game_name,
             "statusLabel": "بازیکن فعال" if user.is_active else "غیرفعال",
             "avatarInitials": name[:2].upper(),
+            "avatarUrl": profile_avatar(profile.avatar_key) if profile else None,
         },
         "snapshot": {
             "tournamentRating": tournament_rating, "tournamentRank": tournament_rank,

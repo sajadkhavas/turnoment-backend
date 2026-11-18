@@ -50,4 +50,8 @@ class FinalizedResultEvent(models.Model):
     finalized_at = models.DateTimeField()
 
     class Meta:
-        indexes = [models.Index(fields=["finalized_at"], name="b08_final_event_idx")]
+        indexes = [
+            models.Index(fields=["finalized_at"], name="b08_final_event_idx"),
+            models.Index(fields=["player_a_id"], name="results_player_a_idx"),
+            models.Index(fields=["player_b_id"], name="results_player_b_idx"),
+        ]

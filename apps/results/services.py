@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.matches.models import Match
 
 from .models import FinalizedResultEvent, MatchResult
+from .venue import is_venue_managed, result_managers, with_result_venue
 
 
 def lock_private_match(match_id, user):
@@ -22,6 +23,7 @@ def score_errors(match, a, b):
         if (
             type(value) is not int
             or value < match.min_score
+            or value > 2_147_483_647
             or (match.max_score is not None and value > match.max_score)
         ):
             errors[field] = "Invalid score"
@@ -33,6 +35,8 @@ def score_errors(match, a, b):
 @transaction.atomic
 def submit_score(match_id, user, revision, player_score, opponent_score, key):
     match = lock_private_match(match_id, user)
+    if is_venue_managed(match):
+        raise PermissionDenied("The hosting center records this result.")
     from .projections import receipt
 
     result = MatchResult.objects.filter(match=match).first()
@@ -129,6 +133,8 @@ def finalize_locked(match, result, confirmer):
 @transaction.atomic
 def confirm_score(match_id, user, revision, player_score, opponent_score):
     match = lock_private_match(match_id, user)
+    if is_venue_managed(match):
+        raise PermissionDenied("The hosting center records this result.")
     result = MatchResult.objects.filter(match=match).first()
     if match.state == Match.State.COMPLETED and result:
         return {
@@ -152,3 +158,37 @@ def confirm_score(match_id, user, revision, player_score, opponent_score):
         return {"outcome": "score_mismatch"}
     event = finalize_locked(match, result, user)
     return {"outcome": "finalized", "eventId": str(event.pk), "revision": str(match.revision)}
+
+@transaction.atomic
+def submit_venue_score(center, match_id, user, revision, score_a, score_b, key):
+    if not result_managers(user).select_for_update().filter(center=center).first():
+        raise PermissionDenied("Hosting center manager required.")
+    match = with_result_venue(Match.objects.select_for_update().filter(pk=match_id)).filter(
+        result_venue_key=center.public_id
+    ).first()
+    if match is None:
+        raise PermissionDenied("Match is outside this center.")
+    result = MatchResult.objects.filter(match=match).first()
+    if match.state == Match.State.COMPLETED and result and result.finalized_at:
+        if result.reported_by_id == user.pk and result.idempotency_key == key and (
+            result.score_a, result.score_b
+        ) == (score_a, score_b):
+            event = FinalizedResultEvent.objects.get(match=match)
+            return {"outcome": "finalized", "eventId": str(event.pk)}
+        return {"outcome": "unavailable"}
+    if str(match.revision) != revision:
+        return {"outcome": "stale", "revision": str(match.revision)}
+    errors = score_errors(match, score_a, score_b)
+    if errors:
+        return {"outcome": "validation_error", "fields": errors}
+    if match.state == Match.State.AWAITING_RESULT and result is None:
+        result = MatchResult.objects.create(
+            match=match, reported_by=user, idempotency_key=key, score_a=score_a, score_b=score_b,
+        )
+        match.state = Match.State.AWAITING_CONFIRMATION
+    elif match.state != Match.State.AWAITING_CONFIRMATION or result is None:
+        return {"outcome": "unavailable"}
+    elif (result.score_a, result.score_b) != (score_a, score_b):
+        return {"outcome": "score_mismatch"}
+    event = finalize_locked(match, result, user)
+    return {"outcome": "finalized", "eventId": str(event.pk)}

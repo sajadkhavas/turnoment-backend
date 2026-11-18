@@ -2,9 +2,12 @@
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
+
+from apps.gaming_centers.models import CenterMembership, GamingCenter
 
 from .models import Team, TeamInvite, TeamMembership
 
@@ -21,6 +24,28 @@ def _captain(team, user):
         raise PermissionDenied("Team captain permission required.")
 
 
+def _lock_center_manager(actor, center_id):
+    allowed = CenterMembership.objects.select_for_update().filter(
+        center_id=center_id,
+        user=actor,
+        is_active=True,
+        role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+    ).first()
+    if allowed is None:
+        raise PermissionDenied("Active center owner or manager permission required.")
+    return allowed
+
+
+@transaction.atomic
+def create_center_team(*, actor, center_id, name):
+    """Create the center's sole team without assigning a player captain."""
+    allowed = _lock_center_manager(actor, center_id)
+    center = GamingCenter.objects.select_for_update().get(pk=allowed.center_id)
+    if Team.objects.filter(center=center).exists():
+        raise TeamConflict("This center already has a team.")
+    return Team.objects.create(center=center, created_by=actor, name=name)
+
+
 @transaction.atomic
 def create_team(*, user, name):
     """Creating a team and its only captain is atomic."""
@@ -32,7 +57,10 @@ def create_team(*, user, name):
 @transaction.atomic
 def invite(*, actor, team_id, recipient_id):
     team = get_object_or_404(Team.objects.select_for_update(), pk=team_id)
-    _captain(team, actor)
+    if team.center_id is not None:
+        _lock_center_manager(actor, team.center_id)
+    else:
+        _captain(team, actor)
     if actor.pk == recipient_id:
         raise TeamConflict("You cannot invite yourself.")
     # Do not reveal private recipient identity in the API response.
@@ -76,6 +104,8 @@ def respond(*, actor, invite_id, accept: bool):
 @transaction.atomic
 def transfer_captain(*, actor, team_id, new_captain_id):
     team = get_object_or_404(Team.objects.select_for_update(), pk=team_id)
+    if team.center_id is not None:
+        raise PermissionDenied("Center-owned teams do not have a player captain.")
     _captain(team, actor)
     target = get_object_or_404(
         TeamMembership.objects.select_for_update(), team=team, user_id=new_captain_id
@@ -102,22 +132,16 @@ def leave(*, actor, team_id):
 
 
 def tournament_eligible_teams(user, tournament):
-    """Read-only B05 hook: candidate captained teams, not a registration authorization.
-
-    B99 must validate tournament-specific composition/game eligibility in the
-    owning integration service before enabling actual team registration.
-    """
+    """Return center teams the active owner or manager can register."""
     if getattr(tournament, "mode", None) != "team" or not user.is_authenticated:
         return []
-    memberships = TeamMembership.objects.filter(
-        user=user, role=TeamMembership.Role.CAPTAIN
-    ).select_related("team")
+    centers = CenterMembership.objects.filter(
+        user=user, is_active=True,
+        role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+    ).values("center_id")
     return [
-        {
-            "id": str(item.team_id),
-            "name": item.team.name,
-            "memberCount": TeamMembership.objects.filter(team_id=item.team_id).count(),
-            "role": item.role,
-        }
-        for item in memberships
+        {"id": str(team.pk), "name": team.name,
+         "memberCount": team.member_count, "role": "center_manager"}
+        for team in Team.objects.filter(center_id__in=centers)
+        .annotate(member_count=Count("memberships")).filter(member_count__gt=0)
     ]

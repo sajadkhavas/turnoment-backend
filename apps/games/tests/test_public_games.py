@@ -170,3 +170,51 @@ def test_b03_schema_migrations_and_postgres_search_index_were_applied():
             """
         )
         assert cursor.fetchone() == ("games_public_search_idx",)
+
+
+@pytest.mark.django_db
+def test_home_highlights_show_games_before_results_and_only_rank_public_players():
+    from django.utils import timezone
+
+    from apps.accounts.models import PlayerProfile, User
+    from apps.gaming_centers.models import City
+    from apps.matches.models import Match
+    from apps.rankings.models import PublicRankingIdentity
+    from apps.results.models import FinalizedResultEvent, MatchResult
+
+    game = make_game(cover_image="/media/tekken.webp")
+    make_game(slug="hidden", game_id="hidden", state="draft")
+    city = City.objects.create(slug="karaj", name="کرج")
+    players = [User.objects.create_user(phone=f"09123100{n:03}") for n in range(3)]
+    for n, player in enumerate(players):
+        PlayerProfile.objects.create(user=player, gamer_tag=f"Player{n}")
+        PublicRankingIdentity.objects.create(
+            user=player, city=city, username=f"player-{n}", is_published=n != 1,
+        )
+    endpoint = "/api/v1/discovery/home/highlights/"
+    client = APIClient()
+    assert client.get(endpoint).data == {
+        "leaders": [], "games": [{
+            "gameId": game.pk, "slug": game.slug, "name": game.name,
+            "imageUrl": "/media/tekken.webp",
+        }],
+    }
+    # The public winner is on side B; the private player and an unplayed profile stay out.
+    now = timezone.now()
+    a, b = players[1], players[0]
+    match = Match.objects.create(
+        source_kind="tournament", source_id="home-test", participant_a=a, participant_b=b,
+        game_id=game.pk, starts_at=now, state=Match.State.COMPLETED,
+    )
+    result = MatchResult.objects.create(
+        match=match, reported_by=a, confirmed_by=b, finalized_at=now,
+        score_a=1, score_b=2, idempotency_key="home-test-score",
+    )
+    FinalizedResultEvent.objects.create(
+        match=match, result=result, player_a_id=a.pk, player_b_id=b.pk,
+        score_a=1, score_b=2, finalized_at=now,
+    )
+    assert client.get(endpoint).data["leaders"] == [{
+        "rank": 1, "username": "player-0", "name": "Player0",
+        "avatarUrl": None, "wins": 1, "level": 1,
+    }]

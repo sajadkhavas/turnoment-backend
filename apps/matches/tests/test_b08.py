@@ -511,3 +511,61 @@ def test_dispute_replay_with_non_string_statement_is_controlled_validation(match
         )
         assert repeated["outcome"] == "validation_error"
     assert Dispute.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_only_hosting_center_can_publish_in_person_result(match, players):
+    from apps.gaming_centers.models import CenterMembership, City, GamingCenter
+    from apps.tournaments.tests.test_b05 import make_tournament
+
+    a, b, manager = players
+    city = City.objects.create(slug="karaj-venue", name="کرج")
+    venue = GamingCenter.objects.create(public_id="venue-home", name="Home", city=city)
+    other = GamingCenter.objects.create(public_id="venue-other", name="Other", city=city)
+    CenterMembership.objects.create(center=venue, user=manager, role=CenterMembership.Role.MANAGER)
+    CenterMembership.objects.create(center=other, user=b, role=CenterMembership.Role.OWNER)
+    tournament = make_tournament(center_key=venue.public_id)
+    Match.objects.filter(pk=match.pk).update(
+        source_kind=Match.Source.TOURNAMENT, tournament_slug=tournament.slug,
+        venue_id=other.public_id,
+    )
+
+    def client(user):
+        instance = APIClient()
+        instance.force_authenticate(user)
+        return instance
+
+    queue = "/api/v1/me/venue-results/"
+    assert client(a).get(queue).data == {"items": [], "canManage": False}
+    assert client(b).get(queue).data == {"items": [], "canManage": True}
+    hosting = client(manager)
+    assert [item["id"] for item in hosting.get(queue).data["items"]] == [str(match.pk)]
+
+    url = result_url(match)
+    assert client(a).get(url).data["submissionState"] == "unavailable"
+    assert client(a).post(
+        url, {"revision": str(match.revision), "playerScore": 3, "opponentScore": 1},
+        format="json", HTTP_IDEMPOTENCY_KEY="player-attempt",
+    ).status_code == 403
+    assert client(a).post(
+        url + "confirm/", {"revision": str(match.revision)}, format="json",
+    ).status_code == 403
+
+    def write(key):
+        return f"/api/v1/venue-results/{key}/{match.pk}/"
+    score = {"revision": str(match.revision), "scoreA": 3, "scoreB": 1}
+    options = {"format": "json", "HTTP_IDEMPOTENCY_KEY": "center-attempt"}
+    assert client(b).post(write(other.public_id), score, **options).status_code == 403
+    assert hosting.post(write(venue.public_id), {**score, "revision": "0"}, **options).data[
+        "outcome"
+    ] == "stale"
+    assert hosting.post(write(venue.public_id), {**score, "scoreB": 3}, **options).data[
+        "outcome"
+    ] == "validation_error"
+    first = hosting.post(write(venue.public_id), score, **options)
+    assert first.data["outcome"] == "finalized"
+    assert hosting.post(write(venue.public_id), score, **options).data == first.data
+    assert FinalizedResultEvent.objects.filter(match=match).count() == 1
+    assert MatchResult.objects.get(match=match).confirmed_by_id == manager.pk
+    assert client(b).get(url).data["finalResult"]["playerScore"] == 1
+    assert hosting.get(queue).data["items"] == []

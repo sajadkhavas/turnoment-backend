@@ -4,7 +4,7 @@ from django.urls import include, path
 from apps.disputes.api import DisputeView, EvidenceView
 from apps.matches.api import MyMatchesView
 from apps.rankings.api import PublicCompetitiveProfileView, PublicRankingView
-from apps.results.api import ConfirmView, ResultView
+from apps.results.api import ConfirmView, ResultView, VenueResultsView, VenueResultWriteView
 from apps.rivalries.api import MyRivalriesView
 from apps.system.api.views import LiveView, ReadyView
 
@@ -30,6 +30,8 @@ urlpatterns = [
         PublicCompetitiveProfileView.as_view(), name="public-competitive-profile",
     ),
     path("api/v1/me/matches/", MyMatchesView.as_view()),
+    path("api/v1/me/venue-results/", VenueResultsView.as_view()),
+    path("api/v1/venue-results/<slug:center_key>/<uuid:match_id>/", VenueResultWriteView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/", ResultView.as_view()),
     path("api/v1/matches/<uuid:match_id>/result/confirm/", ConfirmView.as_view()),
     path("api/v1/matches/<uuid:match_id>/dispute/", DisputeView.as_view()),
