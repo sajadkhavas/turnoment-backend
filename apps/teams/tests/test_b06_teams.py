@@ -6,6 +6,7 @@ from django.db import IntegrityError, connections, transaction
 from rest_framework.test import APIClient
 
 from apps.accounts.models import PlayerProfile, User
+from apps.gaming_centers.models import CenterMembership, City, GamingCenter
 from apps.teams.models import TeamInvite, TeamMembership
 from apps.teams.services import (
     create_team,
@@ -28,6 +29,17 @@ def authed(user):
     c = APIClient()
     c.force_authenticate(user=user)
     return c
+
+
+def managed_center(owner):
+    city, _ = City.objects.get_or_create(slug="karaj", defaults={"name": "کرج"})
+    center = GamingCenter.objects.create(
+        public_id=f"center-{uuid4()}", name="Test center", city=city
+    )
+    CenterMembership.objects.create(
+        center=center, user=owner, role=CenterMembership.Role.OWNER, is_active=True
+    )
+    return center, f"/api/v1/centers/{center.pk}/team/"
 
 
 @pytest.mark.django_db
@@ -83,18 +95,30 @@ def test_team_query_validation_and_roster_pagination():
 
 
 @pytest.mark.django_db
-def test_create_invite_accept_replay_and_scoped_invite_read():
+def test_create_invite_accept_replay_and_scoped_invite_read(settings):
     owner, guest, stranger = player(24), player(25), player(26)
-    made = authed(owner).post(TEAM, {"name": "Winners"}, format="json")
+    center, center_url = managed_center(owner)
+    owner_api, stranger_api = authed(owner), authed(stranger)
+    assert stranger_api.post(TEAM, {"name": "Winners"}, format="json").status_code == 403
+    assert stranger_api.post(center_url, {"name": "Winners"}, format="json").status_code == 403
+    assert stranger_api.get(center_url).status_code == 403
+    made = owner_api.post(center_url, {"name": "Winners"}, format="json")
     assert made.status_code == 201
-    tid = made.data["teamId"]
+    tid = made.data["team"]["teamId"]
+    assert owner_api.post(center_url, {"name": "Another"}, format="json").status_code == 409
+    assert owner_api.get("/api/v1/me/team-centers/").data["items"] == [
+        {"id": str(center.pk), "name": center.name, "team": {"teamId": tid, "name": "Winners"}}
+    ]
+    assert not TeamMembership.objects.filter(team_id=tid, role="captain").exists()
     denied = authed(stranger).post(
         f"{TEAM}{tid}/invites/", {"playerId": str(guest.pk)}, format="json"
     )
     assert denied.status_code == 403
-    endpoint = f"{TEAM}{tid}/invites/"
-    first = authed(owner).post(endpoint, {"playerId": str(guest.pk)}, format="json")
-    again = authed(owner).post(endpoint, {"playerId": str(guest.pk)}, format="json")
+    endpoint = f"/api/v1/center-teams/{tid}/invites/"
+    body = {"gamerTag": guest.player_profile.gamer_tag.lower()}
+    assert stranger_api.post(endpoint, body, format="json").status_code == 403
+    first = owner_api.post(endpoint, body, format="json")
+    again = owner_api.post(endpoint, body, format="json")
     assert first.status_code == 201
     assert again.status_code == 200
     assert first.data == again.data
@@ -109,8 +133,21 @@ def test_create_invite_accept_replay_and_scoped_invite_read():
     assert authed(guest).post(url, {}, format="json").data == accepted.data
     assert TeamMembership.objects.filter(team_id=tid, user=guest).count() == 1
     assert authed(guest).get("/api/v1/me/team-invites/").data["items"] == []
-    assert authed(owner).post(endpoint, {"playerId": str(guest.pk)},
-        format="json").status_code == 409
+    assert owner_api.post(endpoint, body, format="json").status_code == 409
+
+    from apps.tournaments.models import Tournament
+    from apps.tournaments.tests.test_b05 import make_tournament, payload
+
+    settings.TOURNAMENT_TEAM_ELIGIBILITY_HOOK = "apps.teams.services.tournament_eligible_teams"
+    tournament = make_tournament(mode=Tournament.Mode.TEAM)
+    registration_url = f"/api/v1/tournaments/{tournament.slug}/registrations/"
+    registration = payload(teamId=tid)
+    assert authed(guest).post(registration_url, registration, format="json").data[
+        "reason"
+    ] == "ineligible"
+    assert owner_api.post(registration_url, registration, format="json").data[
+        "outcome"
+    ] == "confirmed"
 
 
 @pytest.mark.django_db
@@ -156,9 +193,10 @@ def test_negative_fields_permissions_and_constraints():
     assert authed(member).post(
         f"{TEAM}{t.pk}/invites/", {"playerId": str(owner.pk)}, format="json"
     ).status_code == 403
-    assert authed(owner).post(TEAM, {"name": ""}, format="json").status_code == 400
+    _, center_url = managed_center(owner)
+    assert authed(owner).post(center_url, {"name": ""}, format="json").status_code == 400
     assert authed(owner).post(
-        TEAM, {"name": "ok", "role": "captain"}, format="json"
+        center_url, {"name": "ok", "role": "captain"}, format="json"
     ).status_code == 400
     assert authed(owner).post(
         f"{TEAM}{t.pk}/invites/", {"playerId": "invalid"}, format="json"
@@ -173,15 +211,17 @@ def test_negative_fields_permissions_and_constraints():
 
 
 @pytest.mark.django_db
-def test_tournament_hook_only_returns_captained_team_candidates():
+def test_tournament_hook_only_returns_managed_center_teams():
     from types import SimpleNamespace
 
     owner, mate = player(33), player(34)
-    team = create_team(user=owner, name="Eligible")
+    center, endpoint = managed_center(owner)
+    assert authed(owner).post(endpoint, {"name": "Eligible"}, format="json").status_code == 201
+    team = center.competitive_team
     TeamMembership.objects.create(team=team, user=mate)
     tournament = SimpleNamespace(mode="team")
     assert tournament_eligible_teams(owner, tournament) == [{
-        "id": str(team.pk), "name": team.name, "memberCount": 2, "role": "captain"
+        "id": str(team.pk), "name": team.name, "memberCount": 1, "role": "center_manager"
     }]
     assert tournament_eligible_teams(mate, tournament) == []
     assert tournament_eligible_teams(owner, SimpleNamespace(mode="solo")) == []
@@ -192,12 +232,13 @@ def test_session_write_requires_csrf_cookie_and_token():
     from rest_framework.test import APIClient
 
     owner = player(35)
+    _, endpoint = managed_center(owner)
     c = APIClient(enforce_csrf_checks=True)
     c.force_login(owner)
-    assert c.post(TEAM, {"name": "CSRF"}, format="json").status_code == 403
+    assert c.post(endpoint, {"name": "CSRF"}, format="json").status_code == 403
     token = c.get("/api/v1/auth/csrf/").data["csrf_token"]
     assert c.post(
-        TEAM, {"name": "CSRF"}, format="json", HTTP_X_CSRFTOKEN=token
+        endpoint, {"name": "CSRF"}, format="json", HTTP_X_CSRFTOKEN=token
     ).status_code == 201
 
 

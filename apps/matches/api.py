@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.results.venue import with_result_venue
+
 from .projections import current_player, match_item, visible_matches
 
 PAGE_SIZE = 20
@@ -28,7 +30,8 @@ class MyMatchesView(APIView):
         except (TypeError, ValueError):
             return Response({"detail": "Invalid page"}, status=400)
 
-        items = [match_item(m, request.user) for m in visible_matches(request.user)]
+        matches = with_result_venue(visible_matches(request.user))
+        items = [match_item(match, request.user) for match in matches]
         summary = {
             "total": len(items),
             "upcoming": sum(x["lifecycleState"] in {"scheduled", "ready", "live"} for x in items),

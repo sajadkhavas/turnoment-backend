@@ -13,6 +13,13 @@ class Team(models.Model):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="created_teams"
     )
+    center = models.OneToOneField(
+        "gaming_centers.GamingCenter",
+        on_delete=models.PROTECT,
+        related_name="competitive_team",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

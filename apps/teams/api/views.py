@@ -1,13 +1,15 @@
 from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.core.identifiers import uuid_public_id
+from apps.accounts.models import PlayerProfile
+from apps.gaming_centers.models import CenterMembership
 
-from ..models import TeamInvite
+from ..models import Team, TeamInvite
 from ..projections import team_page
-from ..services import create_team, invite, leave, respond, transfer_captain
+from ..services import create_center_team, invite, leave, respond, transfer_captain
 
 
 class StrictInput(serializers.Serializer):
@@ -40,10 +42,76 @@ class TeamCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        raise PermissionDenied("Teams can only be created by a gaming center.")
+
+
+class ManagedCentersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        memberships = CenterMembership.objects.filter(
+            user=request.user, is_active=True,
+            role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+        ).select_related("center", "center__competitive_team").order_by("center__name", "center_id")
+        return Response({"items": [
+            {"id": str(m.center_id), "name": m.center.name,
+             "team": CenterTeamView.summary(team) if (team := getattr(
+                 m.center, "competitive_team", None
+             )) else None}
+            for m in memberships
+        ]})
+
+
+class CenterInviteInput(StrictInput):
+    gamerTag = serializers.CharField(max_length=24)
+
+
+class CenterTeamInviteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, team_id):
+        if not Team.objects.filter(
+            pk=team_id, center__memberships__user=request.user,
+            center__memberships__is_active=True,
+            center__memberships__role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+        ).exists():
+            raise PermissionDenied("Active center owner or manager permission required.")
+        data = CenterInviteInput(data=request.data)
+        data.is_valid(raise_exception=True)
+        profile = PlayerProfile.objects.filter(
+            gamer_tag__iexact=data.validated_data["gamerTag"], user__is_active=True
+        ).first()
+        if profile is None:
+            return Response({"detail": "Player not found."}, status=404)
+        obj, created = invite(actor=request.user, team_id=team_id, recipient_id=profile.user_id)
+        return Response({"inviteId": str(obj.pk)}, status=201 if created else 200)
+
+
+class CenterTeamView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, center_id):
+        if not CenterMembership.objects.filter(
+            center_id=center_id,
+            user=request.user,
+            is_active=True,
+            role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+        ).exists():
+            raise PermissionDenied("Active center owner or manager permission required.")
+        team = Team.objects.filter(center_id=center_id).first()
+        return Response({"team": None if team is None else self.summary(team)})
+
+    def post(self, request, center_id):
         data = TeamCreateInput(data=request.data)
         data.is_valid(raise_exception=True)
-        team = create_team(user=request.user, name=data.validated_data["name"])
-        return Response({"teamId": uuid_public_id(team.pk), "name": team.name}, status=201)
+        team = create_center_team(
+            actor=request.user, center_id=center_id, name=data.validated_data["name"]
+        )
+        return Response({"team": self.summary(team)}, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def summary(team):
+        return {"teamId": str(team.pk), "name": team.name}
 
 
 class TeamInviteView(APIView):

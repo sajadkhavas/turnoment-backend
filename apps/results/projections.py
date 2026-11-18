@@ -1,6 +1,8 @@
 from apps.matches.models import Match
 from apps.matches.projections import common
 
+from .venue import is_venue_managed
+
 
 def reported_score(match, result, user):
     if not result:
@@ -38,6 +40,8 @@ def result_view(match, user):
         Match.State.COMPLETED: "finalized",
         Match.State.DISPUTED: "disputed",
     }.get(match.state, "unavailable")
+    if state in {"reportable", "awaiting-confirmation"} and is_venue_managed(match):
+        state = "unavailable"
     data = common(match, user)
     data.update(
         {

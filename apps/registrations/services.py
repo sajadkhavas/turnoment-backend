@@ -36,7 +36,7 @@ def register(*, identifier, user, payload):
             return {"outcome": "validation_error", "fields": {"teamId": "Required"}}
         chosen = next(
             (team for team in eligible_teams(user, tournament)
-             if team["id"] == team_id and team["role"] == "captain"),
+             if team["id"] == team_id and team["role"] in {"captain", "center_manager"}),
             None
         )
         if chosen is None:
@@ -57,7 +57,7 @@ def register(*, identifier, user, payload):
         previous.status = Registration.Status.CONFIRMED
         previous.team_id = team_id or ""
         previous.team_name = chosen["name"] if chosen else ""
-        previous.team_role = "captain" if chosen else ""
+        previous.team_role = chosen["role"] if chosen else ""
         previous.save(update_fields=["status", "team_id", "team_name", "team_role"])
         registration = previous
     else:
@@ -65,7 +65,7 @@ def register(*, identifier, user, payload):
             tournament=tournament, user=user,
             team_id=team_id or "",
             team_name=chosen["name"] if chosen else "",
-            team_role="captain" if chosen else "",
+            team_role=chosen["role"] if chosen else "",
         )
     tournament.registered_count += 1
     tournament.save(update_fields=["registered_count"])

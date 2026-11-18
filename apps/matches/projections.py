@@ -90,7 +90,11 @@ def dispute_state(match):
 
 
 def attention(match, user):
+    from apps.results.venue import is_venue_managed
+
     state = result_state(match)
+    if state in {"reportable", "awaiting-confirmation"} and is_venue_managed(match):
+        return "none"
     if state == "reportable":
         return "submit-result"
     if state == "awaiting-confirmation":
