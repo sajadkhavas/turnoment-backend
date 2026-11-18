@@ -3,6 +3,7 @@ from django.urls import path
 from apps.accounts.dashboard import MyDashboardView
 
 from .preferences import NotificationPreferencesView
+from .profile_summary import MyProfileSummaryView
 from .views import (
     CsrfView,
     LogoutView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path("auth/otp/verify/", OtpVerifyView.as_view(), name="otp-verify"),
     path("auth/me/", MeView.as_view(), name="me"),
     path("me/dashboard/", MyDashboardView.as_view(), name="me-dashboard"),
+    path("me/profile-summary/", MyProfileSummaryView.as_view(), name="my-profile-summary"),
     path("auth/me/profile/", MeProfileView.as_view(), name="me-profile"),
     path(
         "me/settings/notification-preferences/",
