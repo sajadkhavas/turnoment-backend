@@ -107,7 +107,7 @@ def test_create_invite_accept_replay_and_scoped_invite_read(settings):
     tid = made.data["team"]["teamId"]
     assert owner_api.post(center_url, {"name": "Another"}, format="json").status_code == 409
     assert owner_api.get("/api/v1/me/team-centers/").data["items"] == [
-        {"id": str(center.pk), "name": center.name, "team": {"teamId": tid, "name": "Winners"}}
+        {"id": str(center.pk), "name": center.name, "team": {"teamId": tid, "name": "Winners", "image": ""}}
     ]
     assert not TeamMembership.objects.filter(team_id=tid, role="captain").exists()
     denied = authed(stranger).post(
@@ -298,3 +298,83 @@ def test_platform_admin_cannot_mutate_team_membership_outside_services():
         assert instance.has_add_permission(None) is False
         assert instance.has_change_permission(None) is False
         assert instance.has_delete_permission(None) is False
+
+
+@pytest.mark.django_db
+def test_public_teams_rank_search_and_preserve_unpublished_member_privacy():
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.matches.models import Match
+    from apps.matches.services import create_match_for_source
+    from apps.rankings.models import PublicRankingIdentity
+    from apps.results.models import FinalizedResultEvent, MatchResult
+
+    owner, member, hidden, other = [player(n) for n in range(201, 205)]
+    center, endpoint = managed_center(owner)
+    center.publication_state = GamingCenter.Publication.PUBLISHED
+    center.save(update_fields=["publication_state"])
+    other_center, other_endpoint = managed_center(other)
+    other_center.publication_state = GamingCenter.Publication.PUBLISHED
+    other_center.save(update_fields=["publication_state"])
+    guest_center, guest_endpoint = managed_center(hidden)
+
+    for actor, url, name in (
+        (owner, endpoint, "Zeta Arena"), (other, other_endpoint, "Alpha Arena"),
+        (hidden, guest_endpoint, "Private Arena"),
+    ):
+        assert authed(actor).post(url, {"name": name}, format="json").status_code == 201
+    team = center.competitive_team
+    joined = TeamMembership.objects.create(team=team, user=member)
+    TeamMembership.objects.create(team=team, user=hidden)
+    PublicRankingIdentity.objects.create(
+        user=member, username="visible-member", city=center.city, is_published=True
+    )
+    PublicRankingIdentity.objects.create(
+        user=hidden, username="private-member", city=center.city, is_published=False
+    )
+
+    for n, time, score_a, score_b in (
+        (1, timezone.now(), 2, 0),
+        (2, timezone.now(), 1, 1),
+        (3, joined.joined_at - timedelta(days=1), 2, 0),
+        (4, timezone.now(), 0, 2),
+    ):
+        match = create_match_for_source(
+            source_kind=Match.Source.CHALLENGE, source_id=f"public-team-{n}",
+            participant_a=member, participant_b=hidden, game_id="fc", game_name="FC",
+            competition_title="Challenge", starts_at=time,
+        )
+        result = MatchResult.objects.create(
+            match=match, reported_by=member, score_a=score_a, score_b=score_b,
+            confirmed_by=hidden, finalized_at=time, idempotency_key=f"team-result-{n}",
+        )
+        FinalizedResultEvent.objects.create(
+            match=match, result=result, score_a=score_a, score_b=score_b,
+            player_a_id=member.pk, player_b_id=hidden.pk, finalized_at=time,
+        )
+    directory = "/api/v1/public/teams/"
+    public = APIClient()
+    rows = public.get(directory).data["items"]
+    assert [(item["name"], item["wins"], item["level"]) for item in rows] == [
+        ("Zeta Arena", 2, 1), ("Alpha Arena", 0, 1),
+    ]
+    assert public.get(directory, {"q": "zeta"}).data["items"] == [rows[0]]
+    assert public.get(directory, {"center": center.public_id}).data["items"] == [rows[0]]
+    assert public.get(directory + f"{guest_center.competitive_team.pk}/").status_code == 404
+    path = directory + f"{team.pk}/"
+    detail = public.get(path).data
+    assert detail["memberCount"] == 2
+    assert detail["members"] == [{
+        "username": "visible-member", "gamerTag": member.player_profile.gamer_tag,
+    }]
+    assert str(hidden.pk) not in str(detail)
+    image = {"image": "https://example.com/emblem.webp"}
+    assert authed(other).patch(endpoint, image, format="json").status_code == 403
+    assert authed(owner).patch(endpoint, {"image": "http://example.com/a.png"},
+                               format="json").status_code == 400
+    assert authed(owner).patch(endpoint, image, format="json").status_code == 200
+    assert public.get(path).data["image"] == image["image"]
+    assert authed(owner).patch(endpoint, {"image": ""}, format="json").status_code == 200
+    assert public.get(path).data["image"] is None

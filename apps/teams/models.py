@@ -6,10 +6,11 @@ from django.db.models import Q
 
 
 class Team(models.Model):
-    """Private team identity; no public roster endpoint."""
+    """Team identity. Only teams of published centers appear in the directory."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=120)
+    image_url = models.URLField(max_length=2048, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="created_teams"
     )

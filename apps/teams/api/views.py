@@ -1,3 +1,5 @@
+from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -73,7 +75,9 @@ class CenterTeamInviteView(APIView):
         if not Team.objects.filter(
             pk=team_id, center__memberships__user=request.user,
             center__memberships__is_active=True,
-            center__memberships__role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+            center__memberships__role__in=(
+                CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER,
+            ),
         ).exists():
             raise PermissionDenied("Active center owner or manager permission required.")
         data = CenterInviteInput(data=request.data)
@@ -85,6 +89,19 @@ class CenterTeamInviteView(APIView):
             return Response({"detail": "Player not found."}, status=404)
         obj, created = invite(actor=request.user, team_id=team_id, recipient_id=profile.user_id)
         return Response({"inviteId": str(obj.pk)}, status=201 if created else 200)
+
+
+class TeamImageInput(StrictInput):
+    image = serializers.URLField(max_length=2048, allow_blank=True)
+
+    def validate_image(self, value):
+        from urllib.parse import urlsplit
+
+        if value:
+            url = urlsplit(value)
+            if url.scheme != "https" or url.username or url.password:
+                raise serializers.ValidationError("Use a public HTTPS image URL.")
+        return value
 
 
 class CenterTeamView(APIView):
@@ -109,9 +126,24 @@ class CenterTeamView(APIView):
         )
         return Response({"team": self.summary(team)}, status=status.HTTP_201_CREATED)
 
+    @transaction.atomic
+    def patch(self, request, center_id):
+        managed = CenterMembership.objects.select_for_update().filter(
+            center_id=center_id, user=request.user, is_active=True,
+            role__in=(CenterMembership.Role.OWNER, CenterMembership.Role.MANAGER),
+        ).first()
+        if managed is None:
+            raise PermissionDenied("Active center owner or manager permission required.")
+        data = TeamImageInput(data=request.data)
+        data.is_valid(raise_exception=True)
+        team = get_object_or_404(Team.objects.select_for_update(), center_id=center_id)
+        team.image_url = data.validated_data["image"]
+        team.save(update_fields=["image_url"])
+        return Response({"team": self.summary(team)})
+
     @staticmethod
     def summary(team):
-        return {"teamId": str(team.pk), "name": team.name}
+        return {"teamId": str(team.pk), "name": team.name, "image": team.image_url}
 
 
 class TeamInviteView(APIView):

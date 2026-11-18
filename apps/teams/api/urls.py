@@ -1,11 +1,12 @@
 from django.urls import path
 
+from .public import PublicTeamDetail, PublicTeamList
 from .views import (
     CaptainTransferView,
-    CenterTeamView,
     CenterTeamInviteView,
-    ManagedCentersView,
+    CenterTeamView,
     InvitationActionView,
+    ManagedCentersView,
     MyTeamInvitesView,
     MyTeamsView,
     TeamCreateView,
@@ -16,6 +17,8 @@ from .views import (
 app_name = "teams"
 
 urlpatterns = [
+    path("public/teams/", PublicTeamList.as_view(), name="public-teams"),
+    path("public/teams/<uuid:team_id>/", PublicTeamDetail.as_view(), name="public-team"),
     path("me/team-centers/", ManagedCentersView.as_view(), name="team-centers"),
     path("center-teams/<uuid:team_id>/invites/", CenterTeamInviteView.as_view(),
          name="center-team-invite"),
